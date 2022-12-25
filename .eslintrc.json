@@ -10,6 +10,7 @@
     ],
     "rules": {
         "@typescript-eslint/naming-convention": "warn",
+        "@typescript-eslint/camelcase": "off",
         "@typescript-eslint/semi": "warn",
         "curly": "warn",
         "eqeqeq": "warn",
