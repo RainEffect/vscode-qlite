@@ -1,7 +1,7 @@
 {
   "name": "vscode-qlite",
   "displayName": "VSCode-QLite",
-  "description": "",
+  "description": "A lite qq displayed in vscode",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.74.0"
@@ -9,17 +9,46 @@
   "categories": [
     "Other"
   ],
+  "icon": "ico.ico",
+  "publisher": "Vi-brance",
   "activationEvents": [
-    "onCommand:vscode-qlite.helloWorld"
+    "onView:qliteExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-qlite.helloWorld",
-        "title": "Hello World"
+        "command": "qlite.login",
+        "icon": "$(sign-in)",
+        "title": "登录"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "qlite",
+          "title": "QLite",
+          "icon": "ico.ico"
+        }
+      ]
+    },
+    "views": {
+      "qlite": [
+        {
+          "id": "qliteExplorer",
+          "name": "QLite"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "qlite.login",
+          "when": "view == qliteExplorer",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -30,16 +59,19 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
-    "typescript": "^4.9.3",
-    "@vscode/test-electron": "^2.2.0"
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "oicq": "^2.3.1"
   }
 }
