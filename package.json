@@ -2,14 +2,14 @@
   "name": "vscode-qlite",
   "displayName": "VSCode-QLite",
   "description": "A lite qq displayed in vscode",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other"
   ],
-  "icon": "ico.ico",
+  "icon": "./ico.ico",
   "publisher": "Vi-brance",
   "activationEvents": [
     "onView:qliteExplorer"

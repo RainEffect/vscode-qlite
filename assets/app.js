@@ -1,6 +1,6 @@
 /**
  * window.webview 是一个内置全局变量，封装了一些与宿主交互的方法
- * @type {import("../types").Webview}
+ * @type {import("./types").Webview}
  */
 var webview;
 
@@ -64,7 +64,7 @@ function getChatHistory(message_id = "", count = 20) {
     webview.getChatHistory(message_id, count).then((data) => {
         let html = "";
         let tmp = [];
-        for (let msg of data.data) {
+        for (let msg of data) {
             if (msg.message_id !== message_id && !tmp.includes(msg.message_id)) {
                 tmp.push(msg.message_id);
                 html += genUserMessage(msg);
@@ -84,7 +84,9 @@ function getChatHistory(message_id = "", count = 20) {
 
 let sending = false;
 const pastedImageBufferSize = 10_000_000;
-/** @type {{ placeholder: string, cqcode: string, url: string }[]} */
+/**
+ * @type {{ placeholder: string, cqcode: string, url: string }[]}
+ */
 const pastedImageMappings = [];
 function sendMsg() {
     let message = `${document.querySelector("#content").value}`;
@@ -95,7 +97,7 @@ function sendMsg() {
     document.querySelector("#send").disabled = true;
 
     // 把粘贴的图片占位符重新转换为 CQ 码
-    const splitted = []
+    const splitted = [];
     let messageHtml = '';
     while (true) {
         let begin = Infinity;
@@ -103,7 +105,7 @@ function sendMsg() {
         let found;
         for (const x of pastedImageMappings) {
             const index = message.indexOf(x.placeholder);
-            if (index != -1 && index < begin) {
+            if (index !== -1 && index < begin) {
                 found = x;
                 begin = index;
             }
@@ -229,7 +231,7 @@ function genSystemMessage(data) {
                 break;
             case "ban":
                 if (data.user_id > 0) {
-                    msg = `${genLabel(data.operator_id)} 禁言 ${data.user_id === 80000000 ? "匿名用户(" + data.nickname + ")" : genLabel(data.user_id)} ${~~(data.duration/60)}分钟`;
+                    msg = `${genLabel(data.operator_id)} 禁言 ${data.user_id === 80000000 ? "匿名用户(" + data.nickname + ")" : genLabel(data.user_id)} ${~~(data.duration / 60)}分钟`;
                 } else {
                     msg = `${genLabel(data.operator_id)} ${data.duration > 0 ? "开启" : "关闭"}了全员禁言`;
                 }
@@ -300,10 +302,10 @@ function genUserMessage(data) {
             title = `<span class="htitle ${role}">${role}</span>`;
         }
     }
-    return `<a class="msgid" id="${data.message_id}"></a><div class="${data.user_id === data.self_id ? "cright" : "cleft"} cmsg">
+    return `<a class="msgid" id="${data.message_id}"></a><div class="${data.user_id === me ? "cright" : "cleft"} cmsg">
     <img class="headIcon radius" onmouseenter="previewImage(this)" src="${genAvaterUrl(data.user_id)}" />
     <span uid="${data.user_id}" ondblclick="addAt(${data.user_id})" class="name" title="${filterXss(data.sender.nickname)}(${data.user_id}) ${datetime(data.time)}">
-        ${c2c?"":'<b class="operation">...</b>'}
+        ${c2c ? "" : '<b class="operation">...</b>'}
         ${title}${filterXss(data.sender.card ? data.sender.card : data.sender.nickname)} ${timestamp(data.time)}
     </span>
     <span class="content">${parseMessage(data.message)}</span>
@@ -348,22 +350,22 @@ function parseMessage(message) {
     for (let v of message) {
         switch (v.type) {
             case "text":
-                msg += filterXss(v.data.text).replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>');
+                msg += filterXss(v.text).replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>');
                 break;
             case "at":
-                msg += `<a title="${v.data.qq}" href="javascript:void(0);" onclick="addAt('${v.data.qq}');">${filterXss(v.data.text)}</a>`;
+                msg += `<a title="${v.qq}" href="javascript:void(0);" onclick="addAt('${v.qq}');">${filterXss(v.text)}</a>`;
                 break;
             case "face":
-                if (v.data.id > 324) {
-                    msg += v.data.text || "[表情]";
+                if (v.id > 324) {
+                    msg += v.text || "[表情]";
                 } else {
-                    msg += `<img class="face" ondblclick="addFace(${v.data.id})" src="${facePath + v.data.id}.png">`;
+                    msg += `<img class="face" ondblclick="addFace(${v.id})" src="${facePath + v.id}.png">`;
                 }
                 break;
             case "sface":
             case "bface":
-                if (v.data.text) {
-                    msg += "[" + filterXss(v.data.text) + "]";
+                if (v.text) {
+                    msg += "[" + filterXss(v.text) + "]";
                 } else {
                     msg += "[表情]";
                 }
@@ -371,26 +373,26 @@ function parseMessage(message) {
             case "image":
             case "flash":
                 if (!c2c) {
-                    v.data.url = v.data.url.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
+                    v.url = vurl.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
                 }
-                let split = v.data.file.split("-");
+                let split = v.file.split("-");
                 let width = parseInt(split[1]), height = parseInt(split[2]);
-                msg += `<a href="${v.data.url}&file=${v.data.file}&vscodeDragFlag=1" target="_blank" onmouseenter="previewImage(this,${width},${height})">${v.type === "image" ? "图片" : "闪照"}</a>`;
+                msg += `<a href="${v.url}&file=${v.file}&vscodeDragFlag=1" target="_blank" onmouseenter="previewImage(this,${width},${height})">${v.type === "image" ? "图片" : "闪照"}</a>`;
                 break;
             case "record":
-                msg = `<a href="${v.data.url}" target="_blank">语音消息</a>`;
+                msg = `<a href="${v.url}" target="_blank">语音消息</a>`;
                 break;
             case "video":
-                msg = `<a href="${v.data.url}" target="_blank">视频消息</a>`;
+                msg = `<a href="${v.url}" target="_blank">视频消息</a>`;
                 break;
             case "xml":
-                const dom = new DOMParser().parseFromString(v.data.data, "text/xml");
+                const dom = new DOMParser().parseFromString(v.data, "text/xml");
                 if (dom.querySelector("msg")?.getAttribute("serviceID") === "35") {
                     try {
-                        const resid = /resid="[^"]+"/.exec(v.data.data)[0].replace("resid=\"", "").replace("\"", "");
+                        const resid = /resid="[^"]+"/.exec(v.data)[0].replace("resid=\"", "").replace("\"", "");
                         msg = `<a href="javascript:void(0)" onclick="triggerForwardMsg(this)" id="${resid}">[合并转发]</a><span class="msg-forward"></span>`;
                     } catch {
-                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[嵌套转发]</a><span style="display:none">${filterXss(v.data.data)}</span>`;
+                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[嵌套转发]</a><span style="display:none">${filterXss(v.data)}</span>`;
                     }
                 } else {
                     if (dom.querySelector("msg")?.getAttribute("action") === "web") { //判断是否为链接分享
@@ -398,13 +400,13 @@ function parseMessage(message) {
                         const url = dom.querySelector("msg").getAttribute("url");
                         msg = `<a href="${filterXss(url)}">${filterXss(title)}</a><br>` + filterXss(dom.querySelector("summary")?.innerHTML);
                     } else {
-                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[XML卡片消息]</a><span style="display:none">${filterXss(v.data.data)}</span>`;
+                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[XML卡片消息]</a><span style="display:none">${filterXss(v.data)}</span>`;
                     }
                 }
                 break;
             case "json":
                 try {
-                    const jsonObj = JSON.parse(v.data.data);
+                    const jsonObj = JSON.parse(v.data);
                     if (jsonObj["app"] === "com.tencent.mannounce") { //判断是否为群公告
                         const title = decodeURIComponent(escape(atob(jsonObj["meta"]["mannounce"]["title"])));
                         const content = decodeURIComponent(escape(atob(jsonObj["meta"]["mannounce"]["text"])));
@@ -415,13 +417,13 @@ function parseMessage(message) {
                 } catch { }
                 break;
             case "file":
-                msg = `<a href="${v.data.url}" target="_blank">文件: ${filterXss(v.data.name)} (${v.data.size / 1e6}MB)</a>`;
+                msg = `<a href="${v.url}" target="_blank">文件: ${filterXss(v.name)} (${v.size / 1e6}MB)</a>`;
                 break;
             case "reply":
-                if (message[1]?.type === "at" && message[3]?.type === "at" && message[1]?.data.qq === message[3]?.data.qq) {
+                if (message[1]?.type === "at" && message[3]?.type === "at" && message[1]?.qq === message[3]?.qq) {
                     message.splice(1, 2);
                 }
-                msg += `<a href="#${v.data.id}" onclick="document.querySelector('#${filterMsgIdSelector(v.data.id).replace(/\\/g, "\\\\")}')?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">[回复]</a>`;
+                msg += `<a href="#${v.id}" onclick="document.querySelector('#${filterMsgIdSelector(v.id).replace(/\\/g, "\\\\")}')?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">[回复]</a>`;
                 break;
             case "rps":
                 msg += "[猜拳]";
@@ -465,7 +467,7 @@ function addFace(id) {
  * 加入图片到输入框
  * @param {string} file 
  */
- function addImage(file) {
+function addImage(file) {
     const cqcode = `[CQ:image,file=${file},type=face]`;
     addStr2Textarea(cqcode);
 }
@@ -484,7 +486,7 @@ function setTextareaText(str) {
 
 function insertStr2Textarea(str) {
     const textArea = document.querySelector("#content");
-    if (textArea.selectionStart || textArea.selectionStart == '0') {
+    if (textArea.selectionStart || textArea.selectionStart === '0') {
         const begin = textArea.selectionStart;
         const end = textArea.selectionEnd || textArea.selectionStart;
         setTextareaText(textArea.value.substring(0, begin) + str + textArea.value.substring(end));
@@ -516,12 +518,12 @@ document.querySelector("body").insertAdjacentHTML("beforeend", `<div class="cont
 <div class="modal-dialog">
     <div class="modal-title"></div>
     <div class="modal-button">
-        <button class="modal-confirm">确定</button>　<button onclick="closeModalDialog()">取消</button>
+        <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
     </div>
 </div>
 <div id="footer">
     <textarea id="content" rows="4" placeholder="在此输入消息..."></textarea>
-    <button id="send" onclick="sendMsg()">发送</button>Ctrl+Enter　
+    <button id="send" onclick="sendMsg()">发送</button>Ctrl+Enter
     <span id="show-stamp-box" class="insert-button">🧡</span>
     <div class="stamp-box box"></div>
     <span id="show-face-box" class="insert-button">😀</span>
@@ -559,7 +561,7 @@ for (let i = 0; i <= 324; ++i) {
         continue;
     }
     ++tmpFaceStep;
-    let html = `<img onclick="addFace(${i})" style="margin:5px;cursor:pointer" width="28" height="28" src="${facePath+i+".png"}">`;
+    let html = `<img onclick="addFace(${i})" style="margin:5px;cursor:pointer" width="28" height="28" src="${facePath + i + ".png"}">`;
     document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
 }
 document.querySelector("body").addEventListener("click", (e) => {
@@ -775,14 +777,14 @@ document.querySelector("#content").addEventListener("paste", async ev => {
                 const placeholder = `[粘贴的图片 ${url}]`;
                 pastedImageMappings.push({ placeholder, cqcode, url });
                 resolve(placeholder);
-            }
+            };
             reader.onerror = reject;
-            reader.readAsDataURL(blob)
-        })
-    }))
+            reader.readAsDataURL(blob);
+        });
+    }));
     const text = pasted.join("");
     insertStr2Textarea(text);
-})
+});
 
 function timestamp(unixstamp) {
     return webview.timestamp(unixstamp);
@@ -824,10 +826,10 @@ function triggerForwardMsg(obj) {
     }
     if (elememt.innerHTML === "" || elememt.innerHTML === "加载失败") {
         elememt.innerHTML = "...";
-        webview.getForwardMsg(resid).then(data=>{
+        webview.getForwardMsg(resid).then(data => {
             let html = "";
             for (let v of data.data) {
-                html +=  `<p>👤${filterXss(v.nickname)}(${v.user_id}) ${datetime(v.time)}</p>${parseMessage(v.message)}`;
+                html += `<p>👤${filterXss(v.nickname)}(${v.user_id}) ${datetime(v.time)}</p>${parseMessage(v.message)}`;
             }
             if (!html) {
                 html = "加载失败";
@@ -838,7 +840,7 @@ function triggerForwardMsg(obj) {
 }
 
 //init
-(async()=>{
+(async () => {
     if (!c2c) {
         //加载群资料、群员列表
         await updateMemberList();

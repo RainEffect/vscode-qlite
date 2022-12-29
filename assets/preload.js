@@ -1,8 +1,7 @@
 /**
  * 该文件在页面生成时自动加载
  */
-;(() => {
-
+; (() => {
     /**
      * @type {import("./types").Webview}
      */
@@ -37,13 +36,24 @@
      */
     function onHostMessage(data) {
         if (!data.echo) {
-            if (data.post_type === "message" || (data.post_type === "sync" && data.sync_type === "message")) {
-                vsc.dispatchEvent(new window.CustomEvent("message", { detail: data }));
-            } else if (data.post_type === "notice") {
-                vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data }));
+            data = data.data;
+            if (Array.isArray(data)) {
+                for (let i of data) {
+                    if (i.post_type === "message" || (i.post_type === "sync" && i.sync_type === "message")) {
+                        vsc.dispatchEvent(new window.CustomEvent("message", { detail: i }));
+                    } else if (i.post_type === "notice") {
+                        vsc.dispatchEvent(new window.CustomEvent("notice", { detail: i }));
+                    }
+                }
+            } else {
+                if (data.post_type === "message" || (data.post_type === "sync" && data.sync_type === "message")) {
+                    vsc.dispatchEvent(new window.CustomEvent("message", { detail: data }));
+                } else if (data.post_type === "notice") {
+                    vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data }));
+                }
             }
         } else {
-            handlers.get(data?.echo)?.call(null, data);
+            handlers.get(data.echo)?.call(null, data.data);
             handlers.delete(data.echo);
         }
     }
@@ -54,7 +64,7 @@
     vsc.callApi = (command, params = []) => {
         const echo = String(Date.now()) + String(Math.random());
         /**
-         * @type {import("../src/chat").WebViewPostData}
+         * @type {import("../src/chat").WebviewPostData}
          */
         const obj = {
             command, params, echo
@@ -80,7 +90,7 @@
         "sendGroupPoke", "setGroupCard", "setGroupAdmin", "setGroupSpecialTitle",
         "setGroupKick", "setGroupBan", "setGroupWholeBan", "setGroupAnonymousBan",
         "getForwardMsg", "getGroupInfo", "getGroupMemberList", "getGroupMemberInfo",
-        "getStrangerInfo", "getGroupNotice", "getRoamingStamp", "getMsg"
+        "getStrangerInfo", "getRoamingStamp", "getMsg"
     ];
 
     for (let name of available_apis) {

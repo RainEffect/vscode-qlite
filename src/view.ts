@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { bind } from './chat';
 import * as config from './config';
 import { Global } from './global';
 
@@ -18,9 +19,9 @@ class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
         } else if (element instanceof ContactsListTree) { // contacts list
             return [element.friendClassesListTree, element.groupClassesListTree];
         } else if (element instanceof ClassesListTree) { // class list
-            return element._classesList;
+            return element.classesList;
         } else if (element instanceof ItemListTree) { // info list
-            return element._infoList;
+            return element.infoList;
         }
     }
 }
@@ -51,39 +52,39 @@ class ContactsListTree extends vscode.TreeItem {
 
 // classes list
 class ClassesListTree extends vscode.TreeItem {
-    public _classesList: ItemListTree[];
+    public classesList: ItemListTree[];
     constructor(label: string | vscode.TreeItemLabel, classesList: Map<number, string>) {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this._classesList = [];
+        this.classesList = [];
         for (let classesItem of classesList) {
             let classesTreeItem = new ItemListTree(classesItem, this.label === "分组" ? false : true);
-            this._classesList.push(classesTreeItem);
+            this.classesList.push(classesTreeItem);
         }
     }
 }
 
 // classes item
 class ItemListTree extends vscode.TreeItem {
-    public _type: boolean; // group for true, friend for false
-    public _classId: number;
-    public _infoList: InfoTreeItem[];
+    public type: boolean; // group for true, friend for false
+    public classId: number;
+    public infoList: InfoTreeItem[];
     constructor([classId, label]: [number, string | vscode.TreeItemLabel], type: boolean) {
         super(label, vscode.TreeItemCollapsibleState.Collapsed);
-        this._type = type;
-        this._classId = classId;
-        this._infoList = [];
-        if (this._type) { // get group info
+        this.type = type;
+        this.classId = classId;
+        this.infoList = [];
+        if (this.type) { // get group info
             for (let [, group] of Global.client.gl) {
                 if ((this.label === "我创建的" && group.owner_id === Global.client.uin) ||
                 (this.label === "我管理的" && group.owner_id !== Global.client.uin && group.admin_flag) ||
                 (this.label === "我加入的" && group.owner_id !== Global.client.uin && !group.admin_flag)) {
-                    this._infoList.push(new InfoTreeItem(group.group_name, group.group_id));
+                    this.infoList.push(new InfoTreeItem(group.group_name, group.group_id, this.type));
                 }
             }
         } else { // get friend info
             for (let [, friend] of Global.client.fl) {
-                if (friend.class_id === this._classId) {
-                    this._infoList.push(new InfoTreeItem(friend.remark, friend.user_id));
+                if (friend.class_id === this.classId) {
+                    this.infoList.push(new InfoTreeItem(friend.remark, friend.user_id, this.type));
                 }
             }
         }
@@ -92,10 +93,15 @@ class ItemListTree extends vscode.TreeItem {
 
 // information item
 class InfoTreeItem extends vscode.TreeItem {
-    private _uid: number; // group id or friend id
-    constructor(label: string | vscode.TreeItemLabel, uid: number) {
+    private uid: number; // group id or friend id
+    constructor(label: string | vscode.TreeItemLabel, uid: number, type: boolean) {
         super(label);
-        this._uid = uid;
+        this.uid = uid;
+        this.command = {
+            title: "打开消息",
+            command: "qlite.chat",
+            arguments: [uid, type]
+        };
     }
 }
 
@@ -106,6 +112,7 @@ function initLists() {
     let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
+    bind();
 }
 
 export { initLists };
