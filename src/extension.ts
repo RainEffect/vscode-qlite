@@ -5,7 +5,6 @@ import * as client from './client';
 
 // 扩展启动
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Congratulations, your extension "vscode-qlite" is now active!');
 	// 创建账号目录
 	Global.context = context;
 	if (!fs.existsSync(Global.context.globalStorageUri.fsPath)) {
