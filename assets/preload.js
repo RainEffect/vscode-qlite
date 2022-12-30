@@ -14,14 +14,6 @@
      */
     const handlers = new Map;
 
-    /**
-     * @type {Function}
-     */
-    const postMessage = window.acquireVsCodeApi().postMessage;
-    window.acquireVsCodeApi = () => {
-        return { postMessage };
-    };
-
     const env = window.document.querySelector("env");
     vsc.self_uin = Number(env.attributes.self_id?.value);
     vsc.nickname = String(env.attributes.nickname?.value);
@@ -70,7 +62,7 @@
             command, params, echo
         };
         return new Promise((resolve, reject) => {
-            postMessage(obj);
+            acquireVsCodeApi().postMessage(obj);
             const id = setTimeout(() => {
                 reject(new vsc.TimeoutError);
                 handlers.delete(echo);
