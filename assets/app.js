@@ -163,8 +163,8 @@ function sendMsg() {
 </div>`);
             return;
         }
-        if (c2c && data.data.message_id) {
-            const html = `<a class="msgid" id="${data.data.message_id}"></a><div class="cright cmsg">
+        if (c2c && data.message_id) {
+            const html = `<a class="msgid" id="${data.message_id}"></a><div class="cright cmsg">
     <img class="headIcon radius" onmouseenter="previewImage(this)" src="${genAvaterUrl(me)}" />
     <span class="name" title="${nick}(${me}) ${datetime()}">${nick} ${timestamp()}</span>
     <span class="content">${messageHtml}</span>
@@ -373,7 +373,7 @@ function parseMessage(message) {
             case "image":
             case "flash":
                 if (!c2c) {
-                    v.url = vurl.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
+                    v.url = v.url.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
                 }
                 let split = v.file.split("-");
                 let width = parseInt(split[1]), height = parseInt(split[2]);
