@@ -41,8 +41,8 @@ function appendMsg(msg) {
 }
 
 async function updateMemberList() {
-    ginfo = (await webview.getGroupInfo(uin)).data;
-    const arr = (await webview.getGroupMemberList(uin)).data;
+    ginfo = await webview.getGroupInfo(uin);
+    const arr = await webview.getGroupMemberList(uin);
     members = new Map;
     const element = document.querySelector(".group-members");
     element.innerHTML = "";
@@ -284,14 +284,13 @@ function appendRecalledText(message_id) {
 
 /**
  * 生成一般消息
- * @param {import("oicq").PrivateMessageEventData | import("oicq").GroupMessageEventData} data 
+ * @param {import("oicq").PrivateMessageEvent | import("oicq").GroupMessageEvent} data 
  */
 function genUserMessage(data) {
     if (document.querySelector("#" + filterMsgIdSelector(data.message_id))) {
         return "";
     }
     let title = "";
-    data.user_id = data.sender.user_id;
 
     if (data.anonymous) {
         data.sender.card = data.anonymous.name;
@@ -302,9 +301,9 @@ function genUserMessage(data) {
             title = `<span class="htitle ${role}">${role}</span>`;
         }
     }
-    return `<a class="msgid" id="${data.message_id}"></a><div class="${data.user_id === me ? "cright" : "cleft"} cmsg">
+    return `<a class="msgid" id="${data.message_id}"></a><div class="${data.sender.user_id === me ? "cright" : "cleft"} cmsg">
     <img class="headIcon radius" onmouseenter="previewImage(this)" src="${genAvaterUrl(data.user_id)}" />
-    <span uid="${data.user_id}" ondblclick="addAt(${data.user_id})" class="name" title="${filterXss(data.sender.nickname)}(${data.user_id}) ${datetime(data.time)}">
+    <span uid="${data.sender.user_id}" ondblclick="addAt(${data.sender.user_id})" class="name" title="${filterXss(data.sender.nickname)}(${data.sender.user_id}) ${datetime(data.time)}">
         ${c2c ? "" : '<b class="operation">...</b>'}
         ${title}${filterXss(data.sender.card ? data.sender.card : data.sender.nickname)} ${timestamp(data.time)}
     </span>

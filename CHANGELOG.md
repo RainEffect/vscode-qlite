@@ -4,6 +4,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.1.1] - 2022-12-31
+
+### Changed
+- 更新聊天界面中获取用户昵称的方法
+
+### Fixed
+- 修复原扩展中群资料读取失败的问题
+
 ## [0.1.0] - 2022-12-31
 
 ### Added
@@ -13,14 +21,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 - 添加切换账号选项
 - 添加登出选项
 
+## Changed
+- 修改默认的README文件，公开代码仓库
+
 ## Removed
 - 移除vsc-extension-quickstart.md文件
 
-## fixed
+## Fixed
 - 修复原扩展中无法加载历史聊天记录的问题
-
-## changed
-- 修改默认的README文件，公开代码仓库
 
 ## [0.0.2] - 2022-12-29
 
