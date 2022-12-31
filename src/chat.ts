@@ -12,8 +12,6 @@ interface WebviewPostData {
 // 页面缓存, 按聊天类型和对象id建立与聊天页面的索引
 const webviewMap: Map<[boolean, number], vscode.WebviewPanel> = new Map;
 
-Global.context.subscriptions.push(vscode.commands.registerCommand("qlite.chat", openChatView));
-
 // 初始化页面
 function setHtml(uid: number, c2c: boolean, webview: vscode.Webview): string {
     const assetUri = vscode.Uri.joinPath(Global.context.extensionUri, "assets");
@@ -100,4 +98,4 @@ function bind() {
     Global.client.on("sync.message", postPrivateEvent);
 }
 
-export { bind };
+export { openChatView, bind };
