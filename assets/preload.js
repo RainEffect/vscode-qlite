@@ -14,6 +14,11 @@
      */
     const handlers = new Map;
 
+    /**
+     * @type {Function}
+     */
+    const vscode = acquireVsCodeApi();
+
     const env = window.document.querySelector("env");
     vsc.self_uin = Number(env.attributes.self_id?.value);
     vsc.nickname = String(env.attributes.nickname?.value);
@@ -62,7 +67,7 @@
             command, params, echo
         };
         return new Promise((resolve, reject) => {
-            acquireVsCodeApi().postMessage(obj);
+            vscode.postMessage(obj);
             const id = setTimeout(() => {
                 reject(new vsc.TimeoutError);
                 handlers.delete(echo);
