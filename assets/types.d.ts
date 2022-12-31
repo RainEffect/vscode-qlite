@@ -35,7 +35,7 @@ export interface Webview extends EventTarget {
     setGroupBan: oicq.Client["setGroupBan"];
     setGroupWholeBan: oicq.Client["setGroupWholeBan"];
     setGroupAnonymousBan: oicq.Client["setGroupAnonymousBan"];
-    
+
     getStrangerInfo: oicq.Client["getStrangerInfo"];
     getGroupInfo: oicq.Client["getGroupInfo"];
     getGroupMemberList(uin: number): Promise<oicq.MemberInfo[]>;
