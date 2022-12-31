@@ -12,7 +12,13 @@ interface WebviewPostData {
 // 页面缓存, 按聊天类型和对象id建立与聊天页面的索引
 const webviewMap: Map<[boolean, number], vscode.WebviewPanel> = new Map;
 
-// 初始化页面
+/**
+ * 初始化聊天页面的html
+ * @param uid 目标账号
+ * @param c2c 是否是私聊
+ * @param webview 聊天页面的webview类，用于转换本地文件路径
+ * @returns 生成的html
+ */
 function setHtml(uid: number, c2c: boolean, webview: vscode.Webview): string {
     const assetUri = vscode.Uri.joinPath(Global.context.extensionUri, "assets");
     const path = webview.asWebviewUri(assetUri).toString();
@@ -35,7 +41,11 @@ function setHtml(uid: number, c2c: boolean, webview: vscode.Webview): string {
     </html>`;
 }
 
-// 生成一个聊天页面
+/**
+ * 生成一个聊天页面
+ * @param uid 目标账号
+ * @param c2c 是否是私聊
+ */
 function openChatView(uid: number, c2c: boolean) {
     let label: string | undefined = c2c ? Global.client.fl.get(uid)?.remark : Global.client.gl.get(uid)?.group_name;
     if (webviewMap.has([c2c, uid])) { // 读取页面缓存
@@ -81,17 +91,25 @@ function openChatView(uid: number, c2c: boolean) {
     });
 }
 
-// 向页面发送私聊信息
+/**
+ * 向页面发送私聊信息
+ * @param event 私聊事件
+ */
 function postPrivateEvent(event: oicq.PrivateMessageEvent | oicq.PrivateMessage) {
     webviewMap.get([true, event.sender.user_id])?.webview.postMessage(event);
 }
 
-// 向页面发送群聊信息
+/**
+ * 向页面发送群聊信息
+ * @param event 群聊信息
+ */
 function postGroupEvent(event: oicq.GroupMessageEvent) {
     webviewMap.get([false, event.group_id])?.webview.postMessage(event);
 }
 
-// 绑定消息事件
+/**
+ * 绑定消息事件
+ */
 function bind() {
     Global.client.on("message.group", postGroupEvent);
     Global.client.on("message.private", postPrivateEvent);
