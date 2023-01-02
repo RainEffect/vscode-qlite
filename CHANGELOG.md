@@ -4,7 +4,12 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
-## [0.2.0] - 2023-1-2
+## [0.2.1] - 2023-01-02
+
+### Fixed
+- 修复私聊窗口中对话误添加title的问题
+
+## [0.2.0] - 2023-01-02
 
 ### Changed
 - 重新匹配types中webview中所有函数的接口，将统一从客户端类调用函数拆分为分别从私聊类和群聊类调用各自的函数

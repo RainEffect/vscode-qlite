@@ -315,7 +315,7 @@ function genUserMessage(msg) {
     let title = "";
     if (msg.sub_type === "anonymous") {
         title = `<span class="htitle member">匿名</span>`;
-    } else if (msg.sender.role !== "member") {
+    } else if (msg.sender.role === "owner" || msg.sender.role === "admin") {
         title = `<span class="htitle ${msg.sender.role}">${msg.sender.role}</span>`;
     }
     return `<a class="seq" id="${msg.seq}"></a>
