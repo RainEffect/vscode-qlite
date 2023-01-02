@@ -14,8 +14,8 @@ const webviewMap: Map<[boolean, number], vscode.WebviewPanel> = new Map;
 
 /**
  * 初始化聊天页面的html
- * @param uin 目标账号
- * @param c2c 是否是私聊
+ * @param uin 私聊为对方账号，群聊为群号
+ * @param c2c 私聊为true，群聊为false
  * @param webview 聊天页面的webview类，用于转换本地文件路径
  * @returns 生成的html
  */

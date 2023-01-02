@@ -187,7 +187,7 @@ function sendMsg() {
             <div class="cright cmsg">
                 <img class="headIcon radius" onmouseenter="previewImage(this)" src="${webview.getUserAvaterUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
-                    ${webview.nickname} ${webview.timestamp()}
+                    ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
                 </span>
                 <span class="content">${messageHtml}</span>
             </div>`;

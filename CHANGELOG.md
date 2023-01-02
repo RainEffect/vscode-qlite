@@ -4,6 +4,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.2.2] - 2023-01-02
+
+### Fixed
+- 统一设置私聊对话不显示昵称，群聊显示群友昵称
+
 ## [0.2.1] - 2023-01-02
 
 ### Fixed
