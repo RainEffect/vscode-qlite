@@ -1,6 +1,4 @@
 import * as oicq from "oicq";
-type MessageEventData = oicq.PrivateMessageEvent | oicq.GroupMessageEvent;
-type NoticeEventData = oicq.FriendNoticeEvent | oicq.GroupNoticeEvent;
 
 /**
  * webview类型参考
@@ -16,33 +14,9 @@ export interface Webview extends EventTarget {
     readonly TimeoutError: typeof Error;
 
     // 监听新消息事件
-    on(type: "message", listener: (data: CustomEvent<MessageEventData>) => void): void;
+    on(type: "message", listener: (event: CustomEvent<oicq.PrivateMessageEvent | oicq.GroupMessageEvent>) => void): void;
     // 监听新系统通知事件
-    on(type: "notice", listener: (data: CustomEvent<NoticeEventData>) => void): void;
-
-    callApi(command: keyof oicq.Client, params?: any[]): Promise<unknown>;
-
-    sendMsg(message: string | oicq.MessageElem | Iterable<oicq.MessageElem>, auto_escape?: boolean): Promise<{ message_id: string }>;
-    sendPrivateMsg: oicq.Client["sendPrivateMsg"];
-    sendGroupMsg: oicq.Client["sendGroupMsg"];
-    deleteMsg: oicq.Client["deleteMsg"];
-    getChatHistory: oicq.Client["getChatHistory"];
-    sendGroupPoke: oicq.Client["sendGroupPoke"];
-    setGroupCard: oicq.Client["setGroupCard"];
-    setGroupAdmin: oicq.Client["setGroupAdmin"];
-    setGroupSpecialTitle: oicq.Client["setGroupSpecialTitle"];
-    setGroupKick: oicq.Client["setGroupKick"];
-    setGroupBan: oicq.Client["setGroupBan"];
-    setGroupWholeBan: oicq.Client["setGroupWholeBan"];
-    setGroupAnonymousBan: oicq.Client["setGroupAnonymousBan"];
-
-    getStrangerInfo: oicq.Client["getStrangerInfo"];
-    getGroupInfo: oicq.Client["getGroupInfo"];
-    getGroupMemberList(uin: number): Promise<oicq.MemberInfo[]>;
-    getGroupMemberInfo: oicq.Client["getGroupMemberInfo"];
-    getForwardMsg: oicq.Client["getForwardMsg"];
-    getRoamingStamp: oicq.Client["getRoamingStamp"];
-    getMsg: oicq.Client["getMsg"];
+    on(type: "notice", listener: (event: CustomEvent<oicq.FriendNoticeEvent | oicq.GroupNoticeEvent>) => void): void;
 
     scrollHome(): void;
     scrollEnd(): void;
@@ -52,4 +26,50 @@ export interface Webview extends EventTarget {
     getUserAvaterUrlLarge(uin: number): string;
     getGroupAvaterUrlSmall(uin: number): string;
     getGroupAvaterUrlLarge(uin: number): string;
+
+    callApi(command: keyof oicq.Friend | keyof oicq.Group, params?: any[]): Promise<unknown>;
+    // Contactable Api
+    uploadImages: oicq.Friend["uploadImages"] | oicq.Group["uploadImages"];
+    uploadVideo: oicq.Friend["uploadVideo"] | oicq.Group["uploadVideo"];
+    uploadPtt: oicq.Friend["uploadPtt"] | oicq.Group["uploadPtt"];
+    makeForwardMsg: oicq.Friend["makeForwardMsg"] | oicq.Group["makeForwardMsg"];
+    getForwardMsg: oicq.Friend["getForwardMsg"] | oicq.Group["getForwardMsg"];
+    getVideoUrl: oicq.Friend["getVideoUrl"] | oicq.Group["getVideoUrl"];
+    // Friend Api 为群聊消息时不实现
+    getSimpleInfo: oicq.Friend["getSimpleInfo"];
+    setFriendReq: oicq.Friend["setFriendReq"];
+    setGroupReq: oicq.Friend["setGroupReq"];
+    setGroupInvite: oicq.Friend["setGroupInvite"];
+    setRemark: oicq.Friend["setRemark"];
+    setClass: oicq.Friend["setClass"];
+    poke: oicq.Friend["poke"];
+    delete: oicq.Friend["delete"];
+    sendFile: oicq.Friend["sendFile"];
+    forwardFile: oicq.Friend["forwardFile"];
+    recallFile: oicq.Friend["recallFile"];
+    // Group Api 为私聊消息时不实现
+    setName: oicq.Group["setName"];
+    setAvatar: oicq.Group["setAvatar"];
+    muteAll: oicq.Group["muteAll"];
+    muteMember: oicq.Group["muteMember"];
+    muteAnony: oicq.Group["muteAnony"];
+    kickMember: oicq.Group["kickMember"];
+    pokeMember: oicq.Group["pokeMember"];
+    setCard: oicq.Group["setCard"];
+    setAdmin: oicq.Group["setAdmin"];
+    setTitle: oicq.Group["setTitle"];
+    invite: oicq.Group["invite"];
+    quit: oicq.Group["quit"];
+    getAnonyInfo: oicq.Group["getAnonyInfo"];
+    allowAnony: oicq.Group["allowAnony"];
+    getMemberMap: oicq.Group["getMemberMap"];
+    getAtAllRemainder: oicq.Group["getAtAllRemainder"];
+    renew: oicq.Group["renew"];
+    // User or Group Api
+    sendMsg: oicq.User["sendMsg"] | oicq.Group["sendMsg"];
+    recallMsg: oicq.User["recallMsg"] | oicq.Group["recallMsg"];
+    getChatHistory: oicq.User["getChatHistory"] | oicq.Group["getChatHistory"];
+    markRead: oicq.User["markRead"] | oicq.Group["markRead"];
+    getFileUrl: oicq.User["getFileUrl"] | oicq.Group["getFileUrl"];
+    getAvatarUrl: oicq.User["getAvatarUrl"] | oicq.Group["getAvatarUrl"];
 }

@@ -6,6 +6,7 @@
      * @type {import("./types").Webview}
      */
     const vsc = new window.EventTarget;
+
     vsc.on = vsc.addEventListener;
     vsc.TimeoutError = class TimeoutError extends Error { };
 
@@ -29,13 +30,12 @@
     vsc.t = Number(env.attributes.t?.value);
 
     /**
-     * @param {import("oicq").CommonEventData} data 
+     * @param {{echo: string, data: any}} data
      */
     function onHostMessage(data) {
         if (!data.echo) {
-            data = data.data;
-            if (Array.isArray(data)) {
-                for (let i of data) {
+            if (Array.isArray(data.data)) {
+                for (let i of data.data) {
                     if (i.post_type === "message" || (i.post_type === "sync" && i.sync_type === "message")) {
                         vsc.dispatchEvent(new window.CustomEvent("message", { detail: i }));
                     } else if (i.post_type === "notice") {
@@ -43,10 +43,10 @@
                     }
                 }
             } else {
-                if (data.post_type === "message" || (data.post_type === "sync" && data.sync_type === "message")) {
-                    vsc.dispatchEvent(new window.CustomEvent("message", { detail: data }));
-                } else if (data.post_type === "notice") {
-                    vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data }));
+                if (data.data.post_type === "message" || (data.data.post_type === "sync" && data.data.sync_type === "message")) {
+                    vsc.dispatchEvent(new window.CustomEvent("message", { detail: data.data }));
+                } else if (data.data.post_type === "notice") {
+                    vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data.data }));
                 }
             }
         } else {
@@ -80,24 +80,33 @@
     };
 
     /**
-     * @type {Array<keyof import("oicq").Client>}
+     * @type {{
+     *     both: Array<keyof import("oicq").Friend> | Array<keyof import("oicq").Group;
+     *     friend: Array<keyof import("oicq").Friend>;
+     *     group: Array<keyof import("oicq").Group>
+     * }}
      */
-    const available_apis = [
-        "sendPrivateMsg", "sendGroupMsg", "deleteMsg", "getChatHistory",
-        "sendGroupPoke", "setGroupCard", "setGroupAdmin", "setGroupSpecialTitle",
-        "setGroupKick", "setGroupBan", "setGroupWholeBan", "setGroupAnonymousBan",
-        "getForwardMsg", "getGroupInfo", "getGroupMemberList", "getGroupMemberInfo",
-        "getStrangerInfo", "getRoamingStamp", "getMsg"
-    ];
-
-    for (let name of available_apis) {
+    const available_apis = {
+        both: [
+            "uploadImages", "uploadVideo", "uploadPtt", "makeForwardMsg", "getForwardMsg", "getVideoUrl",
+            "sendMsg", "recallMsg", "getChatHistory", "markRead", "getFileUrl", "getAvatarUrl"
+        ],
+        friend: [
+            "getSimpleInfo", "setFriendReq", "setGroupReq", "setGroupInvite", "setRemark", "setClass",
+            "poke", "delete", "sendFile", "forwardFile", "recallFile"
+        ],
+        group: [
+            "setName", "setAvatar", "muteAll", "muteMember", "muteAnony",
+            "kickMember", "pokeMember", "setCard", "setAdmin", "setTitle", "invite", "quit",
+            "getAnonyInfo", "allowAnony", "getMemberMap", "getAtAllRemainder", "renew"
+        ]
+    };
+    for (let name of available_apis.both) {
         vsc[name] = (...args) => vsc.callApi(name, args);
     }
-
-    vsc.sendMsg = (message, auto_escape = false) => {
-        const method = vsc.c2c ? "sendPrivateMsg" : "sendGroupMsg";
-        return vsc.callApi(method, [vsc.target_uin, message, auto_escape]);
-    };
+    for (let name of vsc.c2c ? available_apis.friend : available_apis.group) {
+        vsc[name] = (...args) => vsc.callApi(name, args);
+    }
 
     vsc.scrollHome = () => window.scroll(0, 0);
     vsc.scrollEnd = () => window.scroll(0, window.document.body.scrollHeight);
@@ -105,7 +114,6 @@
     vsc.getUserAvaterUrlLarge = (uin) => `https://q1.qlogo.cn/g?b=qq&s=640&nk=${uin}&t=` + vsc.t;
     vsc.getGroupAvaterUrlSmall = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/100?t=` + vsc.t;
     vsc.getGroupAvaterUrlLarge = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/640?t=` + vsc.t;
-
     vsc.timestamp = (unixstamp) => {
         const date = new Date(unixstamp ? unixstamp * 1000 : Date.now());
         return date.getHours()
