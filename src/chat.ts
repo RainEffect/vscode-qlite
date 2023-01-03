@@ -6,7 +6,7 @@ import { Global } from './global';
 interface WebviewPostData {
     command: keyof oicq.Friend | keyof oicq.Group, // 指令
     params: any[], // 参数
-    echo: string // 消息的唯一标识，用于一对一响应指令，由 Date.now() + Math.random() 组成
+    echo: string // 消息的唯一标识，用于响应对应指令，由 Date.now() + Math.random() 组成
 }
 
 // 页面缓存, 私聊页面在webviewMap[true]中按对方账号查找，群聊页面在webviewMap[false]中按群号查找

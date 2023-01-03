@@ -4,6 +4,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.2.4] - 2023-01-03
+
+### Changed
+- 修改群聊中的头衔名显示
+
+### Deprecated
+- 计划删除头像放大预览功能
+
 ## [0.2.3] - 2023-01-03
 
 ### Added

@@ -312,18 +312,23 @@ function genUserMessage(msg) {
     if (document.getElementById(msg.seq)) {
         return "";
     }
-    let title = "";
+    let title = "", name = "";
     if (msg.sub_type === "anonymous") {
         title = `<span class="htitle member">匿名</span>`;
-    } else if (msg.sender.role === "owner" || msg.sender.role === "admin") {
-        title = `<span class="htitle ${msg.sender.role}">${msg.sender.role}</span>`;
+        name = msg.anonymous.name;
+    } else if (msg.sender.role === "owner") {
+        title = `<span class="htitle ${msg.sender.role}">群主</span>`;
+        name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
+    } else if (msg.sender.role === "admin") {
+        title = `<span class="htitle ${msg.sender.role}>管理员</span>`;
+        name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
     return `<a class="seq" id="${msg.seq}"></a>
     <div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg">
-        <img class="headIcon radius" onmouseenter="previewImage(this)" src="${webview.getUserAvaterUrlSmall(msg.sender.user_id)}" />
+        <img class="headIcon radius" src="${webview.getUserAvaterUrlSmall(msg.sender.user_id)}" />
         <span uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" class="name" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
             ${webview.c2c ? "" : '<b class="operation">...</b>'}
-            ${title}${webview.c2c ? "" : filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname)} ${webview.timestamp(msg.time)}
+            ${title} ${name} ${webview.timestamp(msg.time)}
         </span>
         <span class="content">${parseMessage(msg.message)}</span>
     </div>`;
@@ -695,6 +700,7 @@ addEmoji2Box(0x1F004, 0x1F004);
 /**
  * 图片预览
  * @param {Element} obj 
+ * @deprecated 计划弃用头像放大预览功能
  */
 function previewImage(obj, width, height) {
     const url = obj.href ?? obj.src.replace("100", "640");
