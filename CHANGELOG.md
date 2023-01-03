@@ -4,6 +4,15 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.2.3] - 2023-01-03
+
+### Added
+- 添加消息同步功能（原扩展已实现）
+
+### Changed
+- 修改页面缓存的数据类型，使其能够按key索引
+- 将向页面发送事件的子函数（PostPrivateEvent、PostGroupEvent）整合到绑定消息事件函数（bind）中
+
 ## [0.2.2] - 2023-01-02
 
 ### Fixed

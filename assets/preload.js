@@ -34,8 +34,9 @@
      */
     function onHostMessage(data) {
         if (!data.echo) {
-            if (Array.isArray(data.data)) {
-                for (let i of data.data) {
+            data = data.data ?? data;
+            if (Array.isArray(data)) {
+                for (let i of data) {
                     if (i.post_type === "message" || (i.post_type === "sync" && i.sync_type === "message")) {
                         vsc.dispatchEvent(new window.CustomEvent("message", { detail: i }));
                     } else if (i.post_type === "notice") {
@@ -43,10 +44,10 @@
                     }
                 }
             } else {
-                if (data.data.post_type === "message" || (data.data.post_type === "sync" && data.data.sync_type === "message")) {
-                    vsc.dispatchEvent(new window.CustomEvent("message", { detail: data.data }));
-                } else if (data.data.post_type === "notice") {
-                    vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data.data }));
+                if (data.post_type === "message" || (data.post_type === "sync" && data.sync_type === "message")) {
+                    vsc.dispatchEvent(new window.CustomEvent("message", { detail: data }));
+                } else if (data.post_type === "notice") {
+                    vsc.dispatchEvent(new window.CustomEvent("notice", { detail: data }));
                 }
             }
         } else {

@@ -14,7 +14,7 @@ export interface Webview extends EventTarget {
     readonly TimeoutError: typeof Error;
 
     // 监听新消息事件
-    on(type: "message", listener: (event: CustomEvent<oicq.PrivateMessageEvent | oicq.GroupMessageEvent>) => void): void;
+    on(type: "message", listener: (event: CustomEvent<oicq.PrivateMessageEvent | oicq.GroupMessageEvent | oicq.PrivateMessage>) => void): void;
     // 监听新系统通知事件
     on(type: "notice", listener: (event: CustomEvent<oicq.FriendNoticeEvent | oicq.GroupNoticeEvent>) => void): void;
 

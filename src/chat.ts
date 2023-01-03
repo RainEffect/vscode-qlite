@@ -9,8 +9,11 @@ interface WebviewPostData {
     echo: string // 消息的唯一标识，用于一对一响应指令，由 Date.now() + Math.random() 组成
 }
 
-// 页面缓存, 按聊天类型和对象id建立与聊天页面的索引
-const webviewMap: Map<[boolean, number], vscode.WebviewPanel> = new Map;
+// 页面缓存, 私聊页面在webviewMap[true]中按对方账号查找，群聊页面在webviewMap[false]中按群号查找
+const webviewMap: Map<boolean, Map<number, vscode.WebviewPanel>> = new Map([
+    [true, new Map],
+    [false, new Map]
+]);
 
 /**
  * 初始化聊天页面的html
@@ -48,8 +51,8 @@ function setHtml(uin: number, c2c: boolean, webview: vscode.Webview): string {
  */
 function openChatView(uin: number, c2c: boolean) {
     let label: string | undefined = c2c ? Global.client.fl.get(uin)?.remark : Global.client.gl.get(uin)?.group_name;
-    if (webviewMap.has([c2c, uin])) { // 读取页面缓存
-        return webviewMap.get([c2c, uin])?.reveal();
+    if (webviewMap.get(c2c)?.has(uin)) { // 读取页面缓存
+        return webviewMap.get(c2c)?.get(uin)?.reveal();
     }
     const chatView = vscode.window.createWebviewPanel("chat", label as string, -1, {
         enableScripts: true,
@@ -57,11 +60,11 @@ function openChatView(uin: number, c2c: boolean) {
         retainContextWhenHidden: true
     });
     // 添加页面缓存
-    webviewMap.set([c2c, uin], chatView);
+    webviewMap.get(c2c)?.set(uin, chatView);
     chatView.webview.html = setHtml(uin, c2c, chatView.webview);
     chatView.reveal();
     chatView.onDidDispose(() => {
-        webviewMap.delete([c2c, uin]);
+        webviewMap.get(c2c)?.delete(uin);
     });
     chatView.webview.onDidReceiveMessage(async (data: WebviewPostData) => {
         try {
@@ -84,28 +87,24 @@ function openChatView(uin: number, c2c: boolean) {
 }
 
 /**
- * 向页面发送私聊信息
- * @param event 私聊事件
- */
-function postPrivateEvent(event: oicq.PrivateMessageEvent | oicq.PrivateMessage) {
-    webviewMap.get([true, event.sender.user_id])?.webview.postMessage(event);
-}
-
-/**
- * 向页面发送群聊信息
- * @param event 群聊信息
- */
-function postGroupEvent(event: oicq.GroupMessageEvent) {
-    webviewMap.get([false, event.group_id])?.webview.postMessage(event);
-}
-
-/**
  * 绑定消息事件
  */
 function bind() {
-    Global.client.on("message.group", postGroupEvent);
-    Global.client.on("message.private", postPrivateEvent);
-    Global.client.on("sync.message", postPrivateEvent);
+    Global.client.on("message.group", (event) => {
+        webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
+    });
+    Global.client.on("message.private", (event) => {
+        webviewMap.get(true)?.get(event.from_id === Global.client.uin ? event.to_id : event.from_id)?.webview.postMessage(event);
+    });
+    Global.client.on("notice.friend", (event) => {
+        webviewMap.get(true)?.get(event.user_id)?.webview.postMessage(event);
+    });
+    Global.client.on("notice.group", (event) => {
+        webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
+    });
+    Global.client.on("sync.message", (event) => {
+        webviewMap.get(true)?.get(event.from_id === Global.client.uin ? event.to_id : event.from_id)?.webview.postMessage(event);
+    });
 }
 
 export { openChatView, bind };
