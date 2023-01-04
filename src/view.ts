@@ -1,8 +1,19 @@
 import * as vscode from 'vscode';
-import * as oicq from 'oicq';
 import { bind } from './chat';
-import * as config from './config';
 import { Global } from './global';
+
+// 消息类
+interface News {
+    c2c: boolean,
+    uin: number,
+    item: InfoTreeItem,
+    cnt: number
+}
+
+// 全局实例化容器
+let qliteTreeDataProvider: QliteTreeDataProvider;
+// 消息列表记录
+let newsList: News[] = [];
 
 // 数据容器
 class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -35,10 +46,16 @@ class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
 
 // 消息目录
 class NewsListTree extends vscode.TreeItem {
-    newsList: InfoTreeItem[];
+    newsList: InfoTreeItem[] = [];
     constructor(label: string | vscode.TreeItemLabel) {
         super(label, vscode.TreeItemCollapsibleState.Expanded);
-        this.newsList = [];
+        newsList.forEach((value, index) => {
+            if (value.c2c ? Global.client.pickFriend(value.uin) : Global.client.pickGroup(value.uin)) {
+                this.newsList.push(value.item);
+            } else {
+                delete newsList[index];
+            }
+        });
     }
 }
 
@@ -96,25 +113,26 @@ class ItemListTree extends vscode.TreeItem {
 
 // 好友/群信息
 class InfoTreeItem extends vscode.TreeItem {
-    constructor(label: string | vscode.TreeItemLabel, uid: number, c2c: boolean) {
+    constructor(label: string | vscode.TreeItemLabel, uid: number, c2c: boolean, description?: string) {
         super(label);
         this.command = {
             title: "打开消息",
             command: "qlite.chat",
             arguments: [uid, c2c]
         };
+        this.description = description;
     }
 }
 
 // 账号登录时调用，读取账号好友/群列表
 function initLists() {
     // 创建树视图
-    let qliteTreeDataProvider = new QliteTreeDataProvider;
+    qliteTreeDataProvider = new QliteTreeDataProvider;
     vscode.window.registerTreeDataProvider("qliteExplorer", qliteTreeDataProvider);
     let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
-    // 注册事件处理
+    // 注册通知事件处理
     Global.client.on("notice.friend.decrease", (event) => {
         vscode.window.showInformationMessage("你删除了好友：" + event.nickname + `(${event.user_id})`);
         qliteTreeDataProvider.refresh();
@@ -160,4 +178,43 @@ function initLists() {
     bind(); // 绑定命令
 }
 
-export { initLists };
+/**
+ * 更新新消息列表
+ * @param c2c 私聊为true，群聊为false
+ * @param uin 私聊为对方账号，群聊为群号
+ * @param flag 有新消息为true，已读新消息为false
+ */
+function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
+    let news: News | undefined;
+    newsList.forEach((value) => {
+        if (value.c2c === c2c && value.uin === uin) {
+            news = value;
+        }
+    });
+    if (!news) { // 新消息列表中没有该消息
+        const label = c2c ? Global.client.pickFriend(uin).remark : Global.client.pickGroup(uin).name;
+        // 初始化新消息
+        news = {
+            c2c: c2c,
+            uin: uin,
+            item: new InfoTreeItem(label as string, uin, c2c, "+" + String(flag ? 1 : 0)),
+            cnt: flag ? 1 : 0
+        };
+        newsList.unshift(news);
+    } else {
+        if (flag) { // 未读新消息
+            news.cnt++;
+            news.item.description = "+" + String(news.cnt);
+            // 重新抽出该条消息到列表头
+            newsList.splice(newsList.indexOf(news), 1);
+            newsList.unshift(news);
+        } else { // 已读新消息
+            news.cnt = 0;
+            news.item.description = false;
+        }
+    }
+    // 最后刷新列表
+    qliteTreeDataProvider.refresh();
+}
+
+export { initLists, refreshContacts };

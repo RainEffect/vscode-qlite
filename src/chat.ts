@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as oicq from 'oicq';
 import { Global } from './global';
+import { refreshContacts } from './view';
 
 // 发送给页面的数据类
 interface WebviewPostData {
@@ -66,10 +67,15 @@ function openChatView(uin: number, c2c: boolean) {
     chatView.onDidDispose(() => {
         webviewMap.get(c2c)?.delete(uin);
     });
+    chatView.onDidChangeViewState((e) => {
+        if (e.webviewPanel.visible) {
+            refreshContacts(c2c, uin, false);
+        }
+    });
     chatView.webview.onDidReceiveMessage(async (data: WebviewPostData) => {
         try {
             const fn = c2c ? Global.client.pickFriend(uin)[data.command as keyof oicq.Friend] as Function
-                            : Global.client.pickGroup(uin)[data.command as keyof oicq.Group] as Function;
+                : Global.client.pickGroup(uin)[data.command as keyof oicq.Group] as Function;
             let ret = fn.apply(c2c ? Global.client.pickFriend(uin) : Global.client.pickGroup(uin), data.params);
             if (ret instanceof Promise) {
                 ret = await ret;
@@ -91,9 +97,11 @@ function openChatView(uin: number, c2c: boolean) {
  */
 function bind() {
     Global.client.on("message.group", (event) => {
+        refreshContacts(false, event.group_id, true);
         webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
     });
     Global.client.on("message.private", (event) => {
+        refreshContacts(true, event.from_id === Global.client.uin ? event.to_id : event.from_id, event.from_id !== Global.client.uin);
         webviewMap.get(true)?.get(event.from_id === Global.client.uin ? event.to_id : event.from_id)?.webview.postMessage(event);
     });
     Global.client.on("notice.friend", (event) => {

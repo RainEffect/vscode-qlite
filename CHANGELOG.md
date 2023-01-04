@@ -4,6 +4,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.4.0] - 2023-01-04
+
+### Added
+- 实现侧边栏新消息加入消息列表功能
+
 ## [0.3.1] - 2023-01-04
 
 ### Added
