@@ -1,16 +1,24 @@
 {
   "name": "vscode-qlite",
   "displayName": "VSCode-QLite",
-  "description": "A lite qq displayed in vscode",
-  "version": "0.4.0",
+  "description": "A lite qq in vscode",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.74.0"
   },
+  "icon": "ico.ico",
+  "publisher": "Vi-brance",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vi-brance/vscode-qlite"
+  },
+  "keywords": [
+    "qq",
+    "oicq"
+  ],
   "categories": [
     "Other"
   ],
-  "icon": "./ico.ico",
-  "publisher": "Vi-brance",
   "activationEvents": [
     "onView:qliteExplorer"
   ],
