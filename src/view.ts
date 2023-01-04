@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as oicq from 'oicq';
 import { bind } from './chat';
 import * as config from './config';
 import { Global } from './global';
@@ -7,8 +8,8 @@ import { Global } from './global';
 class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     newsListTree = new NewsListTree("消息");
     contactsListTree = new ContactsListTree("联系人");
-    // TODO: 实现更新树视图事件
-    onDidChangeTreeData?: vscode.Event<vscode.TreeItem> | undefined;
+    _onDidChangeTreeData = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+    onDidChangeTreeData = this._onDidChangeTreeData.event;
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
@@ -24,6 +25,11 @@ class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
         } else if (element instanceof ItemListTree) {
             return element.infoList;
         }
+    }
+    refresh() {
+        this.newsListTree = new NewsListTree("消息");
+        this.contactsListTree = new ContactsListTree("联系人");
+        this._onDidChangeTreeData.fire();
     }
 }
 
@@ -107,6 +113,30 @@ function initLists() {
     vscode.window.registerTreeDataProvider("qliteExplorer", qliteTreeDataProvider);
     let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
+    });
+    Global.client.on("notice.group.increase", (event) => {
+        let msg: string = "";
+        if (event.group.is_owner) {
+            msg = "你创建了群：";
+        } else if (event.user_id === Global.client.uin) {
+            msg = "你已加入群：";
+        }
+        vscode.window.showInformationMessage(msg + event.group.name);
+        qliteTreeDataProvider.refresh();
+    });
+    Global.client.on("notice.group.decrease", (event) => {
+        if (event.user_id === Global.client.uin) {
+            let msg: string;
+            if (event.dismiss) {
+                msg = "群：" + event.group_id + " 已解散";
+            } else if (event.operator_id === Global.client.uin) {
+                msg = "你退出了群：" + event.group.name;
+            } else {
+                msg = event.group.pickMember(event.operator_id).card + " 将你踢出了群:" + event.group.name;
+            }
+            vscode.window.showInformationMessage(msg);
+            qliteTreeDataProvider.refresh();
+        }
     });
     bind(); // 绑定命令
 }
