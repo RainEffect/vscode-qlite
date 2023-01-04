@@ -19,6 +19,7 @@
   "categories": [
     "Other"
   ],
+  "license": "GPL-3.0",
   "activationEvents": [
     "onView:qliteExplorer"
   ],
