@@ -4,6 +4,12 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [0.3.1] - 2023-01-04
+
+### Added
+- 添加了对好友增减时的消息通知
+- 添加了对群头衔变化时的消息通知
+
 ## [0.3.0] - 2023-01-04
 
 ### Added

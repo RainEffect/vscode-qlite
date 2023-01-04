@@ -114,6 +114,25 @@ function initLists() {
     let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
+    // 注册事件处理
+    Global.client.on("notice.friend.decrease", (event) => {
+        vscode.window.showInformationMessage("你删除了好友：" + event.nickname + `(${event.user_id})`);
+        qliteTreeDataProvider.refresh();
+    });
+    Global.client.on("notice.friend.increase", (event) => {
+        vscode.window.showInformationMessage("你添加了好友：" + event.nickname + `(${event.user_id})`);
+        qliteTreeDataProvider.refresh();
+    });
+    Global.client.on("notice.group.admin", (event) => {
+        if (event.user_id === Global.client.uin) {
+            vscode.window.showInformationMessage(event.set ? "你已成为" : "你被取消了" + "群：" + event.group.name + "的管理员");
+        }
+    });
+    Global.client.on("notice.group.transfer", (event) => {
+        if (event.user_id === Global.client.uin) {
+            vscode.window.showInformationMessage("群：" + event.group.name + " 的群主已将群主身份转让给你");
+        }
+    });
     Global.client.on("notice.group.increase", (event) => {
         let msg: string = "";
         if (event.group.is_owner) {
