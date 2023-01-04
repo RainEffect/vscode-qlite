@@ -77,7 +77,7 @@ function createClient(uin: number) {
             password: Global.client.password_md5 ? Global.client.password_md5.toString("hex") : "qrcode"
         });
         vscode.window.showInformationMessage(`${Global.client.nickname}(${Global.client.uin}) 已上线。`);
-        view.initLists();
+        view.createTreeView();
     });
     inputPassword();
 }
@@ -152,9 +152,13 @@ export function login() {
     }
     vscode.window.showQuickPick(settings).then((value) => {
         if (value === "切换账号") {
-            Global.client.logout();
-            config.setConfig();
-            inputAccount();
+            vscode.window.showWarningMessage("将会退出当前帐号，是否继续？", "是", "否").then((value) => {
+                if (value === "是") {
+                    Global.client.logout();
+                    config.setConfig();
+                    inputAccount();
+                }
+            });
         } else if (value === "我的状态") {
             const statusArray = [...statusMap.values()];
             vscode.window.showQuickPick([...statusMap.values()], {

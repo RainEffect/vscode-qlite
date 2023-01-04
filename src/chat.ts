@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as oicq from 'oicq';
+import * as path from 'path';
 import { Global } from './global';
 import { refreshContacts } from './view';
 
@@ -62,6 +63,7 @@ function openChatView(uin: number, c2c: boolean) {
     });
     // 添加页面缓存
     webviewMap.get(c2c)?.set(uin, chatView);
+    chatView.iconPath = vscode.Uri.file(path.join(Global.context.extensionPath, "ico.ico"));
     chatView.webview.html = setHtml(uin, c2c, chatView.webview);
     chatView.reveal();
     chatView.onDidDispose(() => {
@@ -97,12 +99,17 @@ function openChatView(uin: number, c2c: boolean) {
  */
 function bind() {
     Global.client.on("message.group", (event) => {
-        refreshContacts(false, event.group_id, true);
+        if (!webviewMap.get(false)?.get(event.group_id)?.active) {
+            refreshContacts(false, event.group_id, true);
+        }
         webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
     });
     Global.client.on("message.private", (event) => {
-        refreshContacts(true, event.from_id === Global.client.uin ? event.to_id : event.from_id, event.from_id !== Global.client.uin);
-        webviewMap.get(true)?.get(event.from_id === Global.client.uin ? event.to_id : event.from_id)?.webview.postMessage(event);
+        const target_id = event.from_id === Global.client.uin ? event.to_id : event.from_id;
+        if (!webviewMap.get(true)?.get(event.from_id)?.active) {
+            refreshContacts(true, target_id, event.from_id !== Global.client.uin);
+        }
+        webviewMap.get(true)?.get(target_id)?.webview.postMessage(event);
     });
     Global.client.on("notice.friend", (event) => {
         webviewMap.get(true)?.get(event.user_id)?.webview.postMessage(event);

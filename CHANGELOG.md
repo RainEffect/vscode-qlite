@@ -4,6 +4,17 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.0.2] - 2023-01-04
+
+### Added
+- 切换账号需要二次确认
+
+### Changed
+- 修改聊天窗口图标为自定义
+
+### Fixed
+- 修复当前聊天窗口收到消息时侧边栏显示新消息的问题
+
 ## [1.0.1] - 2023-01-04
 
 ### Fixed

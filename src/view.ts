@@ -124,8 +124,10 @@ class InfoTreeItem extends vscode.TreeItem {
     }
 }
 
-// 账号登录时调用，读取账号好友/群列表
-function initLists() {
+/**
+ * 账号登录时调用，读取账号好友/群列表
+ */
+function createTreeView() {
     // 创建树视图
     qliteTreeDataProvider = new QliteTreeDataProvider;
     vscode.window.registerTreeDataProvider("qliteExplorer", qliteTreeDataProvider);
@@ -197,7 +199,7 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
         news = {
             c2c: c2c,
             uin: uin,
-            item: new InfoTreeItem(label as string, uin, c2c, "+" + String(flag ? 1 : 0)),
+            item: new InfoTreeItem(label as string, uin, c2c, flag ? "+1" : ""),
             cnt: flag ? 1 : 0
         };
         newsList.unshift(news);
@@ -217,4 +219,4 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
     qliteTreeDataProvider.refresh();
 }
 
-export { initLists, refreshContacts };
+export { createTreeView, refreshContacts };
