@@ -4,6 +4,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.0.1] - 2023-01-04
+
+### Fixed
+- 修复消息内容和头衔显示错误的问题
+
 ## [1.0.0] - 2023-01-04
 
 ### Added

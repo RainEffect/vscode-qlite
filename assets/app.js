@@ -316,11 +316,12 @@ function genUserMessage(msg) {
     if (msg.sub_type === "anonymous") {
         title = `<span class="htitle member">匿名</span>`;
         name = msg.anonymous.name;
-    } else if (msg.sender.role === "owner") {
-        title = `<span class="htitle ${msg.sender.role}">群主</span>`;
-        name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
-    } else if (msg.sender.role === "admin") {
-        title = `<span class="htitle ${msg.sender.role}>管理员</span>`;
+    } else {
+        if (msg.sender.role === "owner") {
+            title = `<span class="htitle owner">群主</span>`;
+        } else if (msg.sender.role === "admin") {
+            title = `<span class="htitle admin">管理员</span>`;
+        }
         name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
     return `<a class="seq" id="${msg.seq}"></a>
