@@ -156,14 +156,15 @@ export function login() {
                 if (value === "是") {
                     Global.client.logout();
                     config.setConfig();
+                    view.qliteTreeDataProvider.refresh();
                     inputAccount();
                 }
             });
         } else if (value === "我的状态") {
             const statusArray = [...statusMap.values()];
             vscode.window.showQuickPick([...statusMap.values()], {
-                placeHolder: "切换我的状态",
-                title: "当前状态：" + statusMap.get(Global.client.status)
+                placeHolder: "当前状态：" + statusMap.get(Global.client.status),
+                title: "我的状态"
             }).then((value) => {
                 if (value === undefined) {
                     return;
@@ -178,7 +179,12 @@ export function login() {
                 }
             });
         } else if (value === "登出账号") {
-            Global.client.logout();
+            vscode.window.showWarningMessage("是否退出登录？", "是", "否").then((value) => {
+                if (value === "是") {
+                    Global.client.logout();
+                    view.qliteTreeDataProvider.refresh();
+                }
+            });
         }
     });
 }

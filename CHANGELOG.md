@@ -4,6 +4,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.0.3] - 2023-01-05
+
+### Added
+- 添加登出账号的二次确认窗口
+
+### Changed
+- 账号为离线状态时侧边栏设置为空
+
 ## [1.0.2] - 2023-01-04
 
 ### Added

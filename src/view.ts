@@ -25,7 +25,9 @@ class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
         return element;
     }
     getChildren(element?: vscode.TreeItem | undefined): vscode.ProviderResult<vscode.TreeItem[]> {
-        if (element === undefined) { // 根目录
+        if (!Global.client.isOnline()) { // 离线不显示列表
+            return [];
+        } else if (element === undefined) { // 根目录
             return [this.newsListTree, this.contactsListTree];
         } else if (element instanceof NewsListTree) {
             return element.newsList;
@@ -219,4 +221,4 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
     qliteTreeDataProvider.refresh();
 }
 
-export { createTreeView, refreshContacts };
+export { createTreeView, refreshContacts, qliteTreeDataProvider };
