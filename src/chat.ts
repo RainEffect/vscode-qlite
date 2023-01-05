@@ -122,4 +122,55 @@ function bind() {
     });
 }
 
-export { openChatView, bind };
+// 搜索条目
+interface SearchItem extends vscode.QuickPickItem {
+    c2c: boolean
+}
+
+/**
+ * 搜索栏
+ */
+function search() {
+    if (!Global.client || !Global.client.isOnline()) {
+        return;
+    }
+    let searchList: SearchItem[] = [];
+    vscode.window.showQuickPick(["$(person)搜索好友", "$(organization)搜索群聊"], {
+        title: "搜索"
+    }).then((value) => {
+        if (value === undefined) {
+            return;
+        } else if (value === "$(person)搜索好友") {
+            for (let friend of Global.client.fl.values()) {
+                let fItem: SearchItem = {
+                    label: friend.remark ? friend.remark : friend.nickname,
+                    c2c: true
+                };
+                fItem.alwaysShow = false;
+                fItem.description = String(friend.user_id);
+                searchList.push(fItem);
+            }
+        } else {
+            for (let group of Global.client.gl.values()) {
+                let gItem: SearchItem = {
+                    label: group.group_name,
+                    c2c: false
+                };
+                gItem.alwaysShow = false;
+                gItem.description = String(group.group_id);
+                searchList.push(gItem);
+            }
+        }
+        vscode.window.showQuickPick(searchList, {
+            matchOnDescription: true,
+            placeHolder: "搜索",
+            title: value
+        }).then((value) => {
+            if (value !== undefined) {
+                openChatView(Number(value.description), value.c2c);
+            }
+        });
+    });
+}
+
+export { openChatView, bind, search };

@@ -4,6 +4,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.1.0] - 2023-01-05
+
+### Added
+- 添加好友和群聊的搜索功能
+
+### Fixed
+- 修复新群友加群时也会出现提示的问题
+
 ## [1.0.3] - 2023-01-05
 
 ### Added

@@ -156,14 +156,10 @@ function createTreeView() {
         }
     });
     Global.client.on("notice.group.increase", (event) => {
-        let msg: string = "";
-        if (event.group.is_owner) {
-            msg = "你创建了群：";
-        } else if (event.user_id === Global.client.uin) {
-            msg = "你已加入群：";
+        if (event.user_id === Global.client.uin) {
+            vscode.window.showInformationMessage("你已加入群：" + event.group.name);
+            qliteTreeDataProvider.refresh();
         }
-        vscode.window.showInformationMessage(msg + event.group.name);
-        qliteTreeDataProvider.refresh();
     });
     Global.client.on("notice.group.decrease", (event) => {
         if (event.user_id === Global.client.uin) {

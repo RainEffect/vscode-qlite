@@ -11,9 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
 	if (!fs.existsSync(Global.context.globalStorageUri.fsPath)) {
 		fs.mkdirSync(Global.context.globalStorageUri.fsPath);
 	}
-	// 注册登录命令
+	// 注册命令
 	context.subscriptions.push(vscode.commands.registerCommand("qlite.login", client.login));
 	context.subscriptions.push(vscode.commands.registerCommand("qlite.chat", chat.openChatView));
+	context.subscriptions.push(vscode.commands.registerCommand("qlite.search", chat.search));
 }
 
 // 扩展关闭

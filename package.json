@@ -2,7 +2,7 @@
   "name": "vscode-qlite",
   "displayName": "VSCode-QLite",
   "description": "A lite qq in vscode",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -30,6 +30,11 @@
         "command": "qlite.login",
         "icon": "$(sign-in)",
         "title": "登录"
+      },
+      {
+        "command": "qlite.search",
+        "icon": "$(search)",
+        "title": "搜索"
       }
     ],
     "viewsContainers": {
@@ -54,7 +59,12 @@
         {
           "command": "qlite.login",
           "when": "view == qliteExplorer",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "qlite.search",
+          "when": "view == qliteExplorer",
+          "group": "navigation@0"
         }
       ]
     }
