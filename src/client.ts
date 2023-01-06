@@ -9,9 +9,9 @@ import * as view from './view';
 let logining: boolean = false;
 // 登录选项
 const settings: Array<string> = [
-    "切换账号",
-    "我的状态",
-    "登出账号"
+    "$(log-out) 切换账号",
+    "$(account) 我的状态",
+    "$(warning) 登出账号"
 ];
 // 当前状态
 let selectedStatus: number = 11;
@@ -151,7 +151,7 @@ export function login() {
         return;
     }
     vscode.window.showQuickPick(settings).then((value) => {
-        if (value === "切换账号") {
+        if (value === settings[0]) {
             vscode.window.showWarningMessage("将会退出当前帐号，是否继续？", "是", "否").then((value) => {
                 if (value === "是") {
                     Global.client.logout();
@@ -160,7 +160,7 @@ export function login() {
                     inputAccount();
                 }
             });
-        } else if (value === "我的状态") {
+        } else if (value === settings[1]) {
             const statusArray = [...statusMap.values()];
             vscode.window.showQuickPick([...statusMap.values()], {
                 placeHolder: "当前状态：" + statusMap.get(Global.client.status),
@@ -178,7 +178,7 @@ export function login() {
                     Global.client.setOnlineStatus(selectedStatus);
                 }
             });
-        } else if (value === "登出账号") {
+        } else if (value === settings[2]) {
             vscode.window.showWarningMessage("是否退出登录？", "是", "否").then((value) => {
                 if (value === "是") {
                     Global.client.logout();

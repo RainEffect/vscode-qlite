@@ -4,6 +4,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.1.1] - 2023-01-06
+
+### Added
+- 为登陆选项添加小图标，优化了显示效果
+
+### Changed
+- 修改搜索功能的显示效果
+
 ## [1.1.0] - 2023-01-05
 
 ### Added

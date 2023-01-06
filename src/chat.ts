@@ -135,12 +135,11 @@ function search() {
         return;
     }
     let searchList: SearchItem[] = [];
-    vscode.window.showQuickPick(["$(person)搜索好友", "$(organization)搜索群聊"], {
-        title: "搜索"
-    }).then((value) => {
+    const searchMenu = ["$(person) 搜索好友", "$(organization) 搜索群聊"];
+    vscode.window.showQuickPick(searchMenu).then((value) => {
         if (value === undefined) {
             return;
-        } else if (value === "$(person)搜索好友") {
+        } else if (value === searchMenu[0]) {
             for (let friend of Global.client.fl.values()) {
                 let fItem: SearchItem = {
                     label: friend.remark ? friend.remark : friend.nickname,
@@ -163,8 +162,7 @@ function search() {
         }
         vscode.window.showQuickPick(searchList, {
             matchOnDescription: true,
-            placeHolder: "搜索",
-            title: value
+            placeHolder: value.split(" ")[1]
         }).then((value) => {
             if (value !== undefined) {
                 openChatView(Number(value.description), value.c2c);
