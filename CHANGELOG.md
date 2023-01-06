@@ -4,6 +4,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 
+## [1.1.2] - 2023-01-06
+
+### Changed
+- 聊天图片从链接改为直接显示
+
 ## [1.1.1] - 2023-01-06
 
 ### Added

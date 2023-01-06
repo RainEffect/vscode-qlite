@@ -185,7 +185,7 @@ function sendMsg() {
         if (webview.c2c && msgRet.seq) {
             const html = `<a class="seq" id="${msgRet.seq}"></a>
             <div class="cright cmsg">
-                <img class="headIcon radius" onmouseenter="previewImage(this)" src="${webview.getUserAvaterUrlSmall(webview.self_uin)}" />
+                <img class="headIcon radius" src="${webview.getUserAvaterUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
                 </span>
@@ -392,7 +392,7 @@ function parseMessage(message) {
                 }
                 let split = v.file.split("-");
                 let width = parseInt(split[1]), height = parseInt(split[2]);
-                msg += `<a href="${v.url}&file=${v.file}&vscodeDragFlag=1" target="_blank" onmouseenter="previewImage(this,${width},${height})">${v.type === "image" ? "图片" : "闪照"}</a>`;
+                msg += showImage(v.url, width, height);
                 break;
             case "record":
                 msg = `<a href="${v.url}" target="_blank">语音消息</a>`;
@@ -735,6 +735,27 @@ function previewImage(obj, width, height) {
     idPreviewElement.style.top = top + "px";
     idPreviewElement.style.display = "block";
     obj.onmouseleave = () => idPreviewElement.style.display = "none";
+}
+
+/**
+ * 显示图片，进行适当的缩放
+ * @param {string} url 图片的url链接
+ * @param {number} width 图片的真实宽度
+ * @param {number} height 图片的真实高度
+ * @returns img元素
+ */
+function showImage(url, width, height) {
+    let img = `<img src="${url}" width="`;
+    const query = document.querySelector(".content-left");
+    const rate = width / query.clientWidth;
+    if (width > height * 2) {
+        img += String(Math.trunc(rate > 0.6 ? width : query.clientWidth * 0.6));
+    } else if (width * 2 < height) {
+        img += String(Math.trunc(rate < 0.4 ? width : query.clientWidth * 0.4));
+    } else {
+        img += String(Math.trunc(rate > 0.5 ? query.clientWidth * 0.5 : width));
+    }
+    return img + `">`;
 }
 
 // Ctrl+Enter

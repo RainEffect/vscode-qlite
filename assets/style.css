@@ -64,10 +64,10 @@
     min-width:9px;
     min-height:18px
 }
-.lite-chatbox .content img{
+/* .lite-chatbox .content img{
     width:100%;
     height:auto
-}
+} */
 .lite-chatbox .content a{
     color:var(--vscode-editorLink-activeForeground);
     margin:0 2px;
@@ -167,10 +167,10 @@ body {
 .lite-chatbox .name b.operation:hover {
     background-color: var(--vscode-focusBorder);
 }
-.lite-chatbox .content img {
+/* .lite-chatbox .content img {
     width: auto;
     vertical-align: bottom;
-}
+} */
 .lite-chatbox .content img.face {
     width: 28px;
     height: 28px;
