@@ -111,10 +111,10 @@
 
     vsc.scrollHome = () => window.scroll(0, 0);
     vsc.scrollEnd = () => window.scroll(0, window.document.body.scrollHeight);
-    vsc.getUserAvaterUrlSmall = (uin) => `https://q1.qlogo.cn/g?b=qq&s=100&nk=${uin}&t=` + vsc.t;
-    vsc.getUserAvaterUrlLarge = (uin) => `https://q1.qlogo.cn/g?b=qq&s=640&nk=${uin}&t=` + vsc.t;
-    vsc.getGroupAvaterUrlSmall = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/100?t=` + vsc.t;
-    vsc.getGroupAvaterUrlLarge = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/640?t=` + vsc.t;
+    vsc.getUserAvatarUrlSmall = (uin) => `https://q1.qlogo.cn/g?b=qq&s=100&nk=${uin}&t=` + vsc.t;
+    vsc.getUserAvatarUrlLarge = (uin) => `https://q1.qlogo.cn/g?b=qq&s=640&nk=${uin}&t=` + vsc.t;
+    vsc.getGroupAvatarUrlSmall = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/100?t=` + vsc.t;
+    vsc.getGroupAvatarUrlLarge = (uin) => `https://p.qlogo.cn/gh/${uin}/${uin}/640?t=` + vsc.t;
     vsc.timestamp = (unixstamp) => {
         const date = new Date(unixstamp ? unixstamp * 1000 : Date.now());
         return date.getHours()

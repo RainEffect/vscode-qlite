@@ -22,10 +22,10 @@ export interface Webview extends EventTarget {
     scrollEnd(): void;
     timestamp(unixtime?: number): string;
     datetime(unixtime?: number): string;
-    getUserAvaterUrlSmall(uin: number): string;
-    getUserAvaterUrlLarge(uin: number): string;
-    getGroupAvaterUrlSmall(uin: number): string;
-    getGroupAvaterUrlLarge(uin: number): string;
+    getUserAvatarUrlSmall(uin: number): string;
+    getUserAvatarUrlLarge(uin: number): string;
+    getGroupAvatarUrlSmall(uin: number): string;
+    getGroupAvatarUrlLarge(uin: number): string;
 
     callApi(command: keyof oicq.Friend | keyof oicq.Group, params?: any[]): Promise<unknown>;
     // Contactable Api
@@ -35,7 +35,7 @@ export interface Webview extends EventTarget {
     makeForwardMsg: oicq.Friend["makeForwardMsg"] | oicq.Group["makeForwardMsg"];
     getForwardMsg: oicq.Friend["getForwardMsg"] | oicq.Group["getForwardMsg"];
     getVideoUrl: oicq.Friend["getVideoUrl"] | oicq.Group["getVideoUrl"];
-    // Friend Api 为群聊消息时不实现
+    // Friend Api: 为群聊消息时不实现
     getSimpleInfo: oicq.Friend["getSimpleInfo"];
     setFriendReq: oicq.Friend["setFriendReq"];
     setGroupReq: oicq.Friend["setGroupReq"];
@@ -47,7 +47,7 @@ export interface Webview extends EventTarget {
     sendFile: oicq.Friend["sendFile"];
     forwardFile: oicq.Friend["forwardFile"];
     recallFile: oicq.Friend["recallFile"];
-    // Group Api 为私聊消息时不实现
+    // Group Api: 为私聊消息时不实现
     setName: oicq.Group["setName"];
     setAvatar: oicq.Group["setAvatar"];
     muteAll: oicq.Group["muteAll"];

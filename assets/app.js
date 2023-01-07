@@ -62,22 +62,22 @@ function updateMemberList() {
 
 /**
  * 获取历史聊天记录
- * @param {number} param 群聊为条数，默认从最后一条发言往前；私聊为时间，默认从当前时间往前
+ * @param {number} param 群聊为序号，默认从最后一条发言往前；私聊为时间，默认从当前时间往前
  * @param {number} count 获取的条数
  */
 function getChatHistory(param, count = 20) {
     webview.getChatHistory(param, count).then((msgList) => {
         let html = "";
-        let tmp = [];
+        let msgMark = [];
         for (let msg of msgList) {
             if (webview.c2c) { // 私聊以time为标识
-                if (msg.time !== param && !tmp.includes(msg.time)) {
-                    tmp.push(msg.time);
+                if (!msgMark.includes(msg.time)) {
+                    msgMark.push(msg.time);
                     html += genUserMessage(msg);
                 }
             } else { // 群聊以seq为标识
-                if (msg.seq !== param && !tmp.includes(msg.seq)) {
-                    tmp.push(msg.seq);
+                if (!msgMark.includes(msg.seq)) {
+                    msgMark.push(msg.seq);
                     html += genUserMessage(msg);
                 }
             }
@@ -185,7 +185,7 @@ function sendMsg() {
         if (webview.c2c && msgRet.seq) {
             const html = `<a class="seq" id="${msgRet.seq}"></a>
             <div class="cright cmsg">
-                <img class="headIcon radius" src="${webview.getUserAvaterUrlSmall(webview.self_uin)}" />
+                <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
                 </span>
@@ -292,6 +292,7 @@ function genLabel(user_id) {
 /**
  * 转义message_id中的特殊字符
  * @param {string} message_id 
+ * @deprecated 取消使用message_id区别消息
  */
 function filterMsgIdSelector(message_id) {
     return message_id.replace(/\//g, "\\/").replace(/\=/g, "\\=").replace(/\+/g, "\\+");
@@ -309,7 +310,7 @@ function appendRecalledText(seq) {
  * @param {import("oicq").PrivateMessage | import("oicq").GroupMessage} msg
  */
 function genUserMessage(msg) {
-    if (document.getElementById(msg.seq)) {
+    if (document.getElementById(msg.seq)) { // 重复消息
         return "";
     }
     let title = "", name = "";
@@ -326,8 +327,8 @@ function genUserMessage(msg) {
     }
     return `<a class="seq" id="${msg.seq}"></a>
     <div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg">
-        <img class="headIcon radius" src="${webview.getUserAvaterUrlSmall(msg.sender.user_id)}" />
-        <span uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" class="name" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
+        <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}" />
+        <span class="name" uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
             ${webview.c2c ? "" : '<b class="operation">...</b>'}
             ${title} ${name} ${webview.timestamp(msg.time)}
         </span>
@@ -374,7 +375,7 @@ function parseMessage(message) {
                 if (v.id > 324) {
                     msg += v.text || "[表情]";
                 } else {
-                    msg += `<img class="face" ondblclick="addFace(${v.id})" src="${webview.faces_path + v.id}.png">`;
+                    msg += `<img class="face" ondblclick="addFace(${v.id})" src="${webview.faces_path + v.id}.png" style="width: 18px; height: 18px; vertical-align: bottom;">`;
                 }
                 break;
             case "sface":
@@ -515,44 +516,45 @@ function insertStr2Textarea(str) {
 let currentTextareaContent = "";
 
 document.querySelector("body").insertAdjacentHTML("beforeend",
-    `<div class="content-left"><div class="lite-chatbox">
-        <div class="tips">
-            <span ondblclick='getChatHistory(document.querySelector(".seq")?.attributes.id.value ?? "");'>双击加载历史消息</span>
+    `<div class="content-left">
+        <div class="lite-chatbox">
+            <div class="tips">
+                <span ondblclick='getChatHistory(document.querySelector(".seq")?.attributes.id.value ?? "");'>双击加载历史消息</span>
+            </div>
         </div>
-    </div>
-    <div class="lite-chatbox" id="lite-chatbox"></div>
-    <div style="width: 100%; height: 30px;"></div>
-    <img id="img-preview" style="z-index: 999;">
-    <div class="menu-msg">
-        <div class="menu-msg-reply">回复</div>
-        <div class="menu-msg-at">@ TA</div>
-        <div class="menu-msg-poke">戳一戳</div>
-        <div class="menu-msg-recall">撤回消息</div>
-        <div class="menu-msg-mute">禁言</div>
-        <div class="menu-msg-kick">从本群中删除</div>
-    </div>
-    <div class="modal-dialog">
-        <div class="modal-title"></div>
-        <div class="modal-button">
-            <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
+        <div class="lite-chatbox" id="lite-chatbox"></div>
+        <div style="width: 100%; height: 30px;"></div>
+        <img id="img-preview" style="z-index: 999;">
+        <div class="menu-msg">
+            <div class="menu-msg-reply">回复</div>
+            <div class="menu-msg-at">@ TA</div>
+            <div class="menu-msg-poke">戳一戳</div>
+            <div class="menu-msg-recall">撤回消息</div>
+            <div class="menu-msg-mute">禁言</div>
+            <div class="menu-msg-kick">从本群中删除</div>
         </div>
-    </div>
-    <div id="footer">
-        <textarea id="content" rows="4" placeholder="在此输入消息..."></textarea>
-        <button id="send" onclick="sendMsg()">发送</button>Ctrl+Enter
-        <span id="show-stamp-box" class="insert-button">🧡</span>
-        <div class="stamp-box box"></div>
-        <span id="show-face-box" class="insert-button">😀</span>
-        <div class="face-box box"></div>
-        <span id="show-emoji-box" class="insert-button">颜</span>
-        <div class="emoji-box box"></div>
-        <span id="insert-pic" class="insert-button" title="也可以直接粘贴图片">🖼️</span>
-        ${webview.c2c ? "" : '<span id="to-bottom" onclick="triggerRightBar()">显示/隐藏侧栏</span>'}
-    </div>
+        <div class="modal-dialog">
+            <div class="modal-title"></div>
+            <div class="modal-button">
+                <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
+            </div>
+        </div>
+        <div id="footer">
+            <textarea id="content" rows="4" placeholder="在此输入消息..."></textarea>
+            <button id="send" onclick="sendMsg()">发送</button>Ctrl+Enter
+            <span id="show-stamp-box" class="insert-button">🧡</span>
+            <div class="stamp-box box"></div>
+            <span id="show-face-box" class="insert-button">😀</span>
+            <div class="face-box box"></div>
+            <span id="show-emoji-box" class="insert-button">颜</span>
+            <div class="emoji-box box"></div>
+            <span id="insert-pic" class="insert-button" title="也可以直接粘贴图片">🖼️</span>
+            ${webview.c2c ? "" : '<span id="to-bottom" onclick="triggerRightBar()">显示/隐藏侧栏</span>'}
+        </div>
     </div>
     <div class="content-right">
         <div class="group-info">
-            <img class="headIcon radius" src="${webview.getGroupAvaterUrlSmall(webview.target_uin)}">
+            <img class="headIcon radius" src="${webview.getGroupAvatarUrlSmall(webview.target_uin)}">
         </div>
         <div class="group-members"></div>
         <div class="menu-member">
@@ -871,12 +873,12 @@ function triggerForwardMsg(obj) {
     }
 }
 
-//init
+// 初始化
 (() => {
     if (!webview.c2c) {
-        //加载群资料、群员列表
+        // 加载群资料、群员列表
         updateMemberList();
     }
-    //加载历史消息
+    // 加载历史消息
     getChatHistory();
 })();
