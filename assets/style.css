@@ -9,9 +9,8 @@
  */
 /* 主框架 */
 .lite-chatbox {
-    font-family: Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif;
+    /* font-family: Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif; */
     padding: 0;
-    font-size: 18px;
     width: 100%;
     position: relative;
     overflow-y: auto;
@@ -201,8 +200,7 @@
     background-color: #F2BF25
 }
 
-html,
-body {
+html, body {
     height: 100%;
     margin: 0;
     padding: 0;
@@ -255,7 +253,7 @@ body {
     border: var(--vscode-editor-foreground) 1px solid;
 }
 
-#content {
+/* #content {
     width: 100%;
     resize: none;
     box-sizing: border-box;
@@ -263,9 +261,9 @@ body {
     color: var(--vscode-editor-foreground);
     font-size: 16px;
     padding: 10px;
-}
+} */
 
-button#send {
+/* button#send {
     margin-right: 10px;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
@@ -277,7 +275,7 @@ button#send {
     color: var(--vscode-editor-foreground);
     font-weight: bold;
     font-size: 16px;
-}
+} */
 
 #to-bottom {
     position: absolute;
@@ -287,12 +285,12 @@ button#send {
     cursor: pointer;
 }
 
-#footer {
+/* #footer {
     position: sticky;
     width: 100%;
     bottom: 0;
     background-color: var(--vscode-editor-background);
-}
+} */
 
 .box {
     height: 240px;
@@ -377,6 +375,7 @@ button#send {
 }
 
 .content-left {
+    overflow-x: hidden;
     overflow-y: auto;
     flex: 1;
 }

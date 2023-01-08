@@ -94,6 +94,7 @@ function getChatHistory(param, count = 20) {
     });
 }
 
+// 发送状态
 let sending = false;
 const pastedImageBufferSize = 10_000_000;
 /**
@@ -105,12 +106,12 @@ const pastedImageMappings = [];
  * 发送消息
  */
 function sendMsg() {
-    let message = `${document.querySelector("#content").value}`;
+    let message = `${document.querySelector(".chatinput").textContent}`;
     if (sending || !message) {
         return;
     }
     sending = true;
-    document.querySelector("#send").disabled = true;
+    document.querySelector(".send").disabled = true;
 
     // 把粘贴的图片占位符重新转换为 CQ 码
     const splitted = [];
@@ -193,14 +194,14 @@ function sendMsg() {
             </div>`;
             document.querySelector("#lite-chatbox").insertAdjacentHTML("beforeend", html);
         }
-        document.querySelector("#content").value = "";
+        document.querySelector(".chatinput").textContent = "";
         currentTextareaContent = "";
     }).catch(() => {
-        document.querySelector("#content").value = "";
+        document.querySelector(".chatinput").textContent = "";
         currentTextareaContent = "";
     }).finally(() => {
         sending = false;
-        document.querySelector("#send").disabled = false;
+        document.querySelector(".send").disabled = false;
         document.querySelector(".content-left").scroll(0, document.querySelector(".content-left").scrollHeight);
     });
 }
@@ -490,18 +491,18 @@ function addImage(file) {
 
 function addStr2Textarea(str) {
     currentTextareaContent += str;
-    document.querySelector("#content").value = currentTextareaContent;
-    document.querySelector("#content").focus();
+    document.querySelector(".chatinput").value = currentTextareaContent;
+    document.querySelector(".chatinput").focus();
 }
 
 function setTextareaText(str) {
     currentTextareaContent = str;
-    document.querySelector("#content").value = currentTextareaContent;
-    document.querySelector("#content").focus();
+    document.querySelector(".chatinput").value = currentTextareaContent;
+    document.querySelector(".chatinput").focus();
 }
 
 function insertStr2Textarea(str) {
-    const textArea = document.querySelector("#content");
+    const textArea = document.querySelector(".chatinput");
     if (textArea.selectionStart || textArea.selectionStart === '0') {
         const begin = textArea.selectionStart;
         const end = textArea.selectionEnd || textArea.selectionStart;
@@ -517,13 +518,7 @@ let currentTextareaContent = "";
 
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="content-left">
-        <div class="lite-chatbox">
-            <div class="tips">
-                <span ondblclick='getChatHistory(document.querySelector(".seq")?.attributes.id.value ?? "");'>双击加载历史消息</span>
-            </div>
-        </div>
         <div class="lite-chatbox" id="lite-chatbox"></div>
-        <div style="width: 100%; height: 30px;"></div>
         <img id="img-preview" style="z-index: 999;">
         <div class="menu-msg">
             <div class="menu-msg-reply">回复</div>
@@ -539,17 +534,17 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
                 <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
             </div>
         </div>
-        <div id="footer">
-            <textarea id="content" rows="4" placeholder="在此输入消息..."></textarea>
-            <button id="send" onclick="sendMsg()">发送</button>Ctrl+Enter
-            <span id="show-stamp-box" class="insert-button">🧡</span>
+        <div class="lite-chatinput">
+            <hr class="boundary">
+            <span id="show-stamp-box" class="tool-button">🧡</span>
             <div class="stamp-box box"></div>
-            <span id="show-face-box" class="insert-button">😀</span>
+            <span id="show-face-box" class="tool-button">😀</span>
             <div class="face-box box"></div>
-            <span id="show-emoji-box" class="insert-button">颜</span>
+            <span id="show-emoji-box" class="tool-button">颜</span>
             <div class="emoji-box box"></div>
-            <span id="insert-pic" class="insert-button" title="也可以直接粘贴图片">🖼️</span>
-            ${webview.c2c ? "" : '<span id="to-bottom" onclick="triggerRightBar()">显示/隐藏侧栏</span>'}
+            <span id="insert-pic" class="tool-button" title="也可以直接粘贴图片">🖼️</span>
+            <div class="chatinput" contenteditable="true"></div>
+            <button class="send" onclick="sendMsg()">Ctrl+Enter发送</button>
         </div>
     </div>
     <div class="content-right">
@@ -583,6 +578,8 @@ for (let i = 0; i <= 324; ++i) {
     let html = `<img onclick="addFace(${i})" style="margin:5px;cursor:pointer" width="28" height="28" src="${webview.faces_path + i + ".png"}">`;
     document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
 }
+
+// 响应点击事件
 document.querySelector("body").addEventListener("click", (e) => {
     document.querySelector('.face-box').style.display = 'none';
     document.querySelector('.emoji-box').style.display = 'none';
@@ -591,20 +588,18 @@ document.querySelector("body").addEventListener("click", (e) => {
     document.querySelector('.menu-member').style.display = 'none';
     if (e.target === idShowStampBox) {
         document.querySelector('.stamp-box').style.display = 'block';
-        // if (!document.querySelector('.stamp-box img')) {
-        //     // add stamp to document
-        //     webview.getRoamingStamp().then((data) => {
-        //         if (data.retcode === 0) {
-        //             let tmpStampStep = 0;
-        //             for (let i = data.data.length - 1; i >= 0; --i) {
-        //                 ++tmpStampStep;
-        //                 const url = data.data[i];
-        //                 let html = `<img onclick="addImage('${url}')" src="${url}">` + (tmpStampStep % 6 === 0 ? "<br>" : "");
-        //                 document.querySelector('.stamp-box').insertAdjacentHTML("beforeend", html);
-        //             }
-        //         }
-        //     });
-        // }
+        if (!document.querySelector('.stamp-box img')) {
+            // 添加漫游表情
+            webview.getRoamingStamp().then((stampList) => {
+                let tmpStampStep = 0;
+                for (let i = stampList.length - 1; i >= 0; --i) {
+                    ++tmpStampStep;
+                    const url = stampList[i];
+                    let html = `<img onclick="addImage('${url}')" src="${url}">` + (tmpStampStep % 6 === 0 ? "<br>" : "");
+                    document.querySelector('.stamp-box').insertAdjacentHTML("beforeend", html);
+                }
+            });
+        }
     } else if (e.target === idShowFaceBox) {
         document.querySelector('.face-box').style.display = 'block';
     } else if (e.target === idShowEmojiBox) {
@@ -768,31 +763,31 @@ window.onkeydown = function (event) {
 };
 
 //滚动到顶部加载消息
-document.querySelector(".content-left").onscroll = function () {
-    if (document.querySelector(".content-left").scrollTop === 0) {
+document.querySelector(".lite-chatbox").onscroll = function () {
+    if (document.querySelector(".lite-chatbox").scrollTop === 0) {
         getChatHistory(document.querySelector(".seq")?.attributes.id.value ?? "");
     }
 };
 
 //表情、图片拖动
-document.querySelector("#content").oninput = function () {
-    const content = this.value;
-    const diff = content.substr(currentTextareaContent.length);
-    if (diff.startsWith(webview.faces_path)) {
-        const faceId = diff.substr(webview.faces_path.length).split(".")[0];
-        const cqcode = `[CQ:face,id=${faceId}]`;
-        addStr2Textarea(cqcode);
-    } else if (diff.endsWith("&vscodeDragFlag=1")) {
-        const file = new URL(diff).searchParams.get("file");
-        const cqcode = `[CQ:image,file=${file},type=face]`;
-        addStr2Textarea(cqcode);
-    } else {
-        currentTextareaContent = content;
-    }
-};
+// document.querySelector(".chatinput").oninput = function () {
+//     const content = this.value;
+//     const diff = content.substr(currentTextareaContent.length);
+//     if (diff.startsWith(webview.faces_path)) {
+//         const faceId = diff.substr(webview.faces_path.length).split(".")[0];
+//         const cqcode = `[CQ:face,id=${faceId}]`;
+//         addStr2Textarea(cqcode);
+//     } else if (diff.endsWith("&vscodeDragFlag=1")) {
+//         const file = new URL(diff).searchParams.get("file");
+//         const cqcode = `[CQ:image,file=${file},type=face]`;
+//         addStr2Textarea(cqcode);
+//     } else {
+//         currentTextareaContent = content;
+//     }
+// };
 
 // 粘贴图片
-document.querySelector("#content").addEventListener("paste", async ev => {
+document.querySelector(".chatinput").addEventListener("paste", async ev => {
     /** @type {DataTransfer} */
     const clipboardData = (ev.clipboardData || ev.originalEvent.clipboardData);
     const pasted = await Promise.all(Array.from(clipboardData.items).map(item => {

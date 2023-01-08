@@ -3,6 +3,13 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
+- 计划将输入框升级为富文本框，实现输入框中图片的发送和显示
+- 目前测试图片和表情是无法发送的，将会尽快升级恢复功能
+
+## [1.1.4] - 2023-01-08
+
+### Changed
+- 重绘聊天输入框，恢复了读取漫游表情的功能，但没完全恢复（因为还不能发送）
 
 ## [1.1.3] - 2023-01-07
 

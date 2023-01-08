@@ -28,6 +28,9 @@ export interface Webview extends EventTarget {
     getGroupAvatarUrlLarge(uin: number): string;
 
     callApi(command: keyof oicq.Friend | keyof oicq.Group, params?: any[]): Promise<unknown>;
+    // Client Api
+    getRoamingStamp: oicq.Client["getRoamingStamp"];
+    deleteStamp: oicq.Client["deleteStamp"];
     // Contactable Api
     uploadImages: oicq.Friend["uploadImages"] | oicq.Group["uploadImages"];
     uploadVideo: oicq.Friend["uploadVideo"] | oicq.Group["uploadVideo"];

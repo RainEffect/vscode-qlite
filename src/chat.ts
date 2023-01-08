@@ -8,6 +8,7 @@ import { refreshContacts } from './view';
 interface WebviewPostData {
     command: keyof oicq.Friend | keyof oicq.Group, // 指令
     params: any[], // 参数
+    client: boolean, // 是否是client的函数
     echo: string // 消息的唯一标识，用于响应对应指令，由 Date.now() + Math.random() 组成
 }
 
@@ -29,6 +30,7 @@ function setHtml(uin: number, c2c: boolean, webview: vscode.Webview): string {
     const path = webview.asWebviewUri(assetUri).toString();
     const preload = webview.asWebviewUri(vscode.Uri.joinPath(assetUri, "preload.js")).toString();
     const css = webview.asWebviewUri(vscode.Uri.joinPath(assetUri, "style.css")).toString();
+    const inputCss = webview.asWebviewUri(vscode.Uri.joinPath(assetUri, "input.css")).toString();
     const js = webview.asWebviewUri(vscode.Uri.joinPath(assetUri, "app.js")).toString();
     return `<!DOCTYPE html>
     <html>
@@ -36,6 +38,7 @@ function setHtml(uin: number, c2c: boolean, webview: vscode.Webview): string {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="${css}" />
+        <link rel="stylesheet" type="text/css" href="${inputCss}" />
     </head>
     <body>
         <env self_id="${Global.client.uin}" nickname="${Global.client.nickname}" c2c="${c2c ? 1 : 0}" target_id="${uin}" temp="0" path="${path}" t="${Date.now()}">
@@ -75,9 +78,19 @@ function openChatView(uin: number, c2c: boolean) {
     });
     chatView.webview.onDidReceiveMessage(async (data: WebviewPostData) => {
         try {
-            const fn = c2c ? Global.client.pickFriend(uin)[data.command as keyof oicq.Friend] as Function
-                : Global.client.pickGroup(uin)[data.command as keyof oicq.Group] as Function;
-            let ret = fn.apply(c2c ? Global.client.pickFriend(uin) : Global.client.pickGroup(uin), data.params);
+            const fn: Function = data.client
+                ? Global.client[data.command as keyof oicq.Client] as Function
+                : c2c
+                    ? Global.client.pickFriend(uin)[data.command as keyof oicq.Friend] as Function
+                    : Global.client.pickGroup(uin)[data.command as keyof oicq.Group] as Function;
+            let ret = fn.apply(
+                data.client
+                    ? Global.client
+                    : c2c
+                        ? Global.client.pickFriend(uin)
+                        : Global.client.pickGroup(uin),
+                data.params
+            );
             if (ret instanceof Promise) {
                 ret = await ret;
             }
@@ -170,4 +183,4 @@ function search() {
     });
 }
 
-export { openChatView, bind, search };
+export { WebviewPostData, openChatView, bind, search };

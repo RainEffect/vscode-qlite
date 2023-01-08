@@ -59,35 +59,18 @@
         onHostMessage(event.data);
     });
 
-    vsc.callApi = (command, params = []) => {
-        const echo = String(Date.now()) + String(Math.random());
-        /**
-         * @type {import("../src/chat").WebviewPostData}
-         */
-        const obj = {
-            command, params, echo
-        };
-        return new Promise((resolve, reject) => {
-            vscode.postMessage(obj);
-            const id = setTimeout(() => {
-                reject(new vsc.TimeoutError);
-                handlers.delete(echo);
-            }, 5500);
-            handlers.set(echo, (data) => {
-                clearTimeout(id);
-                resolve(data);
-            });
-        });
-    };
-
     /**
      * @type {{
-     *     both: Array<keyof import("oicq").Friend> | Array<keyof import("oicq").Group;
+     *     client: Array<keyof import("oicq").Client>;
+     *     both: Array<keyof import("oicq").Friend> | Array<keyof import("oicq").Group>;
      *     friend: Array<keyof import("oicq").Friend>;
-     *     group: Array<keyof import("oicq").Group>
+     *     group: Array<keyof import("oicq").Group>;
      * }}
      */
     const available_apis = {
+        client: [
+            "getRoamingStamp", "deleteStamp"
+        ],
         both: [
             "uploadImages", "uploadVideo", "uploadPtt", "makeForwardMsg", "getForwardMsg", "getVideoUrl",
             "sendMsg", "recallMsg", "getChatHistory", "markRead", "getFileUrl", "getAvatarUrl"
@@ -102,6 +85,32 @@
             "getAnonyInfo", "allowAnony", "getMemberMap", "getAtAllRemainder", "renew"
         ]
     };
+
+    vsc.callApi = (command, params = []) => {
+        const echo = String(Date.now()) + String(Math.random());
+        const client = available_apis.client.indexOf(command) > -1;
+        /**
+         * @type {import("../src/chat").WebviewPostData}
+         */
+        const obj = {
+            command, params, client, echo
+        };
+        return new Promise((resolve, reject) => {
+            vscode.postMessage(obj);
+            const id = setTimeout(() => {
+                reject(new vsc.TimeoutError);
+                handlers.delete(echo);
+            }, 5500);
+            handlers.set(echo, (data) => {
+                clearTimeout(id);
+                resolve(data);
+            });
+        });
+    };
+
+    for (let name of available_apis.client) {
+        vsc[name] = (...args) => vsc.callApi(name, args);
+    }
     for (let name of available_apis.both) {
         vsc[name] = (...args) => vsc.callApi(name, args);
     }
