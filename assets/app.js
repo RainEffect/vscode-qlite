@@ -222,10 +222,17 @@ function sendMsg_n() {
         if (value.nodeName === "#text") { // 文字
             segment = filterXss(value.textContent);
         } else if (value.nodeName === "IMG") { // 图片
-            segment = {
-                file: value.currentSrc.split(";")[1].replace(",", "://"),
-                type: "image"
-            };
+            if (value.attributes.getNamedItem("cq") && value.attributes.getNamedItem("cq").nodeValue === "face") { // qq表情
+                segment = {
+                    id: Number(value.id),
+                    type: "face"
+                };
+            } else { // 图片
+                segment = {
+                    file: value.currentSrc.split(";")[1].replace(",", "://"),
+                    type: "image"
+                };
+            }
         } else { // 暂不支持的类型
             segment = "";
         }
@@ -518,11 +525,13 @@ function addAt(uid) {
 
 /**
  * 加入表情到输入框
- * @param {number} id 
+ * @param {number} id 表情id
+ * @param {string} src 表情url地址
  */
-function addFace(id) {
-    const cqcode = `[CQ:face,id=${id}]`;
-    addStr2Textarea(cqcode);
+function addFace(id, src) {
+    // const cqcode = `[CQ:face,id=${id}]`;
+    // addStr2Textarea(cqcode);
+    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${src}" cq="face", id="${id}" />`);
 }
 
 /**
@@ -621,7 +630,8 @@ for (let i = 0; i <= 324; ++i) {
         continue;
     }
     ++tmpFaceStep;
-    let html = `<img onclick="addFace(${i})" style="margin:5px;cursor:pointer" width="28" height="28" src="${webview.faces_path + i + ".png"}">`;
+    const src = webview.faces_path + i + ".png";
+    let html = `<img onclick="addFace(${i}, '${src}')" style="margin:5px;cursor:pointer" width="28" height="28" src="${src}">`;
     document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
 }
 
@@ -842,10 +852,6 @@ document.querySelector(".chatinput").addEventListener("paste", async ev => {
     }
     const pasted = await Promise.all(Array.from(ev.clipboardData.items).map(item => {
         if (item.kind !== "file") {
-            // 处理富文本会比较麻烦，交给 textarea 自己去处理吧（
-            // 可是，这样其实有个问题，假如同时复制了交错的文字与图片
-            // 那么顺序将会被打乱 - 首先是 textarea 自己粘贴的文字，之后才是图片
-            // 该怎么办才好呀 qwq
             return Promise.resolve('');
         }
         if (!item.type.startsWith("image/")) {
