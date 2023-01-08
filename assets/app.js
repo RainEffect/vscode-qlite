@@ -228,8 +228,9 @@ function sendMsg_n() {
                     type: "face"
                 };
             } else { // 图片
+                const file = value.currentSrc.startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
                 segment = {
-                    file: value.currentSrc.split(";")[1].replace(",", "://"),
+                    file: file,
                     type: "image"
                 };
             }
@@ -539,8 +540,9 @@ function addFace(id, src) {
  * @param {string} file 
  */
 function addImage(file) {
-    const cqcode = `[CQ:image,file=${file},type=face]`;
-    addStr2Textarea(cqcode);
+    // const cqcode = `[CQ:image,file=${file},type=face]`;
+    // addStr2Textarea(cqcode);
+    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${file}" />`);
 }
 
 function addStr2Textarea(str) {
