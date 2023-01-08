@@ -3,7 +3,12 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 表情还没支持，接着修
+- 美化样式表，优化视觉体验
+
+## [1.2.1] - 2023-01-08
+
+### Added
+- 输入框支持发送qq表情和漫游表情
 
 ## [1.2.0] - 2023-01-08
 
