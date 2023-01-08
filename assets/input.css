@@ -4,10 +4,6 @@
     height: calc(100% - 150px);
 }
 
-.lite-chatbox :last-child {
-    margin-bottom: 20px;
-}
-
 /* 输入框 */
 .lite-chatinput {
     width: 100%;
