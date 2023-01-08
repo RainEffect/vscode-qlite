@@ -3,8 +3,15 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 计划将输入框升级为富文本框，实现输入框中图片的发送和显示
-- 目前测试图片和表情是无法发送的，将会尽快升级恢复功能
+- 表情还没支持，接着修
+
+## [1.2.0] - 2023-01-08
+
+### Added
+- 输入框支持发送粘贴的图片
+
+### Changed
+- 输入框升级为富文本框，可显示粘贴的图片和文字
 
 ## [1.1.4] - 2023-01-08
 

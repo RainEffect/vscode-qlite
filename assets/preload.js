@@ -143,6 +143,7 @@
             + vsc.timestamp(unixstamp);
     };
 
+    // 初始化webview
     window.webview = vsc;
 
 })(window);

@@ -85,11 +85,11 @@ function getChatHistory(param, count = 20) {
         if (!html) {
             return;
         }
-        document.querySelector("#lite-chatbox").insertAdjacentHTML("afterbegin", html);
+        document.querySelector(".lite-chatbox").insertAdjacentHTML("afterbegin", html);
         if (param) {
             window.location.hash = "#" + msgList[0].seq;
         } else {
-            document.querySelector(".content-left").scroll(0, document.querySelector(".content-left").scrollHeight);
+            document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
         }
     });
 }
@@ -102,107 +102,152 @@ const pastedImageBufferSize = 10_000_000;
  */
 const pastedImageMappings = [];
 
-/**
- * 发送消息
- */
-function sendMsg() {
-    let message = `${document.querySelector(".chatinput").textContent}`;
-    if (sending || !message) {
+// /**
+//  * 发送消息
+//  */
+// function sendMsg() {
+//     let message = `${document.querySelector(".chatinput").textContent}`;
+//     if (sending || !message) {
+//         return;
+//     }
+//     sending = true;
+//     document.querySelector(".send").disabled = true;
+
+//     // 把粘贴的图片占位符重新转换为 CQ 码
+//     const splitted = [];
+//     let messageHtml = '';
+//     while (true) {
+//         let begin = Infinity;
+//         /** @type {typeof pastedImageMappings[0]} */
+//         let found;
+//         for (const x of pastedImageMappings) {
+//             const index = message.indexOf(x.placeholder);
+//             if (index !== -1 && index < begin) {
+//                 found = x;
+//                 begin = index;
+//             }
+//         }
+
+//         if (begin === Infinity) {
+//             messageHtml += filterXss(message);
+//             splitted.push(message);
+//             break;
+//         }
+//         const before = message.slice(0, begin);
+
+//         splitted.push(before);
+//         splitted.push(found.cqcode);
+//         message = message.slice(begin + found.placeholder.length);
+
+//         messageHtml += filterXss(before);
+//         messageHtml += `<a href="${found.url}" target="_blank" onmouseenter="previewImage(this)">粘贴的图片</a>`;
+//     }
+//     // 真正的消息，已经把把图片占位符转换成了 CQ 码
+//     const realMessage = splitted.join("");
+
+//     // 计算目前的空间占用，清理比较老的图片
+//     let currentSize = 0;
+//     let clearIndex = pastedImageMappings.length - 1;
+//     for (; clearIndex >= 0; --clearIndex) {
+//         const size = pastedImageMappings[clearIndex].cqcode.length / 4 * 3;
+//         currentSize += size;
+//         if (currentSize >= pastedImageBufferSize) {
+//             break;
+//         }
+//     }
+//     if (clearIndex > 0) {
+//         const removed = pastedImageMappings.splice(0, clearIndex);
+//         for (const { url } of removed) {
+//             URL.revokeObjectURL(url);
+//         }
+//         console.log(`Removed ${removed.length} items`);
+//     }
+
+//     webview.sendMsg(realMessage).then((msgRet) => {
+//         // if (msgRet.retcode > 1) {
+//         //     let msg = msgRet.error?.message;
+//         //     if (msg?.includes("禁言")) {
+//         //         if (ginfo.shutup_time_me * 1000 > Date.now()) {
+//         //             msg += " (至" + webview.datetime(ginfo.shutup_time_me) + ")";
+//         //         } else if (ginfo.shutup_time_whole) {
+//         //             msg += " (全员禁言)";
+//         //         }
+//         //     } else if (msgRet.retcode === 104) {
+//         //         msg = "断线了，发送失败";
+//         //     }
+//         //     document.querySelector("#lite-chatbox").insertAdjacentHTML(
+//         //         "beforeend",
+//         //         `<div class="tips">
+//         //             <span class="tips-danger">Error: ${msg}</span>
+//         //         </div>`
+//         //     );
+//         //     return;
+//         // }
+//         if (webview.c2c && msgRet.seq) {
+//             const html = `<a class="seq" id="${msgRet.seq}"></a>
+//             <div class="cright cmsg">
+//                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
+//                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
+//                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
+//                 </span>
+//                 <span class="content">${messageHtml}</span>
+//             </div>`;
+//             document.querySelector("#lite-chatbox").insertAdjacentHTML("beforeend", html);
+//         }
+//         document.querySelector(".chatinput").textContent = "";
+//         currentTextareaContent = "";
+//     }).catch(() => {
+//         document.querySelector(".chatinput").textContent = "";
+//         currentTextareaContent = "";
+//     }).finally(() => {
+//         sending = false;
+//         document.querySelector(".send").disabled = false;
+//         document.querySelector(".content-left").scroll(0, document.querySelector(".content-left").scrollHeight);
+//     });
+// }
+
+function sendMsg_n() {
+    /** @type {NodeListOf<ChildNode>} */
+    const nodes = document.querySelector(".chatinput").childNodes;
+    if (sending || !nodes) { // 消息正在发送or输入框为空
         return;
     }
     sending = true;
-    document.querySelector(".send").disabled = true;
+    document.querySelector(".send").disabled = true; // 禁用发送按钮
 
-    // 把粘贴的图片占位符重新转换为 CQ 码
-    const splitted = [];
-    let messageHtml = '';
-    while (true) {
-        let begin = Infinity;
-        /** @type {typeof pastedImageMappings[0]} */
-        let found;
-        for (const x of pastedImageMappings) {
-            const index = message.indexOf(x.placeholder);
-            if (index !== -1 && index < begin) {
-                found = x;
-                begin = index;
-            }
+    /** @type {(string | oicq.MessageElem)[]} */
+    const messageList = [];
+    nodes.forEach(value => {
+        let segment;
+        if (value.nodeName === "#text") { // 文字
+            segment = filterXss(value.textContent);
+        } else if (value.nodeName === "IMG") { // 图片
+            segment = {
+                file: value.currentSrc.split(";")[1].replace(",", "://"),
+                type: "image"
+            };
+        } else { // 暂不支持的类型
+            segment = "";
         }
-
-        if (begin === Infinity) {
-            messageHtml += filterXss(message);
-            splitted.push(message);
-            break;
-        }
-        const before = message.slice(0, begin);
-
-        splitted.push(before);
-        splitted.push(found.cqcode);
-        message = message.slice(begin + found.placeholder.length);
-
-        messageHtml += filterXss(before);
-        messageHtml += `<a href="${found.url}" target="_blank" onmouseenter="previewImage(this)">粘贴的图片</a>`;
-    }
-    // 真正的消息，已经把把图片占位符转换成了 CQ 码
-    const realMessage = splitted.join("");
-
-    // 计算目前的空间占用，清理比较老的图片
-    let currentSize = 0;
-    let clearIndex = pastedImageMappings.length - 1;
-    for (; clearIndex >= 0; --clearIndex) {
-        const size = pastedImageMappings[clearIndex].cqcode.length / 4 * 3;
-        currentSize += size;
-        if (currentSize >= pastedImageBufferSize) {
-            break;
-        }
-    }
-    if (clearIndex > 0) {
-        const removed = pastedImageMappings.splice(0, clearIndex);
-        for (const { url } of removed) {
-            URL.revokeObjectURL(url);
-        }
-        console.log(`Removed ${removed.length} items`);
-    }
-
-    webview.sendMsg(realMessage).then((msgRet) => {
-        // if (msgRet.retcode > 1) {
-        //     let msg = msgRet.error?.message;
-        //     if (msg?.includes("禁言")) {
-        //         if (ginfo.shutup_time_me * 1000 > Date.now()) {
-        //             msg += " (至" + webview.datetime(ginfo.shutup_time_me) + ")";
-        //         } else if (ginfo.shutup_time_whole) {
-        //             msg += " (全员禁言)";
-        //         }
-        //     } else if (msgRet.retcode === 104) {
-        //         msg = "断线了，发送失败";
-        //     }
-        //     document.querySelector("#lite-chatbox").insertAdjacentHTML(
-        //         "beforeend",
-        //         `<div class="tips">
-        //             <span class="tips-danger">Error: ${msg}</span>
-        //         </div>`
-        //     );
-        //     return;
-        // }
-        if (webview.c2c && msgRet.seq) {
-            const html = `<a class="seq" id="${msgRet.seq}"></a>
+        messageList.push(segment);
+    });
+    webview.sendMsg(messageList).then(value => {
+        if (value.seq) {
+            html = `<a class="seq" id="${value.seq}"></a>
             <div class="cright cmsg">
                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
                 </span>
-                <span class="content">${messageHtml}</span>
+                <span class="content">${document.querySelector(".chatinput").innerHTML}</span>
             </div>`;
-            document.querySelector("#lite-chatbox").insertAdjacentHTML("beforeend", html);
+            document.querySelector(".lite-chatbox").insertAdjacentHTML("beforeend", html);
         }
-        document.querySelector(".chatinput").textContent = "";
-        currentTextareaContent = "";
-    }).catch(() => {
-        document.querySelector(".chatinput").textContent = "";
-        currentTextareaContent = "";
     }).finally(() => {
         sending = false;
         document.querySelector(".send").disabled = false;
-        document.querySelector(".content-left").scroll(0, document.querySelector(".content-left").scrollHeight);
+        document.querySelector(".chatinput").textContent = "";
+        document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
     });
 }
 
@@ -516,6 +561,7 @@ function insertStr2Textarea(str) {
 
 let currentTextareaContent = "";
 
+// 初始化聊天页面
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="content-left">
         <div class="lite-chatbox" id="lite-chatbox"></div>
@@ -544,7 +590,7 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
             <div class="emoji-box box"></div>
             <span id="insert-pic" class="tool-button" title="也可以直接粘贴图片">🖼️</span>
             <div class="chatinput" contenteditable="true"></div>
-            <button class="send" onclick="sendMsg()">Ctrl+Enter发送</button>
+            <button class="send" onclick="sendMsg_n()">Ctrl+Enter发送</button>
         </div>
     </div>
     <div class="content-right">
@@ -568,7 +614,7 @@ const idShowStampBox = document.querySelector('#show-stamp-box');
 const idShowFaceBox = document.querySelector('#show-face-box');
 const idShowEmojiBox = document.querySelector('#show-emoji-box');
 
-// add face to document
+// 添加qq表情
 let tmpFaceStep = 0;
 for (let i = 0; i <= 324; ++i) {
     if (i === 275 || (i > 247 && i < 260)) {
@@ -672,11 +718,14 @@ document.querySelector("body").addEventListener("click", (e) => {
         };
     }
 });
+
+// 插入图片
 document.querySelector("#insert-pic").addEventListener("click", () => {
     const cqcode = `[CQ:image,file=替换为本地图片或网络URL路径]`;
     addStr2Textarea(cqcode);
 });
 
+// 添加emoji表情
 let tmpEmojiStep = 0;
 function addEmoji2Box(from, to) {
     for (let i = from; i <= to; ++i) {
@@ -755,10 +804,10 @@ function showImage(url, width, height) {
     return img + `">`;
 }
 
-// Ctrl+Enter
+// 键盘Ctrl+Enter
 window.onkeydown = function (event) {
     if (event.ctrlKey && event.keyCode === 13) {
-        sendMsg();
+        sendMsg_n();
     }
 };
 
@@ -788,9 +837,10 @@ document.querySelector(".lite-chatbox").onscroll = function () {
 
 // 粘贴图片
 document.querySelector(".chatinput").addEventListener("paste", async ev => {
-    /** @type {DataTransfer} */
-    const clipboardData = (ev.clipboardData || ev.originalEvent.clipboardData);
-    const pasted = await Promise.all(Array.from(clipboardData.items).map(item => {
+    if (!ev.clipboardData || !ev.clipboardData.items) { // 剪切板无数据
+        return;
+    }
+    const pasted = await Promise.all(Array.from(ev.clipboardData.items).map(item => {
         if (item.kind !== "file") {
             // 处理富文本会比较麻烦，交给 textarea 自己去处理吧（
             // 可是，这样其实有个问题，假如同时复制了交错的文字与图片
