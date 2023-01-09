@@ -1,13 +1,17 @@
-/*!
- * LiteWebChat_Frame v2.1.0
- * MorFans Lab(c) 2017
- *
- * BY:SuperPaxxs & Haswikr
- * https://lab.morfans.cn
- *
- * Released under the LGPL License
- */
-/* 主框架 */
+/* 全局设置 */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+}
+
+/* 聊天区域 */
 .lite-chatbox {
     /* font-family: Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif; */
     padding: 0;
@@ -17,7 +21,6 @@
     overflow-x: hidden;
 }
 
-/* 聊天区域 */
 .lite-chatbox .cmsg {
     position: relative;
     margin: 4px 7px;
@@ -200,16 +203,6 @@
     background-color: #F2BF25
 }
 
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    display: flex;
-}
-
 .lite-chatbox .name b.operation {
     cursor: pointer;
     background-color: var(--vscode-editor-background);
@@ -263,20 +256,6 @@ body {
     padding: 10px;
 } */
 
-/* button#send {
-    margin-right: 10px;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
-    padding-left: 1.5em;
-    padding-right: 1.5em;
-    border-radius: 8px;
-    -webkit-border-radius: 8px;
-    background: var(--vscode-editor-background);
-    color: var(--vscode-editor-foreground);
-    font-weight: bold;
-    font-size: 16px;
-} */
-
 #to-bottom {
     position: absolute;
     bottom: 0;
@@ -285,14 +264,7 @@ body {
     cursor: pointer;
 }
 
-/* #footer {
-    position: sticky;
-    width: 100%;
-    bottom: 0;
-    background-color: var(--vscode-editor-background);
-} */
-
-.box {
+/* .box {
     height: 240px;
     width: 480px;
     overflow-y: auto;
@@ -305,16 +277,7 @@ body {
     padding: 5px;
     border: solid 1px var(--vscode-editor-foreground);
     font-size: 20px;
-}
-
-.stamp-box img {
-    margin: 5px;
-    cursor: pointer;
-    max-width: 68px;
-    max-height: 68px;
-    min-width: 68px;
-    vertical-align: middle;
-}
+} */
 
 .insert-button {
     cursor: pointer;

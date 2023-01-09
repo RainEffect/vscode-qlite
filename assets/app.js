@@ -282,20 +282,20 @@ function genUserMessage(msg) {
     </div>`;
 }
 
-const xssMap = {
-    "&": "&amp;",
-    "\"": "&quot;",
-    "<": "&lt;",
-    ">": "&gt;",
-    " ": "&nbsp;",
-    "\t": "&emsp;",
-};
 
 /**
  * xss过滤
- * @param {string} str 
+ * @param {string} str 要处理的字符串
  */
 function filterXss(str) {
+    const xssMap = {
+        "&": "&amp;",
+        "\"": "&quot;",
+        "<": "&lt;",
+        ">": "&gt;",
+        " ": "&nbsp;",
+        "\t": "&emsp;",
+    };
     str = str.replace(/[&"<>\t ]/g, (s) => {
         return xssMap[s];
     });
@@ -422,19 +422,15 @@ function addAt(uid) {
  * @param {string} src 表情url地址
  */
 function addFace(id, src) {
-    // const cqcode = `[CQ:face,id=${id}]`;
-    // addStr2Textarea(cqcode);
     document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${src}" cq="face", id="${id}" />`);
 }
 
 /**
  * 加入图片到输入框
- * @param {string} file 
+ * @param {string} url 图片url地址
  */
-function addImage(file) {
-    // const cqcode = `[CQ:image,file=${file},type=face]`;
-    // addStr2Textarea(cqcode);
-    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${file}" />`);
+function addImage(url) {
+    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
 }
 
 function addStr2Textarea(str) {
@@ -464,7 +460,9 @@ function insertStr2Textarea(str) {
 
 let currentTextareaContent = "";
 
-// 初始化聊天页面
+const idPreviewElement = document.querySelector("#img-preview");
+
+// 页面框架
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="content-left">
         <div class="lite-chatbox"></div>
@@ -483,15 +481,14 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
                 <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
             </div>
         </div>
+        <div class="lite-chattools">
+            <div style="display:none" class="stamp-box lite-chatbox-tool"></div>
+            <div style="display:none" class="face-box lite-chatbox-tool"></div>
+        </div>
         <div class="lite-chatinput">
             <hr class="boundary">
-            <span id="show-stamp-box" class="tool-button">🧡</span>
-            <div class="stamp-box box"></div>
-            <span id="show-face-box" class="tool-button">😀</span>
-            <div class="face-box box"></div>
-            <span id="show-emoji-box" class="tool-button">颜</span>
-            <div class="emoji-box box"></div>
-            <span id="insert-pic" class="tool-button" title="也可以直接粘贴图片">🖼️</span>
+            <button title="漫游表情" type="button" id="show-stamp-box" class="tool-button">🧡</button>
+            <button title="QQ表情" type="button" id="show-face-box" class="tool-button">😀</button>
             <div class="chatinput" contenteditable="true"></div>
             <button class="send" onclick="sendMsg_n()">Ctrl+Enter发送</button>
         </div>
@@ -512,34 +509,16 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
     </div>`
 );
 
-const idPreviewElement = document.querySelector("#img-preview");
-const idShowStampBox = document.querySelector('#show-stamp-box');
-const idShowFaceBox = document.querySelector('#show-face-box');
-const idShowEmojiBox = document.querySelector('#show-emoji-box');
-
-// 添加qq表情
-let tmpFaceStep = 0;
-for (let i = 0; i <= 324; ++i) {
-    if (i === 275 || (i > 247 && i < 260)) {
-        continue;
-    }
-    ++tmpFaceStep;
-    const src = webview.faces_path + i + ".png";
-    let html = `<img onclick="addFace(${i}, '${src}')" style="margin:5px;cursor:pointer" width="28" height="28" src="${src}">`;
-    document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
-}
-
-// 响应点击事件
+// 全局响应点击事件
 document.querySelector("body").addEventListener("click", (e) => {
+    // 刷新所有弹出的容器
     document.querySelector('.face-box').style.display = 'none';
-    document.querySelector('.emoji-box').style.display = 'none';
     document.querySelector('.stamp-box').style.display = 'none';
     document.querySelector('.menu-msg').style.display = 'none';
     document.querySelector('.menu-member').style.display = 'none';
-    if (e.target === idShowStampBox) {
+    if (e.target === document.querySelector('#show-stamp-box')) { // 漫游表情
         document.querySelector('.stamp-box').style.display = 'block';
-        if (!document.querySelector('.stamp-box img')) {
-            // 添加漫游表情
+        if (!document.querySelector('.stamp-box img')) { // 初始化漫游表情
             webview.getRoamingStamp().then((stampList) => {
                 let tmpStampStep = 0;
                 for (let i = stampList.length - 1; i >= 0; --i) {
@@ -550,11 +529,21 @@ document.querySelector("body").addEventListener("click", (e) => {
                 }
             });
         }
-    } else if (e.target === idShowFaceBox) {
+    } else if (e.target === document.querySelector('#show-face-box')) { // QQ表情
         document.querySelector('.face-box').style.display = 'block';
-    } else if (e.target === idShowEmojiBox) {
-        document.querySelector('.emoji-box').style.display = 'block';
-    } else if (e.target.classList.contains("operation")) {
+        if (!document.querySelector(".face-box img")) { // 初始化QQ表情
+            let tmpFaceStep = 0;
+            for (let i = 0; i < 325; ++i) {
+                if (i === 275 || (i > 247 && i < 260)) {
+                    continue;
+                }
+                ++tmpFaceStep;
+                const src = webview.faces_path + i + ".png";
+                let html = `<img onclick="addFace(${i}, '${src}')" style="margin: 5px; cursor: pointer" width="28" height="28" src="${src}">`;
+                document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
+            }
+        }
+    } else if (e.target.classList.contains("operation")) { // 更多
         const seq = e.target.parentNode.parentNode.previousElementSibling.id;
         document.querySelector('.menu-msg').style.left = e.target.getBoundingClientRect().x + 12 + "px";
         document.querySelector('.menu-msg').style.top = e.target.getBoundingClientRect().y + "px";
@@ -623,30 +612,30 @@ document.querySelector("body").addEventListener("click", (e) => {
     }
 });
 
-// 插入图片
-document.querySelector("#insert-pic").addEventListener("click", () => {
-    const cqcode = `[CQ:image,file=替换为本地图片或网络URL路径]`;
-    addStr2Textarea(cqcode);
-});
+// // 插入图片
+// document.querySelector("#insert-pic").addEventListener("click", () => {
+//     const cqcode = `[CQ:image,file=替换为本地图片或网络URL路径]`;
+//     addStr2Textarea(cqcode);
+// });
 
-// 添加emoji表情
-let tmpEmojiStep = 0;
-function addEmoji2Box(from, to) {
-    for (let i = from; i <= to; ++i) {
-        ++tmpEmojiStep;
-        let str = String.fromCodePoint(i);
-        let html = `<span onclick="addStr2Textarea('${str}')" style="cursor:pointer">` + str + "</span>";
-        document.querySelector('.emoji-box').insertAdjacentHTML("beforeend", html);
-    }
-}
-addEmoji2Box(0x1F600, 0x1F64F);
-addEmoji2Box(0x1F90D, 0x1F945);
-addEmoji2Box(0x1F400, 0x1F4FF);
-addEmoji2Box(0x1F300, 0x1F320);
-addEmoji2Box(0x1F32D, 0x1F394);
-addEmoji2Box(0x1F3A0, 0x1F3FA);
-addEmoji2Box(0x1F680, 0x1F6C5);
-addEmoji2Box(0x1F004, 0x1F004);
+// // 添加emoji表情
+// let tmpEmojiStep = 0;
+// function addEmoji2Box(from, to) {
+//     for (let i = from; i <= to; ++i) {
+//         ++tmpEmojiStep;
+//         let str = String.fromCodePoint(i);
+//         let html = `<span onclick="addStr2Textarea('${str}')" style="cursor:pointer">` + str + "</span>";
+//         document.querySelector('.emoji-box').insertAdjacentHTML("beforeend", html);
+//     }
+// }
+// addEmoji2Box(0x1F600, 0x1F64F);
+// addEmoji2Box(0x1F90D, 0x1F945);
+// addEmoji2Box(0x1F400, 0x1F4FF);
+// addEmoji2Box(0x1F300, 0x1F320);
+// addEmoji2Box(0x1F32D, 0x1F394);
+// addEmoji2Box(0x1F3A0, 0x1F3FA);
+// addEmoji2Box(0x1F680, 0x1F6C5);
+// addEmoji2Box(0x1F004, 0x1F004);
 
 /**
  * 图片预览
