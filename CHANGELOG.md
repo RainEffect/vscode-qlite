@@ -3,9 +3,16 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 群系统消息的支持待修复
+- 处理对方发送的各种类型的消息并显示
+- vscode侧边栏计划添加更多功能（删除多余的消息等）
 
-## [1.2.4] - 2024-01-09
+## [1.2.5] - 2023-01-09
+
+### Fixed
+- 修复通知提示功能
+- 修复群聊发送消息重复显示的问题
+
+## [1.2.4] - 2023-01-09
 
 ### Fixed
 - 修复输入框粘贴html格式文本时带格式粘贴导致无法发送消息的问题
