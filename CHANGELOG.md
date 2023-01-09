@@ -3,8 +3,21 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 美化样式表，优化视觉体验
 - 群系统消息还有bug，目前无法正常显示
+- 输入框粘贴功能还有些缺陷，只有 **纯文本** 和 **图片** 以及二者的组合能成功发送，直接粘贴其他地方的文字会附带html格式，暂未支持相关元素的解析功能
+
+## [1.2.3] - 2023-01-09
+
+### Added
+- 添加输入框按钮的交互效果
+- 现在通过拖动分割线可以改变两个容器的显示比例
+
+### Changed
+- 美化表情工具栏的显示效果
+
+### Removed
+- 移除emoji工具栏
+- 移除粘贴图片工具栏（通过`ctrl+v`直接粘贴）
 
 ## [1.2.2] - 2023-01-09
 
