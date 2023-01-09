@@ -274,7 +274,7 @@ function genUserMessage(msg) {
         <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}" />
         <span class="name" uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
             ${webview.c2c ? "" : '<b class="operation">...</b>'}
-            ${title} ${name} ${webview.timestamp(msg.time)}
+            ${title} ${webview.c2c ? "" : name} ${webview.timestamp(msg.time)}
         </span>
         <span class="content">${parseMessage(msg.message)}</span>
     </div>`;
