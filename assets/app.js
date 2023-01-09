@@ -486,7 +486,7 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
             <div style="display:none" class="face-box lite-chatbox-tool"></div>
         </div>
         <div class="lite-chatinput">
-            <hr class="boundary">
+            <hr class="boundary" />
             <button title="漫游表情" type="button" id="show-stamp-box" class="tool-button">🧡</button>
             <button title="QQ表情" type="button" id="show-face-box" class="tool-button">😀</button>
             <div class="chatinput" contenteditable="true"></div>
@@ -761,6 +761,30 @@ document.querySelector(".chatinput").addEventListener("paste", async ev => {
     const text = pasted.join("");
     insertStr2Textarea(text);
 });
+
+
+// 鼠标拖动分割线时
+document.querySelector(".boundary").onmousedown = (mouseEvent) => {
+    const dy = mouseEvent.clientY;
+    const upperHeight = document.querySelector(".lite-chatbox").offsetHeight;
+    const downHeight = document.querySelector(".lite-chatinput").offsetHeight;
+    document.onmousemove = (ev) => {
+        const diff = ev.clientY - dy; // 移动的距离（上移为负，下移为正）
+        if (100 < (upperHeight + diff) && 100 < (downHeight - diff)) { // 两个div的最小高度都为100px
+            document.querySelector(".lite-chatbox").style.height = `calc(100% - ${downHeight - diff}px)`;
+            document.querySelector(".lite-chatinput").style.height = (downHeight - diff) + "px";
+            document.querySelectorAll(".lite-chatbox-tool").forEach((element) => {
+                element.style.bottom = document.querySelector(".lite-chatinput").clientHeight + "px";
+            });
+        }
+        // 鼠标释放
+        document.onmouseup = () => {
+            document.onmousedown = null;
+            document.onmousemove = null;
+        };
+    };
+};
+
 
 function showModalDialog(title, cb) {
     document.querySelector(".modal-title").innerHTML = title;
