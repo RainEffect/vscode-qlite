@@ -24,14 +24,15 @@ webview.on("notice", (event) => {
     appendMsg(genSystemMessage(event.detail));
 });
 
+/**
+ * 将html格式的新消息字符串添加到聊天窗口末尾
+ * @param {string} msg html格式的新消息
+ */
 function appendMsg(msg) {
-    if (document.querySelector(".content-left").scrollTop + document.querySelector(".content-left").offsetHeight + 100 > document.querySelector(".content-left").scrollHeight) {
-        var flag = 1;
-    }
-    document.querySelector("#lite-chatbox").insertAdjacentHTML("beforeend", msg);
-    if (flag) {
-        document.querySelector(".content-left").scroll(0, document.querySelector(".content-left").scrollHeight);
-    }
+    const chatbox = document.querySelector(".lite-chatbox");
+    chatbox.insertAdjacentHTML("beforeend", msg);
+    // 窗口滑动到底部
+    chatbox.scroll(0, chatbox.scrollHeight);
 }
 
 /**
@@ -69,19 +70,14 @@ function getChatHistory(param, count = 20) {
     webview.getChatHistory(param, count).then((msgList) => {
         let html = "";
         let msgMark = [];
-        for (let msg of msgList) {
-            if (webview.c2c) { // 私聊以time为标识
-                if (!msgMark.includes(msg.time)) {
-                    msgMark.push(msg.time);
-                    html += genUserMessage(msg);
-                }
-            } else { // 群聊以seq为标识
-                if (!msgMark.includes(msg.seq)) {
-                    msgMark.push(msg.seq);
-                    html += genUserMessage(msg);
-                }
+        msgList.forEach((msg) => {
+            // 私聊以time为标识，群聊以seq为标识
+            const mark = webview.c2c ? msg.time : msg.seq;
+            if (!msgMark.includes(mark)) {
+                msgMark.push(mark);
+                html += genUserMessage(msg);
             }
-        }
+        });
         if (!html) {
             return;
         }
@@ -137,8 +133,7 @@ function sendMsg_n() {
     });
     webview.sendMsg(messageList).then(value => {
         if (value.seq) {
-            html = `<a class="seq" id="${value.seq}"></a>
-            <div class="cright cmsg">
+            html = `<div class="cright cmsg", id="${value.seq}">
                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
@@ -275,8 +270,7 @@ function genUserMessage(msg) {
         }
         name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
-    return `<a class="seq" id="${msg.seq}"></a>
-    <div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg">
+    return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="${msg.seq}">
         <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}" />
         <span class="name" uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
             ${webview.c2c ? "" : '<b class="operation">...</b>'}
@@ -471,7 +465,7 @@ let currentTextareaContent = "";
 // 初始化聊天页面
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="content-left">
-        <div class="lite-chatbox" id="lite-chatbox"></div>
+        <div class="lite-chatbox"></div>
         <img id="img-preview" style="z-index: 999;">
         <div class="menu-msg">
             <div class="menu-msg-reply">回复</div>
