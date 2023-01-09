@@ -154,78 +154,70 @@ function sendMsg_n() {
 
 /**
  * 生成系统消息
- * @param {import("oicq").GroupNoticeEvent | import("oicq").FriendNoticeEvent} event 
+ * @param {import("oicq").GroupNoticeEvent | import("oicq").FriendNoticeEvent} event 系统消息事件
  */
 function genSystemMessage(event) {
     let msg = "";
-    if (event.notice_type === "friend") {
+    if (event.notice_type === "friend") { // 私聊通知
         switch (event.sub_type) {
-            case "poke":
-                msg = `${event.operator_id} ${event.action} ${event.target_id} ${event.suffix}`;
+            case "poke": // 戳一戳
+                msg = `<span class="tips-info">${event.nickname} ${event.action} ${webview.nickname} ${event.suffix}</span>`;
                 break;
-            case "recall":
-                msg = `<span class="tips-private">${event.nickname} 撤回了 <a href="#${event.seq}">一条消息</a></span>`;
+            case "recall": // 撤回（仅通知，消息不删除）
+                msg = `<span class="tips-private">${event.nickname} 撤回了 <a href="#${event.seq}" onclick="document.getElementById(${event.seq}).animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</a></span>`;
                 break;
         }
-    } else if (event.notice_type === "group") {
-        switch (typeof event) {
-            case oicq.GroupRecallEvent:
-                msg = `${genLabel(event.operator_id)} 撤回了 ${event.user_id === event.operator_id ? "自己" : genLabel(event.user_id)} 的<a href="#${event.seq}" onclick="document.getElementById(${seq})?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</>`;
-                appendRecalledText(event.seq);
+    } else if (event.notice_type === "group") { // 群聊通知
+        switch (event.sub_type) {
+            case "recall": // 撤回（仅通知，消息不删除）
+                msg = `<span class="tips-private">${genLabel(event.operator_id)} 撤回了 ${event.user_id === event.operator_id ? "自己" : genLabel(event.user_id)} 的<a href="#${event.seq}" onclick="document.getElementById(${event.seq}).animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</a></span>`;
                 break;
-            case oicq.GroupIncreaseEvent:
-                msg = `${filterXss(event.nickname)}(${event.user_id}) 加入了群聊`;
+            case "increase": // 群友加群
                 updateMemberList();
+                msg = `<span class="tips-success">${genLabel(event.user_id)} 加入了群聊</span>`;
                 break;
-            case oicq.MemberDecreaseEvent:
-                if (event.dismiss) {
-                    msg = `该群已被解散`;
+            case "decrease": // 群友退群
+                if (event.dismiss) { // 群解散
+                    msg = `<span class="tips-danger">该群已被解散</span>`;
                     break;
                 }
                 if (event.operator_id === event.user_id) {
-                    msg = `${genLabel(event.user_id)} 退出了群聊`;
+                    msg = `<span class="tips-warning">${genLabel(event.user_id)} 退出了群聊</span>`;
                 } else {
-                    msg = `${genLabel(event.operator_id)} 踢出了 ${genLabel(event.user_id)}`;
+                    msg = `<span class="tips-warning">${genLabel(event.operator_id)} 踢出了 ${genLabel(event.user_id)}</span>`;
                 }
                 updateMemberList();
                 break;
-            case oicq.GroupAdminEvent:
-                msg = `${genLabel(event.user_id)} ${event.set ? "成为了" : "被取消了"}管理员`;
+            case "admin": // 管理员变更
+                msg = `<span class="tips-info">${genLabel(event.user_id)} ${event.set ? "成为了" : "被取消了"}管理员</span>`;
                 updateMemberList();
                 break;
-            case oicq.GroupTransferEvent:
-                msg = `${genLabel(event.operator_id)} 将群主转让给了 ${genLabel(event.user_id)}`;
+            case "transfer": // 群主转让
+                msg = `<span class="tips-info">${genLabel(event.operator_id)} 将群主转让给了 ${genLabel(event.user_id)}</span>`;
                 updateMemberList();
                 break;
-            case oicq.GroupMuteEvent:
+            case "ban": // 禁言
                 if (event.user_id > 0) {
-                    msg = `${genLabel(event.operator_id)} 禁言 ${event.user_id === 80000000 ? "匿名用户(" + event.nickname + ")" : genLabel(event.user_id)} ${~~(event.duration / 60)}分钟`;
+                    msg = `<span class="tips-danger">${genLabel(event.operator_id)} 禁言 ${event.user_id === 80000000 ? "匿名用户(" + event.nickname + ")" : genLabel(event.user_id)} ${~~(event.duration / 60)}分钟</span>`;
                 } else {
-                    msg = `${genLabel(event.operator_id)} ${event.duration > 0 ? "开启" : "关闭"}了全员禁言`;
+                    msg = `<span class="tips-info">${genLabel(event.operator_id)} ${event.duration > 0 ? "开启" : "关闭"}了全员禁言</span>`;
                 }
                 updateMemberList();
                 break;
-            case oicq.GroupPokeEvent:
-                msg = `${genLabel(event.operator_id)} ${event.action} ${genLabel(event.user_id)} ${event.suffix}`;
+            case "poke": // 戳一戳
+                msg = `<span class="tips-info">${genLabel(event.operator_id)} ${event.action} ${genLabel(event.user_id)} ${event.suffix}</span>`;
                 break;
-            // case "setting":
-            //     if (event.group_name) {
-            //         msg = `群名已变更为 ` + event.group_name;
-            //     }
-            //     break;
         }
     }
     if (!msg) {
         return "";
     }
-    return `<div class="tips" title="${webview.datetime(event.time)}">
-        <span>${msg}</span>
-    </div>`;
+    return `<div class="tips" title="${webview.datetime(event.time)}">${msg}</div>`;
 }
 
 /**
- * 生成标签
- * @param {number} user_id 
+ * 生成目标标签
+ * @param {number} user_id 目标id
  */
 function genLabel(user_id) {
     const member = members?.get(user_id);
@@ -242,15 +234,6 @@ function genLabel(user_id) {
  */
 function filterMsgIdSelector(message_id) {
     return message_id.replace(/\//g, "\\/").replace(/\=/g, "\\=").replace(/\+/g, "\\+");
-}
-
-/**
- * 撤回消息通知
- * @param {number} seq 消息序列号
- * @param {string} nickname 撤回消息的好友/群友的昵称
- */
-function appendRecalledText(seq, nickname) {
-    document.querySelector("a[id=" + seq + "]+div span")?.append(" (已撤回)");
 }
 
 /**
