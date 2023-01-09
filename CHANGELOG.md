@@ -4,6 +4,19 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 - 美化样式表，优化视觉体验
+- 群系统消息还有bug，目前无法正常显示
+
+## [1.2.2] - 2023-01-09
+
+### Added
+- 当浏览历史聊天记录（窗口离底部有一段距离）时收到新消息不再滑动窗口到底部
+- 上划获取历史记录时将停留在当前记录位置
+
+### Changed
+- 将消息的序列号信息合并到消息块中，减少页面冗余
+
+### Fixed
+- 修复私聊时聊天界面显示昵称的问题
 
 ## [1.2.1] - 2023-01-08
 

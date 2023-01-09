@@ -82,11 +82,12 @@ function getChatHistory(param, count = 20) {
         if (!html) {
             return;
         }
-        document.querySelector(".lite-chatbox").insertAdjacentHTML("afterbegin", html);
+        const chatbox = document.querySelector(".lite-chatbox");
+        chatbox.insertAdjacentHTML("afterbegin", html);
         if (param) { // 上划获取历史记录，窗口停留在加载消息处
             window.location.hash = "#" + msgList[msgList.length - 1].seq;
         } else { // 初次加载历史记录，窗口滑动到底部
-            document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
+            chatbox.scroll(0, chatbox.scrollHeight);
         }
     });
 }
