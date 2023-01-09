@@ -24,7 +24,7 @@
 }
 
 /* 输入框 */
-.lite-chatinput .chatinput {
+.lite-chatinput .inputcontent {
     position: relative;
     clear: both;
     overflow: auto;
@@ -54,6 +54,7 @@
 
 .lite-chatinput .send:hover {
     background-color: var(--vscode-button-hoverBackground);
+    cursor: pointer;
 }
 
 /* 输入框上方的输入表情等功能按钮 */
@@ -67,6 +68,7 @@
 
 .lite-chatinput .tool-button:hover {
     background: var(--vscode-button-secondaryHoverBackground);
+    cursor: pointer;
 }
 
 .lite-chatinput .tool-button:active {
