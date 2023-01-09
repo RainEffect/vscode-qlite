@@ -134,11 +134,11 @@ function sendMsg_n() {
         messageList.push(segment);
     });
     webview.sendMsg(messageList).then(value => {
-        if (value.seq) {
+        if (value.seq && webview.c2c) {
             html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
-                    ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
+                    ${webview.timestamp()}
                 </span>
                 <span class="content">${document.querySelector(".inputcontent").innerHTML}</span>
             </div>`;
