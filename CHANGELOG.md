@@ -3,8 +3,12 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 群系统消息还有bug，目前无法正常显示
-- 输入框粘贴功能还有些缺陷，只有 **纯文本** 和 **图片** 以及二者的组合能成功发送，直接粘贴其他地方的文字会附带html格式，暂未支持相关元素的解析功能
+- 群系统消息的支持待修复
+
+## [1.2.4] - 2024-01-09
+
+### Fixed
+- 修复输入框粘贴html格式文本时带格式粘贴导致无法发送消息的问题
 
 ## [1.2.3] - 2023-01-09
 
