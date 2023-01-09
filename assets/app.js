@@ -102,7 +102,7 @@ const pastedImageMappings = [];
 
 function sendMsg_n() {
     /** @type {NodeListOf<ChildNode>} */
-    const nodes = document.querySelector(".chatinput").childNodes;
+    const nodes = document.querySelector(".inputcontent").childNodes;
     if (sending || !nodes) { // 消息正在发送or输入框为空
         return;
     }
@@ -140,14 +140,14 @@ function sendMsg_n() {
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
                 </span>
-                <span class="content">${document.querySelector(".chatinput").innerHTML}</span>
+                <span class="content">${document.querySelector(".inputcontent").innerHTML}</span>
             </div>`;
             document.querySelector(".lite-chatbox").insertAdjacentHTML("beforeend", html);
         }
     }).finally(() => {
         sending = false;
         document.querySelector(".send").disabled = false;
-        document.querySelector(".chatinput").textContent = "";
+        document.querySelector(".inputcontent").textContent = "";
         document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
     });
 }
@@ -422,7 +422,7 @@ function addAt(uid) {
  * @param {string} src 表情url地址
  */
 function addFace(id, src) {
-    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${src}" cq="face", id="${id}" />`);
+    document.querySelector(".inputcontent").insertAdjacentHTML("beforeend", `<img src="${src}" cq="face", id="${id}" />`);
 }
 
 /**
@@ -430,23 +430,23 @@ function addFace(id, src) {
  * @param {string} url 图片url地址
  */
 function addImage(url) {
-    document.querySelector(".chatinput").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
+    document.querySelector(".inputcontent").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
 }
 
 function addStr2Textarea(str) {
     currentTextareaContent += str;
-    document.querySelector(".chatinput").value = currentTextareaContent;
-    document.querySelector(".chatinput").focus();
+    document.querySelector(".inputcontent").value = currentTextareaContent;
+    document.querySelector(".inputcontent").focus();
 }
 
 function setTextareaText(str) {
     currentTextareaContent = str;
-    document.querySelector(".chatinput").value = currentTextareaContent;
-    document.querySelector(".chatinput").focus();
+    document.querySelector(".inputcontent").value = currentTextareaContent;
+    document.querySelector(".inputcontent").focus();
 }
 
 function insertStr2Textarea(str) {
-    const textArea = document.querySelector(".chatinput");
+    const textArea = document.querySelector(".inputcontent");
     if (textArea.selectionStart || textArea.selectionStart === '0') {
         const begin = textArea.selectionStart;
         const end = textArea.selectionEnd || textArea.selectionStart;
@@ -489,7 +489,7 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
             <hr class="boundary" />
             <button title="漫游表情" type="button" id="show-stamp-box" class="tool-button">🧡</button>
             <button title="QQ表情" type="button" id="show-face-box" class="tool-button">😀</button>
-            <div class="chatinput" contenteditable="true"></div>
+            <div class="inputcontent" contenteditable="true"></div>
             <button class="send" onclick="sendMsg_n()">Ctrl+Enter发送</button>
         </div>
     </div>
@@ -612,31 +612,6 @@ document.querySelector("body").addEventListener("click", (e) => {
     }
 });
 
-// // 插入图片
-// document.querySelector("#insert-pic").addEventListener("click", () => {
-//     const cqcode = `[CQ:image,file=替换为本地图片或网络URL路径]`;
-//     addStr2Textarea(cqcode);
-// });
-
-// // 添加emoji表情
-// let tmpEmojiStep = 0;
-// function addEmoji2Box(from, to) {
-//     for (let i = from; i <= to; ++i) {
-//         ++tmpEmojiStep;
-//         let str = String.fromCodePoint(i);
-//         let html = `<span onclick="addStr2Textarea('${str}')" style="cursor:pointer">` + str + "</span>";
-//         document.querySelector('.emoji-box').insertAdjacentHTML("beforeend", html);
-//     }
-// }
-// addEmoji2Box(0x1F600, 0x1F64F);
-// addEmoji2Box(0x1F90D, 0x1F945);
-// addEmoji2Box(0x1F400, 0x1F4FF);
-// addEmoji2Box(0x1F300, 0x1F320);
-// addEmoji2Box(0x1F32D, 0x1F394);
-// addEmoji2Box(0x1F3A0, 0x1F3FA);
-// addEmoji2Box(0x1F680, 0x1F6C5);
-// addEmoji2Box(0x1F004, 0x1F004);
-
 /**
  * 图片预览
  * @param {Element} obj 
@@ -713,7 +688,7 @@ document.querySelector(".lite-chatbox").onscroll = () => {
 };
 
 //表情、图片拖动
-// document.querySelector(".chatinput").oninput = function () {
+// document.querySelector(".inputcontent").oninput = function () {
 //     const content = this.value;
 //     const diff = content.substr(currentTextareaContent.length);
 //     if (diff.startsWith(webview.faces_path)) {
@@ -729,39 +704,35 @@ document.querySelector(".lite-chatbox").onscroll = () => {
 //     }
 // };
 
-// 粘贴图片
-document.querySelector(".chatinput").addEventListener("paste", async ev => {
+// 在文本框中粘贴时
+document.querySelector(".inputcontent").onpaste = (ev) => {
     if (!ev.clipboardData || !ev.clipboardData.items) { // 剪切板无数据
         return;
     }
-    const pasted = await Promise.all(Array.from(ev.clipboardData.items).map(item => {
-        if (item.kind !== "file") {
-            return Promise.resolve('');
+    // 禁用链接
+    ev.preventDefault();
+    Array.from(ev.clipboardData.items).map((item) => {
+        if (item.kind === "string") { // 字符串类型
+            if (item.type === "text/plain") { // 只粘贴纯文本
+                item.getAsString((str) => {
+                    document.querySelector(".inputcontent").insertAdjacentText("beforeend", str);
+                });
+            }
+        } else if (item.kind === "file") { // 文件类型
+            if (item.type.startsWith("image/")) { // 图片
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.src = reader.result;
+                    document.querySelector(".inputcontent").insertAdjacentElement("beforeend", img);
+                };
+                reader.readAsDataURL(item.getAsFile());
+            }
+        } else { // 其他类型
+            reject(new Error("unsupported type!"));
         }
-        if (!item.type.startsWith("image/")) {
-            return Promise.resolve(`（暂不支持的文件类型：${item.type}）`);
-        }
-
-        return new Promise((resolve, reject) => {
-            const blob = item.getAsFile();
-            const url = URL.createObjectURL(blob);
-
-            const reader = new FileReader();
-            reader.onload = () => {
-                const base64 = reader.result.split(",")[1];
-                const cqcode = `[CQ:image,file=base64://${base64}]`;
-                const placeholder = `[粘贴的图片 ${url}]`;
-                pastedImageMappings.push({ placeholder, cqcode, url });
-                resolve(placeholder);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    }));
-    const text = pasted.join("");
-    insertStr2Textarea(text);
-});
-
+    });
+};
 
 // 鼠标拖动分割线时
 document.querySelector(".boundary").onmousedown = (mouseEvent) => {
@@ -784,7 +755,6 @@ document.querySelector(".boundary").onmousedown = (mouseEvent) => {
         };
     };
 };
-
 
 function showModalDialog(title, cb) {
     document.querySelector(".modal-title").innerHTML = title;
