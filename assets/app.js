@@ -31,8 +31,9 @@ webview.on("notice", (event) => {
 function appendMsg(msg) {
     const chatbox = document.querySelector(".lite-chatbox");
     chatbox.insertAdjacentHTML("beforeend", msg);
-    // 窗口滑动到底部
-    chatbox.scroll(0, chatbox.scrollHeight);
+    if (chatbox.scrollHeight - chatbox.scrollTop < chatbox.clientHeight * 1.5) { // 浏览历史记录时收到新消息不滑动窗口
+        chatbox.scroll(0, chatbox.scrollHeight);
+    }
 }
 
 /**
@@ -82,9 +83,9 @@ function getChatHistory(param, count = 20) {
             return;
         }
         document.querySelector(".lite-chatbox").insertAdjacentHTML("afterbegin", html);
-        if (param) {
-            window.location.hash = "#" + msgList[0].seq;
-        } else {
+        if (param) { // 上划获取历史记录，窗口停留在加载消息处
+            window.location.hash = "#" + msgList[msgList.length - 1].seq;
+        } else { // 初次加载历史记录，窗口滑动到底部
             document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
         }
     });
@@ -133,7 +134,7 @@ function sendMsg_n() {
     });
     webview.sendMsg(messageList).then(value => {
         if (value.seq) {
-            html = `<div class="cright cmsg", id="${value.seq}">
+            html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.c2c ? "" : webview.nickname} ${webview.timestamp()}
@@ -252,7 +253,7 @@ function appendRecalledText(seq) {
 
 /**
  * 生成一般消息
- * @param {import("oicq").PrivateMessage | import("oicq").GroupMessage} msg
+ * @param {import("oicq").PrivateMessage | import("oicq").GroupMessage} msg 私聊/群聊消息
  */
 function genUserMessage(msg) {
     if (document.getElementById(msg.seq)) { // 重复消息
@@ -270,7 +271,7 @@ function genUserMessage(msg) {
         }
         name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
-    return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="${msg.seq}">
+    return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="${msg.seq}", time="${msg.time}">
         <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}" />
         <span class="name" uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
             ${webview.c2c ? "" : '<b class="operation">...</b>'}
@@ -713,10 +714,11 @@ window.onkeydown = function (event) {
     }
 };
 
-//滚动到顶部加载消息
-document.querySelector(".lite-chatbox").onscroll = function () {
+// 滚动到顶部加载消息
+document.querySelector(".lite-chatbox").onscroll = () => {
     if (document.querySelector(".lite-chatbox").scrollTop === 0) {
-        getChatHistory(document.querySelector(".seq")?.attributes.id.value ?? "");
+        const nodeMap = document.querySelector(".cmsg")?.attributes;
+        getChatHistory((webview.c2c ? nodeMap.time.value : nodeMap.id.value) ?? "");
     }
 };
 
