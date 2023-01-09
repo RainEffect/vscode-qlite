@@ -158,17 +158,16 @@ function sendMsg_n() {
  */
 function genSystemMessage(event) {
     let msg = "";
-    if (event instanceof import("oicq").FriendNoticeEvent) {
-        switch (typeof event) {
-            case oicq.FriendPokeEvent:
+    if (event.notice_type === "friend") {
+        switch (event.sub_type) {
+            case "poke":
                 msg = `${event.operator_id} ${event.action} ${event.target_id} ${event.suffix}`;
                 break;
-            case oicq.FriendRecallEvent:
-                msg = `有人想撤回 <a href="#${event.seq}">一条消息</>`;
-                appendRecalledText(event.seq);
+            case "recall":
+                msg = `<span class="tips-private">${event.nickname} 撤回了 <a href="#${event.seq}">一条消息</a></span>`;
                 break;
         }
-    } else if (event instanceof import("oicq").GroupNoticeEvent) {
+    } else if (event.notice_type === "group") {
         switch (typeof event) {
             case oicq.GroupRecallEvent:
                 msg = `${genLabel(event.operator_id)} 撤回了 ${event.user_id === event.operator_id ? "自己" : genLabel(event.user_id)} 的<a href="#${event.seq}" onclick="document.getElementById(${seq})?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</>`;
@@ -219,7 +218,7 @@ function genSystemMessage(event) {
     if (!msg) {
         return "";
     }
-    return `<div class="tips" title="${weview.datetime(event.time)}">
+    return `<div class="tips" title="${webview.datetime(event.time)}">
         <span>${msg}</span>
     </div>`;
 }
@@ -246,9 +245,11 @@ function filterMsgIdSelector(message_id) {
 }
 
 /**
- * @param {number} seq 
+ * 撤回消息通知
+ * @param {number} seq 消息序列号
+ * @param {string} nickname 撤回消息的好友/群友的昵称
  */
-function appendRecalledText(seq) {
+function appendRecalledText(seq, nickname) {
     document.querySelector("a[id=" + seq + "]+div span")?.append(" (已撤回)");
 }
 

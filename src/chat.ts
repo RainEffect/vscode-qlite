@@ -124,7 +124,7 @@ function bind() {
         webviewMap.get(true)?.get(target_id)?.webview.postMessage(event);
     });
     Global.client.on("notice.friend", (event) => {
-        webviewMap.get(true)?.get(event.user_id)?.webview.postMessage(event);
+        webviewMap.get(true)?.get(event.user_id)?.webview.postMessage({...event, nickname: event.friend.nickname});
     });
     Global.client.on("notice.group", (event) => {
         webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
