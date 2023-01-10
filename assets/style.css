@@ -84,6 +84,7 @@ body {
     font-size: 15px;
     padding: 10px 15px;
     line-height: 20px;
+    white-space: pre-wrap;
     /* 空白消息 */
     min-width: 9px;
     min-height: 18px;
@@ -149,7 +150,6 @@ body {
 /* 左右聊天气泡 */
 .lite-chatbox .cright .content {
     margin: 0 48px 0 0;
-    -webkit-border-radius: 20px 0 20px 20px;
     border-radius: 20px 0 20px 20px;
     border: 2px solid var(--vscode-quickInputTitle-background);
     background: var(--vscode-sideBar-background);
@@ -157,7 +157,6 @@ body {
 
 .lite-chatbox .cleft .content {
     margin: 0 0 0 48px;
-    -webkit-border-radius: 0 20px 20px 20px;
     border-radius: 0 20px 20px 20px;
     border: 2px solid var(--vscode-quickInputTitle-background);
     background: var(--vscode-sideBar-background);
@@ -214,19 +213,16 @@ body {
     background-color: var(--vscode-focusBorder);
 }
 
-.lite-chatbox .content img.face {
+/* 表情 */
+.face {
     width: 28px;
     height: 28px;
 }
 
-.lite-chatbox .content a {
+/* .lite-chatbox .content a {
     text-decoration: none;
-}
-
-.lite-chatbox .cmsg {
-    margin: 10px 15px;
-}
-
+} */
+/* 
 .lite-chatbox .cleft .content {
     border-radius: 0 10px 10px 10px;
     font-size: 14px;
@@ -237,7 +233,7 @@ body {
     border-radius: 10px 0px 10px 10px;
     font-size: 14px;
     padding: 8px 15px;
-}
+} */
 
 #img-preview {
     position: fixed;
