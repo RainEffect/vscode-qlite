@@ -3,8 +3,24 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- 处理对方发送的各种类型的消息并显示
 - vscode侧边栏计划添加更多功能（删除多余的消息等）
+
+## [1.2.6] - 2023-01-10
+
+### Changed
+- 优化表情栏的显示效果
+
+### Fixed
+- 修复群聊中的at功能，现在能通过
+
+  - 点击其他人消息中的at链接
+  - 点击头像旁的`...`，在选项框中选择`@AT`
+  - 双击消息中的昵称
+  
+  来at其他人
+
+### Removed
+- 由于oicq已弃用回复消息的功能，因此本扩展也删除了该功能
 
 ## [1.2.5] - 2023-01-09
 
