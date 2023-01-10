@@ -16,6 +16,12 @@ let members = new Map;
  */
 let ginfo;
 
+/**
+ * 私聊好友信息
+ * @type {import("oicq").FriendInfo}
+ */
+let friend;
+
 // 监听消息和通知
 webview.on("message", (event) => {
     appendMsg(genUserMessage(event.detail));
@@ -63,8 +69,17 @@ function updateMemberList() {
 }
 
 /**
+ * 获取好友信息
+ */
+function updateFriendInfo() {
+    webview.getSimpleInfo().then((value) => {
+        friend = value;
+    });
+}
+
+/**
  * 获取历史聊天记录
- * @param {number} param 群聊为序号，默认从最后一条发言往前；私聊为时间，默认从当前时间往前
+ * @param {number | undefined} param 群聊为序号，默认从最后一条发言往前；私聊为时间，默认从当前时间往前
  * @param {number} count 获取的条数
  */
 function getChatHistory(param, count = 20) {
@@ -94,15 +109,13 @@ function getChatHistory(param, count = 20) {
 
 // 发送状态
 let sending = false;
-const pastedImageBufferSize = 10_000_000;
-/**
- * @type {{ placeholder: string, cqcode: string, url: string }[]}
- */
-const pastedImageMappings = [];
 
-function sendMsg_n() {
+/**
+ * 发送消息时调用
+ */
+function sendMsg() {
     /** @type {NodeListOf<ChildNode>} */
-    const nodes = document.querySelector(".inputcontent").childNodes;
+    const nodes = document.querySelector(".input-content").childNodes;
     if (sending || !nodes) { // 消息正在发送or输入框为空
         return;
     }
@@ -114,7 +127,7 @@ function sendMsg_n() {
     nodes.forEach(value => {
         let segment;
         if (value.nodeName === "#text") { // 文字
-            segment = filterXss(value.textContent);
+            segment = value.textContent;
         } else if (value.nodeName === "IMG") { // 图片
             if (value.attributes.getNamedItem("cq") && value.attributes.getNamedItem("cq").nodeValue === "face") { // qq表情
                 segment = {
@@ -128,26 +141,32 @@ function sendMsg_n() {
                     type: "image"
                 };
             }
+        } else if (value.nodeName === "A") { // at
+            segment = {
+                qq: value.title === "all" ? value.title : Number(value.title),
+                type: "at"
+            };
         } else { // 暂不支持的类型
             segment = "";
         }
         messageList.push(segment);
     });
+    // 调用上层方法
     webview.sendMsg(messageList).then(value => {
         if (value.seq && webview.c2c) {
-            html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
+            const html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
                 <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
                 <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
                     ${webview.timestamp()}
                 </span>
-                <span class="content">${document.querySelector(".inputcontent").innerHTML}</span>
+                <span class="content">${document.querySelector(".input-content").innerHTML}</span>
             </div>`;
             document.querySelector(".lite-chatbox").insertAdjacentHTML("beforeend", html);
         }
     }).finally(() => {
         sending = false;
         document.querySelector(".send").disabled = false;
-        document.querySelector(".inputcontent").textContent = "";
+        document.querySelector(".input-content").textContent = "";
         document.querySelector(".lite-chatbox").scroll(0, document.querySelector(".lite-chatbox").scrollHeight);
     });
 }
@@ -161,10 +180,10 @@ function genSystemMessage(event) {
     if (event.notice_type === "friend") { // 私聊通知
         switch (event.sub_type) {
             case "poke": // 戳一戳
-                msg = `<span class="tips-info">${event.nickname} ${event.action} ${webview.nickname} ${event.suffix}</span>`;
+                msg = `<span class="tips-info">${genLabel(event.operator_id)} ${event.action} ${webview.nickname} ${event.suffix}</span>`;
                 break;
             case "recall": // 撤回（仅通知，消息不删除）
-                msg = `<span class="tips-private">${event.nickname} 撤回了 <a href="#${event.seq}" onclick="document.getElementById(${event.seq}).animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</a></span>`;
+                msg = `<span class="tips-private">${genLabel(event.operator_id)} 撤回了 <a href="#${event.seq}" onclick="document.getElementById(${event.seq}).animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">一条消息</a></span>`;
                 break;
         }
     } else if (event.notice_type === "group") { // 群聊通知
@@ -216,15 +235,20 @@ function genSystemMessage(event) {
 }
 
 /**
- * 生成目标标签
+ * 生成对象标签
  * @param {number} user_id 目标id
+ * @returns {string} 对象的b元素昵称
  */
 function genLabel(user_id) {
-    const member = members?.get(user_id);
-    if (!member) {
-        return user_id;
+    if (webview.c2c) {
+        return `<b title="${filterXss(friend.nickname)}">${filterXss(friend.nickname)}</b>`;
+    } else {
+        const member = members?.get(user_id);
+        if (!member) {
+            return user_id;
+        }
+        return `<b title="${filterXss(member.nickname)} (${user_id})">${filterXss(member.card ? member.card : member.nickname)}</b>`;
     }
-    return `<b title="${filterXss(member.nickname)} (${user_id})">${filterXss(member.card ? member.card : member.nickname)}</b>`;
 }
 
 /**
@@ -270,6 +294,7 @@ function genUserMessage(msg) {
 /**
  * xss过滤
  * @param {string} str 要处理的字符串
+ * @returns {string} 过滤后的字符串
  */
 function filterXss(str) {
     const xssMap = {
@@ -289,7 +314,8 @@ function filterXss(str) {
 
 /**
  * 生成消息字符串
- * @param {import("oicq").MessageElem[]} message 
+ * @param {import("oicq").MessageElem[]} message 消息列表
+ * @returns {string} 消息字符串
  */
 function parseMessage(message) {
     let msg = "";
@@ -305,7 +331,7 @@ function parseMessage(message) {
                 if (v.id > 324) {
                     msg += v.text || "[表情]";
                 } else {
-                    msg += `<img class="face" ondblclick="addFace(${v.id})" src="${webview.faces_path + v.id}.png" style="width: 18px; height: 18px; vertical-align: bottom;">`;
+                    msg += `<img class="face" src="${webview.faces_path + v.id}.png" />`;
                 }
                 break;
             case "sface":
@@ -365,12 +391,12 @@ function parseMessage(message) {
             case "file":
                 msg = `<a href="${v.url}" target="_blank">文件: ${filterXss(v.name)} (${v.size / 1e6}MB)</a>`;
                 break;
-            case "reply":
-                if (message[1]?.type === "at" && message[3]?.type === "at" && message[1]?.qq === message[3]?.qq) {
-                    message.splice(1, 2);
-                }
-                msg += `<a href="#${v.id}" onclick="document.querySelector('#${filterMsgIdSelector(v.id).replace(/\\/g, "\\\\")}')?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">[回复]</a>`;
-                break;
+            // case "reply": // oicq弃用
+            //     if (message[1]?.type === "at" && message[3]?.type === "at" && message[1]?.qq === message[3]?.qq) {
+            //         message.splice(1, 2);
+            //     }
+            //     msg += `<a href="#${v.seq}" onclick="document.getElementById(${v.seq})?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">[回复]</a>`;
+            //     break;
             case "rps":
                 msg += "[猜拳]";
                 break;
@@ -388,16 +414,24 @@ function parseMessage(message) {
     return msg;
 }
 
+/* 添加特殊元素到输入框 */
+
 /**
  * 加入at元素到输入框
- * @param {number | "all"} uid 
+ * @param {string} uid at对象的id或"all"
  */
 function addAt(uid) {
-    if (webview.c2c) {
+    if (webview.c2c) { // 私聊无法at
         return;
     }
-    const cqcode = `[CQ:at,qq=${uid}] `;
-    addStr2Textarea(cqcode);
+    let label = "";
+    if (uid === "all") {
+        label = "全体成员";
+    } else {
+        const member = members.get(Number(uid));
+        label = member ? filterXss(member.card ? member.card : member.nickname) : uid;
+    }
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<a title="${uid}" href="javascript:void(0);" onclick="addAt('${uid}');">@${label}</a>`);
 }
 
 /**
@@ -406,7 +440,7 @@ function addAt(uid) {
  * @param {string} src 表情url地址
  */
 function addFace(id, src) {
-    document.querySelector(".inputcontent").insertAdjacentHTML("beforeend", `<img src="${src}" cq="face", id="${id}" />`);
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img class="face" src="${src}" id="${id}" />`);
 }
 
 /**
@@ -414,37 +448,10 @@ function addFace(id, src) {
  * @param {string} url 图片url地址
  */
 function addImage(url) {
-    document.querySelector(".inputcontent").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
 }
 
-function addStr2Textarea(str) {
-    currentTextareaContent += str;
-    document.querySelector(".inputcontent").value = currentTextareaContent;
-    document.querySelector(".inputcontent").focus();
-}
-
-function setTextareaText(str) {
-    currentTextareaContent = str;
-    document.querySelector(".inputcontent").value = currentTextareaContent;
-    document.querySelector(".inputcontent").focus();
-}
-
-function insertStr2Textarea(str) {
-    const textArea = document.querySelector(".inputcontent");
-    if (textArea.selectionStart || textArea.selectionStart === '0') {
-        const begin = textArea.selectionStart;
-        const end = textArea.selectionEnd || textArea.selectionStart;
-        setTextareaText(textArea.value.substring(0, begin) + str + textArea.value.substring(end));
-        textArea.selectionStart = textArea.selectionEnd = begin + str.length;
-    }
-    else {
-        addStr2Textarea(str);
-    }
-}
-
-let currentTextareaContent = "";
-
-const idPreviewElement = document.querySelector("#img-preview");
+/* 初始化页面 */
 
 // 页面框架
 document.querySelector("body").insertAdjacentHTML("beforeend",
@@ -452,7 +459,6 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
         <div class="lite-chatbox"></div>
         <img id="img-preview" style="z-index: 999;">
         <div class="menu-msg">
-            <div class="menu-msg-reply">回复</div>
             <div class="menu-msg-at">@ TA</div>
             <div class="menu-msg-poke">戳一戳</div>
             <div class="menu-msg-recall">撤回消息</div>
@@ -471,10 +477,10 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
         </div>
         <div class="lite-chatinput">
             <hr class="boundary" />
-            <button title="漫游表情" type="button" id="show-stamp-box" class="tool-button">🧡</button>
-            <button title="QQ表情" type="button" id="show-face-box" class="tool-button">😀</button>
-            <div class="inputcontent" contenteditable="true"></div>
-            <button class="send" onclick="sendMsg_n()">Ctrl+Enter发送</button>
+            <button title="漫游表情" type="button" class="tool-button show-stamp-box">🧡</button>
+            <button title="QQ表情" type="button" class="tool-button show-face-box">😀</button>
+            <div class="input-content" contenteditable="true"></div>
+            <button class="send" onclick="sendMsg()">Ctrl+Enter发送</button>
         </div>
     </div>
     <div class="content-right">
@@ -494,58 +500,48 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
 );
 
 // 全局响应点击事件
-document.querySelector("body").addEventListener("click", (e) => {
-    // 刷新所有弹出的容器
-    document.querySelector('.face-box').style.display = 'none';
-    document.querySelector('.stamp-box').style.display = 'none';
-    document.querySelector('.menu-msg').style.display = 'none';
-    document.querySelector('.menu-member').style.display = 'none';
-    if (e.target === document.querySelector('#show-stamp-box')) { // 漫游表情
-        document.querySelector('.stamp-box').style.display = 'block';
-        if (!document.querySelector('.stamp-box img')) { // 初始化漫游表情
+document.querySelector("body").onclick = ev => {
+    // 收起所有弹出的元素
+    document.querySelector(".face-box").style.display = "none";
+    document.querySelector(".stamp-box").style.display = "none";
+    document.querySelector(".menu-msg").style.display = "none";
+    document.querySelector(".menu-member").style.display = "none";
+    
+    if (ev.target === document.querySelector(".show-stamp-box")) { // 漫游表情
+        document.querySelector(".stamp-box").style.display = "block";
+        if (!document.querySelector(".stamp-box img")) { // 初始化漫游表情栏
             webview.getRoamingStamp().then((stampList) => {
-                let tmpStampStep = 0;
-                for (let i = stampList.length - 1; i >= 0; --i) {
-                    ++tmpStampStep;
-                    const url = stampList[i];
-                    let html = `<img onclick="addImage('${url}')" src="${url}">` + (tmpStampStep % 6 === 0 ? "<br>" : "");
-                    document.querySelector('.stamp-box').insertAdjacentHTML("beforeend", html);
-                }
+                stampList.forEach((stampUrl) => {
+                    document.querySelector(".stamp-box").insertAdjacentHTML("beforeend", `<img class="stamp" onclick="addImage('${stampUrl}')" src="${stampUrl}" />`);
+                });
             });
         }
-    } else if (e.target === document.querySelector('#show-face-box')) { // QQ表情
-        document.querySelector('.face-box').style.display = 'block';
-        if (!document.querySelector(".face-box img")) { // 初始化QQ表情
-            let tmpFaceStep = 0;
-            for (let i = 0; i < 325; ++i) {
+    } else if (ev.target === document.querySelector(".show-face-box")) { // QQ表情
+        document.querySelector(".face-box").style.display = "block";
+        if (!document.querySelector(".face-box img")) { // 初始化QQ表情栏
+            for (let i = 0; i < 325; i++) {
                 if (i === 275 || (i > 247 && i < 260)) {
                     continue;
                 }
-                ++tmpFaceStep;
                 const src = webview.faces_path + i + ".png";
-                let html = `<img onclick="addFace(${i}, '${src}')" style="margin: 5px; cursor: pointer" width="28" height="28" src="${src}">`;
-                document.querySelector('.face-box').insertAdjacentHTML("beforeend", html);
+                document.querySelector(".face-box").insertAdjacentHTML("beforeend", `<img class="face" onclick="addFace(${i}, '${src}')" src="${src}" />`);
             }
         }
-    } else if (e.target.classList.contains("operation")) { // 更多
-        const seq = e.target.parentNode.parentNode.previousElementSibling.id;
-        document.querySelector('.menu-msg').style.left = e.target.getBoundingClientRect().x + 12 + "px";
-        document.querySelector('.menu-msg').style.top = e.target.getBoundingClientRect().y + "px";
-        document.querySelector('.menu-msg').style.display = 'block';
-        document.querySelector('.menu-msg .menu-msg-at').onclick = e.target.parentNode.ondblclick;
-        document.querySelector('.menu-msg .menu-msg-reply').onclick = () => {
-            addStr2Textarea(`[CQ:reply,id=${seq}]`);
-            e.target.parentNode.ondblclick();
-        };
-        // document.querySelector('.menu-msg .menu-msg-recall').onclick = () => {
+    } else if (ev.target.className === "operation") { // 更多
+        // const seq = ev.target.parentNode.parentNode.previousElementSibling.id;
+        document.querySelector(".menu-msg").style.left = ev.target.getBoundingClientRect().x + 12 + "px";
+        document.querySelector(".menu-msg").style.top = ev.target.getBoundingClientRect().y + "px";
+        document.querySelector(".menu-msg").style.display = "block";
+        document.querySelector(".menu-msg .menu-msg-at").onclick = ev.target.parentNode.ondblclick;
+        // document.querySelector(".menu-msg .menu-msg-recall").onclick = () => {
         //     showModalDialog("确定撤回此消息？", () => {
         //         webview.getChatHistory(webview.c2c ?  : seq, 1).then((value) => {webview.recallMsg(value[0]);});
         //     });
         // };
-        const uid = Number(e.target.parentNode.attributes.uid.value);
+        const uid = Number(ev.target.parentNode.attributes.uid.value);
         const member = members.get(uid);
         const label = filterXss(member?.card || member?.nickname || "未知用户") + "(" + uid + ")";
-        document.querySelector('.menu-msg .menu-msg-mute').onclick = () => {
+        document.querySelector(".menu-msg .menu-msg-mute").onclick = () => {
             showModalDialog(`禁言以下成员 <input id="mute-minutes" size="1" maxlength="5" value="10"> 分钟<br>` + label, () => {
                 const duration = document.querySelector("#mute-minutes").value;
                 if (duration >= 0) {
@@ -553,28 +549,28 @@ document.querySelector("body").addEventListener("click", (e) => {
                 }
             });
         };
-        document.querySelector('.menu-msg .menu-msg-kick').onclick = () => {
+        document.querySelector(".menu-msg .menu-msg-kick").onclick = () => {
             showModalDialog(`确定要删除以下成员：<br>` + label, () => {
                 webview.kickMember(uid);
             });
         };
-        document.querySelector('.menu-msg .menu-msg-poke').onclick = () => {
+        document.querySelector(".menu-msg .menu-msg-poke").onclick = () => {
             webview.poke();
         };
-    } else if (e.target.classList.contains("group-member")) {
-        document.querySelector('.menu-member').style.left = e.target.getBoundingClientRect().x + 50 + "px";
-        document.querySelector('.menu-member').style.top = e.target.getBoundingClientRect().y + 10 + "px";
-        document.querySelector('.menu-member').style.display = 'block';
-        const uid = Number(e.target.attributes.uid.value);
+    } else if (ev.target.classList.contains("group-member")) {
+        document.querySelector(".menu-member").style.left = ev.target.getBoundingClientRect().x + 50 + "px";
+        document.querySelector(".menu-member").style.top = ev.target.getBoundingClientRect().y + 10 + "px";
+        document.querySelector(".menu-member").style.display = "block";
+        const uid = Number(ev.target.attributes.uid.value);
         const member = members.get(uid);
         const label = filterXss(member?.card || member?.nickname || "未知用户") + "(" + uid + ")";
-        document.querySelector('.menu-member .menu-member-poke').onclick = () => {
+        document.querySelector(".menu-member .menu-member-poke").onclick = () => {
             webview.pokeMember(uid);
         };
-        document.querySelector('.menu-member .menu-member-at').onclick = () => {
+        document.querySelector(".menu-member .menu-member-at").onclick = () => {
             addAt(uid);
         };
-        document.querySelector('.menu-member .menu-member-mute').onclick = () => {
+        document.querySelector(".menu-member .menu-member-mute").onclick = () => {
             showModalDialog(`禁言以下成员 <input id="mute-minutes" size="1" maxlength="5" value="10"> 分钟<br>` + label, () => {
                 const duration = document.querySelector("#mute-minutes").value;
                 if (duration >= 0) {
@@ -582,58 +578,19 @@ document.querySelector("body").addEventListener("click", (e) => {
                 }
             });
         };
-        document.querySelector('.menu-member .menu-member-kick').onclick = () => {
+        document.querySelector(".menu-member .menu-member-kick").onclick = () => {
             showModalDialog(`确定要删除以下成员：<br>` + label, () => {
                 webview.kickMember(uid);
             });
         };
-        document.querySelector('.menu-member .menu-member-admin1').onclick = () => {
+        document.querySelector(".menu-member .menu-member-admin1").onclick = () => {
             webview.setAdmin(uid, true);
         };
-        document.querySelector('.menu-member .menu-member-admin0').onclick = () => {
+        document.querySelector(".menu-member .menu-member-admin0").onclick = () => {
             webview.setAdmin(uid, false);
         };
     }
-});
-
-/**
- * 图片预览
- * @param {Element} obj 
- * @deprecated 计划弃用头像放大预览功能
- */
-function previewImage(obj, width, height) {
-    const url = obj.href ?? obj.src.replace("100", "640");
-    if (width > 0 && width <= 200) {
-        width = width + "px";
-        height = "auto";
-    } else if (height > 0 && height <= 200) {
-        width = "auto";
-        height = height + "px";
-    } else if (height > 200 && width > 200) {
-        if (width >= height) {
-            width = "auto";
-            height = "200px";
-        } else {
-            width = "200px";
-            height = "auto";
-        }
-    } else {
-        width = "200px";
-        height = "auto";
-    }
-    idPreviewElement.style.width = width;
-    idPreviewElement.style.height = height;
-    let left = obj.getBoundingClientRect().x + 20;
-    if (left + 150 > window.innerWidth) {
-        left -= 200;
-    }
-    let top = obj.getBoundingClientRect().y - 5;
-    idPreviewElement.src = url;
-    idPreviewElement.style.left = left + "px";
-    idPreviewElement.style.top = top + "px";
-    idPreviewElement.style.display = "block";
-    obj.onmouseleave = () => idPreviewElement.style.display = "none";
-}
+};
 
 /**
  * 显示图片，进行适当的缩放
@@ -657,9 +614,9 @@ function showImage(url, width, height) {
 }
 
 // 键盘Ctrl+Enter
-window.onkeydown = function (event) {
+window.onkeydown = (event) => {
     if (event.ctrlKey && event.keyCode === 13) {
-        sendMsg_n();
+        sendMsg();
     }
 };
 
@@ -671,25 +628,8 @@ document.querySelector(".lite-chatbox").onscroll = () => {
     }
 };
 
-//表情、图片拖动
-// document.querySelector(".inputcontent").oninput = function () {
-//     const content = this.value;
-//     const diff = content.substr(currentTextareaContent.length);
-//     if (diff.startsWith(webview.faces_path)) {
-//         const faceId = diff.substr(webview.faces_path.length).split(".")[0];
-//         const cqcode = `[CQ:face,id=${faceId}]`;
-//         addStr2Textarea(cqcode);
-//     } else if (diff.endsWith("&vscodeDragFlag=1")) {
-//         const file = new URL(diff).searchParams.get("file");
-//         const cqcode = `[CQ:image,file=${file},type=face]`;
-//         addStr2Textarea(cqcode);
-//     } else {
-//         currentTextareaContent = content;
-//     }
-// };
-
 // 在文本框中粘贴时
-document.querySelector(".inputcontent").onpaste = (ev) => {
+document.querySelector(".input-content").onpaste = (ev) => {
     if (!ev.clipboardData || !ev.clipboardData.items) { // 剪切板无数据
         return;
     }
@@ -699,7 +639,7 @@ document.querySelector(".inputcontent").onpaste = (ev) => {
         if (item.kind === "string") { // 字符串类型
             if (item.type === "text/plain") { // 只粘贴纯文本
                 item.getAsString((str) => {
-                    document.querySelector(".inputcontent").insertAdjacentText("beforeend", str);
+                    document.querySelector(".input-content").insertAdjacentText("beforeend", str);
                 });
             }
         } else if (item.kind === "file") { // 文件类型
@@ -708,7 +648,7 @@ document.querySelector(".inputcontent").onpaste = (ev) => {
                 reader.onload = () => {
                     const img = new Image();
                     img.src = reader.result;
-                    document.querySelector(".inputcontent").insertAdjacentElement("beforeend", img);
+                    document.querySelector(".input-content").insertAdjacentElement("beforeend", img);
                 };
                 reader.readAsDataURL(item.getAsFile());
             }
@@ -788,9 +728,10 @@ function triggerForwardMsg(obj) {
 
 // 初始化
 (() => {
-    if (!webview.c2c) {
-        // 加载群资料、群员列表
+    if (!webview.c2c) {// 加载群资料、群员列表
         updateMemberList();
+    } else { // 获取好友信息
+        updateFriendInfo();
     }
     // 加载历史消息
     getChatHistory();
