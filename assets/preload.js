@@ -2,22 +2,16 @@
  * 该文件在页面生成时自动加载
  */
 ; (() => {
-    /**
-     * @type {import("./types").Webview}
-     */
+    /** @type {import("./types").Webview} */
     const vsc = new window.EventTarget;
 
     vsc.on = vsc.addEventListener;
     vsc.TimeoutError = class TimeoutError extends Error { };
 
-    /**
-     * @type {Map<string, Function>}
-     */
+    /** @type {Map<string, Function>} */
     const handlers = new Map;
 
-    /**
-     * @type {Function}
-     */
+    /** @type {Function} */
     const vscode = acquireVsCodeApi();
 
     const env = window.document.querySelector("env");
