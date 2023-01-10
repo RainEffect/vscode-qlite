@@ -24,7 +24,7 @@
 }
 
 /* 输入框 */
-.lite-chatinput .inputcontent {
+.lite-chatinput .input-content {
     position: relative;
     clear: both;
     overflow: auto;
@@ -99,6 +99,6 @@
 }
 
 .face-box img {
-    margin: 2px;
+    margin: 4px;
     cursor: pointer;
 }
