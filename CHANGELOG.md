@@ -5,6 +5,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unreleased]
 - vscode侧边栏计划添加更多功能（删除多余的消息等）
 
+## [1.2.8] - 2023-01-12
+
+### Changed
+- 漫游表情栏的图片排列顺序改为由新到旧的顺序
+
+### Fixed
+- 修复发送大图时本地无法正常显示的bug
+
 ## [1.2.7] - 2023-01-11
 
 ### Added
