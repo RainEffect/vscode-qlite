@@ -338,7 +338,7 @@ function parseMessage(message) {
                 if (!webview.c2c) {
                     v.url = v.url.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
                 }
-                msg += `<img src="${v.url}" onload="drawImage(this)" />`;
+                msg += `<img src="${v.url}" onload="drawImage(this)" ondblclick="enlargeImage(this)" />`;
                 break;
             case "record":
                 msg = `<a href="${v.url}" target="_blank">语音消息</a>`;
@@ -435,7 +435,7 @@ function addFace(id, src) {
  * @param {string} url 图片url地址
  */
 function addImage(url) {
-    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img src="${url}" onload="drawImage(this)" />`);
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img src="${url}" onload="drawImage(this)" ondblclick="enlargeImage(this)" />`);
 }
 
 /**
@@ -443,15 +443,26 @@ function addImage(url) {
  * @param {Image} img 图片元素
  */
 function drawImage(img) {
-    if (img.width / img.height >= 1) {
-        if (img.width > 400) {
-            img.width = 400;
+    const limit = 400; // 长宽上限
+    if (img.width / img.height >= 1) { // 宽图宽度上限
+        if (img.width > limit) {
+            img.width = limit;
         }
-    } else {
-        if (img.height > 300) {
-            img.height = 300;
+    } else { // 长图高度上限
+        if (img.height > limit) {
+            img.height = limit;
         }
     }
+}
+
+/**
+ * 点击图片放大
+ * @param {Image} img 图片点击事件
+ */
+function enlargeImage(img) {
+    const imgBox = document.querySelector(".img-focus");
+    imgBox.innerHTML = `<img src="${img.src}" />`;
+    imgBox.style.display = "flex";
 }
 
 /* 初始化页面 */
@@ -460,7 +471,7 @@ function drawImage(img) {
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="content-left">
         <div class="lite-chatbox"></div>
-        <img id="img-preview" style="z-index: 999;">
+        <div class="img-focus" onclick="this.style.display='none';"></div>
         <div class="menu-msg">
             <div class="menu-msg-at">@ TA</div>
             <div class="menu-msg-poke">戳一戳</div>
