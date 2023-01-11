@@ -527,7 +527,7 @@ document.querySelector("body").onclick = ev => {
         if (!document.querySelector(".stamp-box img")) { // 初始化漫游表情栏
             webview.getRoamingStamp().then((stampList) => {
                 stampList.forEach((stampUrl) => {
-                    document.querySelector(".stamp-box").insertAdjacentHTML("beforeend",
+                    document.querySelector(".stamp-box").insertAdjacentHTML("afterbegin",
                         `<img class="stamp" onclick="addImage('${stampUrl}')" src="${stampUrl}" />`);
                 });
             });
