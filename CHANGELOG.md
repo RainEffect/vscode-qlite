@@ -5,6 +5,17 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unreleased]
 - vscode侧边栏计划添加更多功能（删除多余的消息等）
 
+## [1.2.7] - 2023-01-11
+
+### Added
+- 添加双击消息框中图片能放大查看的功能，单击放大后的图片即可退出
+
+### Changed
+- 修改聊天框中表情大小，与文字高度一致
+
+### Fixed
+- 修复发送表情失败的问题
+
 ## [1.2.6] - 2023-01-10
 
 ### Changed
