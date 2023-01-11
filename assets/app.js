@@ -446,11 +446,11 @@ function drawImage(img) {
     const limit = 400; // 长宽上限
     if (img.width / img.height >= 1) { // 宽图宽度上限
         if (img.width > limit) {
-            img.width = limit;
+            img.style.width = limit + "px";
         }
     } else { // 长图高度上限
         if (img.height > limit) {
-            img.height = limit;
+            img.style.height = limit + "px";
         }
     }
 }
@@ -641,11 +641,7 @@ document.querySelector(".input-content").onpaste = (ev) => {
         } else if (item.kind === "file") { // 文件类型
             if (item.type.startsWith("image/")) { // 图片
                 const reader = new FileReader();
-                reader.onload = () => {
-                    const img = new Image();
-                    img.src = reader.result;
-                    document.querySelector(".input-content").insertAdjacentElement("beforeend", img);
-                };
+                reader.onload = () => { addImage(reader.result); };
                 reader.readAsDataURL(item.getAsFile());
             }
         } else { // 其他类型
