@@ -81,7 +81,7 @@ body {
     text-align: left;
     position: relative;
     display: inline-block;
-    font-size: 15px;
+    font-size: 16px;
     padding: 10px 15px;
     line-height: 20px;
     white-space: pre-wrap;
@@ -89,12 +89,6 @@ body {
     min-width: 9px;
     min-height: 18px;
 }
-
-/* 消息内容图片处理 */
-/* .lite-chatbox .content img{
-    width:100%;
-    height:auto;
-} */
 
 /* 消息内容超链接处理 */
 .lite-chatbox .content a {
@@ -122,7 +116,7 @@ body {
 }
 
 /* 聊天组件：微调 */
-/* 圆头像 */
+/* 圆角头像 */
 .lite-chatbox img.radius {
     -moz-border-radius: 20%;
     -webkit-border-radius: 20%;
@@ -215,8 +209,9 @@ body {
 
 /* 表情 */
 .face {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
+    vertical-align: bottom;
 }
 
 /* .lite-chatbox .content a {
@@ -334,8 +329,6 @@ body {
 }
 
 .content-left {
-    overflow-x: hidden;
-    overflow-y: auto;
     flex: 1;
 }
 

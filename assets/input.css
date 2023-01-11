@@ -13,7 +13,6 @@
     background-color: var(--vscode-editor-background);
 }
 
-
 /* 聊天区域和输入框的分界线 */
 .lite-chatinput .boundary {
     cursor: s-resize;
@@ -33,7 +32,7 @@
     height: calc(100% - 80px);
     outline: none;
     resize: none;
-    font-size: 18px;
+    font-size: 16px;
     background-color: var(--vscode-editor-background);
     color: var(--vscode-editor-foreground);
 }
@@ -75,7 +74,7 @@
     background: var(--vscode-button-secondaryForeground);
 }
 
-.lite-chatbox-tool {
+.lite-chattools .lite-chatbox-tool {
     height: 240px;
     width: 480px;
     background-color: var(--vscode-editor-background);
@@ -89,7 +88,7 @@
     overflow-y: auto;
 }
 
-.stamp-box img {
+.lite-chattools .stamp-box img {
     margin: 5px;
     cursor: pointer;
     max-width: 68px;
@@ -98,7 +97,9 @@
     vertical-align: middle;
 }
 
-.face-box img {
+.lite-chattools .face-box img {
+    width: 28px;
+    height: 28px;
     margin: 4px;
     cursor: pointer;
 }
