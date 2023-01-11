@@ -111,7 +111,7 @@ function getChatHistory(param, count = 20) {
 let sending = false;
 
 /**
- * 发送消息时调用
+ * 发送消息
  */
 function sendMsg() {
     /** @type {NodeListOf<ChildNode>} */
@@ -129,7 +129,7 @@ function sendMsg() {
         if (value.nodeName === "#text") { // 文字
             segment = value.textContent;
         } else if (value.nodeName === "IMG") { // 图片
-            if (value.attributes.getNamedItem("cq") && value.attributes.getNamedItem("cq").nodeValue === "face") { // qq表情
+            if (value.className === "face") { // qq表情
                 segment = {
                     id: Number(value.id),
                     type: "face"
@@ -252,15 +252,6 @@ function genLabel(user_id) {
 }
 
 /**
- * 转义message_id中的特殊字符
- * @param {string} message_id 
- * @deprecated 取消使用message_id区别消息
- */
-function filterMsgIdSelector(message_id) {
-    return message_id.replace(/\//g, "\\/").replace(/\=/g, "\\=").replace(/\+/g, "\\+");
-}
-
-/**
  * 生成一般消息
  * @param {import("oicq").PrivateMessage | import("oicq").GroupMessage} msg 私聊/群聊消息
  */
@@ -347,9 +338,7 @@ function parseMessage(message) {
                 if (!webview.c2c) {
                     v.url = v.url.replace(/\/[0-9]+\//, "/0/").replace(/[0-9]+-/g, "0-");
                 }
-                let split = v.file.split("-");
-                let width = parseInt(split[1]), height = parseInt(split[2]);
-                msg += showImage(v.url, width, height);
+                msg += `<img src="${v.url}" onload="drawImage(this)" />`;
                 break;
             case "record":
                 msg = `<a href="${v.url}" target="_blank">语音消息</a>`;
@@ -362,9 +351,11 @@ function parseMessage(message) {
                 if (dom.querySelector("msg")?.getAttribute("serviceID") === "35") {
                     try {
                         const resid = /resid="[^"]+"/.exec(v.data)[0].replace("resid=\"", "").replace("\"", "");
-                        msg = `<a href="javascript:void(0)" onclick="triggerForwardMsg(this)" id="${resid}">[合并转发]</a><span class="msg-forward"></span>`;
+                        msg = `<a href="javascript:void(0)" onclick="triggerForwardMsg(this)" id="${resid}">[合并转发]</a>
+                        <span class="msg-forward"></span>`;
                     } catch {
-                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[嵌套转发]</a><span style="display:none">${filterXss(v.data)}</span>`;
+                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[嵌套转发]</a>
+                        <span style="display:none">${filterXss(v.data)}</span>`;
                     }
                 } else {
                     if (dom.querySelector("msg")?.getAttribute("action") === "web") { //判断是否为链接分享
@@ -372,7 +363,8 @@ function parseMessage(message) {
                         const url = dom.querySelector("msg").getAttribute("url");
                         msg = `<a href="${filterXss(url)}">${filterXss(title)}</a><br>` + filterXss(dom.querySelector("summary")?.innerHTML);
                     } else {
-                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[XML卡片消息]</a><span style="display:none">${filterXss(v.data)}</span>`;
+                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[XML卡片消息]</a>
+                        <span style="display:none">${filterXss(v.data)}</span>`;
                     }
                 }
                 break;
@@ -384,19 +376,14 @@ function parseMessage(message) {
                         const content = decodeURIComponent(Buffer.from(jsonObj["meta"]["mannounce"]["text"], "base64"));
                         msg = `<span class="jsonMsgTitle">${filterXss(title)}</span><br/><span class="jsonMsgContent">${filterXss(content)}</span><br/>`;
                     } else {
-                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[JSON卡片消息]</a><span style="display:none">${filterXss(JSON.stringify(jsonObj, null, 4))}</span>`;
+                        msg = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[JSON卡片消息]</a>
+                        <span style="display:none">${filterXss(JSON.stringify(jsonObj, null, 4))}</span>`;
                     }
                 } catch { }
                 break;
             case "file":
                 msg = `<a href="${v.url}" target="_blank">文件: ${filterXss(v.name)} (${v.size / 1e6}MB)</a>`;
                 break;
-            // case "reply": // oicq弃用
-            //     if (message[1]?.type === "at" && message[3]?.type === "at" && message[1]?.qq === message[3]?.qq) {
-            //         message.splice(1, 2);
-            //     }
-            //     msg += `<a href="#${v.seq}" onclick="document.getElementById(${v.seq})?.nextElementSibling.animate([{'background':'var(--vscode-sideBar-background)'}],{duration: 3000})">[回复]</a>`;
-            //     break;
             case "rps":
                 msg += "[猜拳]";
                 break;
@@ -448,7 +435,23 @@ function addFace(id, src) {
  * @param {string} url 图片url地址
  */
 function addImage(url) {
-    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img src="${url}" />`);
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", `<img src="${url}" onload="drawImage(this)" />`);
+}
+
+/**
+ * 渲染缩略图
+ * @param {Image} img 图片元素
+ */
+function drawImage(img) {
+    if (img.width / img.height >= 1) {
+        if (img.width > 400) {
+            img.width = 400;
+        }
+    } else {
+        if (img.height > 300) {
+            img.height = 300;
+        }
+    }
 }
 
 /* 初始化页面 */
@@ -468,7 +471,8 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
         <div class="modal-dialog">
             <div class="modal-title"></div>
             <div class="modal-button">
-                <button class="modal-confirm">确定</button><button onclick="closeModalDialog()">取消</button>
+                <button class="modal-confirm">确定</button>
+                <button onclick="closeModalDialog()">取消</button>
             </div>
         </div>
         <div class="lite-chattools">
@@ -506,13 +510,14 @@ document.querySelector("body").onclick = ev => {
     document.querySelector(".stamp-box").style.display = "none";
     document.querySelector(".menu-msg").style.display = "none";
     document.querySelector(".menu-member").style.display = "none";
-    
+
     if (ev.target === document.querySelector(".show-stamp-box")) { // 漫游表情
         document.querySelector(".stamp-box").style.display = "block";
         if (!document.querySelector(".stamp-box img")) { // 初始化漫游表情栏
             webview.getRoamingStamp().then((stampList) => {
                 stampList.forEach((stampUrl) => {
-                    document.querySelector(".stamp-box").insertAdjacentHTML("beforeend", `<img class="stamp" onclick="addImage('${stampUrl}')" src="${stampUrl}" />`);
+                    document.querySelector(".stamp-box").insertAdjacentHTML("beforeend",
+                        `<img class="stamp" onclick="addImage('${stampUrl}')" src="${stampUrl}" />`);
                 });
             });
         }
@@ -524,7 +529,8 @@ document.querySelector("body").onclick = ev => {
                     continue;
                 }
                 const src = webview.faces_path + i + ".png";
-                document.querySelector(".face-box").insertAdjacentHTML("beforeend", `<img class="face" onclick="addFace(${i}, '${src}')" src="${src}" />`);
+                document.querySelector(".face-box").insertAdjacentHTML("beforeend",
+                    `<img class="face" onclick="addFace(${i}, '${src}')" src="${src}" />`);
             }
         }
     } else if (ev.target.className === "operation") { // 更多
@@ -591,27 +597,6 @@ document.querySelector("body").onclick = ev => {
         };
     }
 };
-
-/**
- * 显示图片，进行适当的缩放
- * @param {string} url 图片的url链接
- * @param {number} width 图片的真实宽度
- * @param {number} height 图片的真实高度
- * @returns img元素
- */
-function showImage(url, width, height) {
-    let img = `<img src="${url}" width="`;
-    const query = document.querySelector(".content-left");
-    const rate = width / query.clientWidth;
-    if (width > height * 2) {
-        img += String(Math.trunc(rate > 0.6 ? width : query.clientWidth * 0.6));
-    } else if (width * 2 < height) {
-        img += String(Math.trunc(rate < 0.4 ? width : query.clientWidth * 0.4));
-    } else {
-        img += String(Math.trunc(rate > 0.5 ? query.clientWidth * 0.5 : width));
-    }
-    return img + `">`;
-}
 
 // 键盘Ctrl+Enter
 window.onkeydown = (event) => {
