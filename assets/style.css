@@ -217,20 +217,10 @@ body {
     background-color: var(--vscode-focusBorder);
 }
 
-/* 
-.lite-chatbox .cleft .content {
-    border-radius: 0 10px 10px 10px;
-    font-size: 14px;
-    padding: 8px 15px;
-}
-
-.lite-chatbox .cright .content {
-    border-radius: 10px 0px 10px 10px;
-    font-size: 14px;
-    padding: 8px 15px;
-} */
 
 /* 图片居中放大 */
+
+/* 图片背景蒙板 */
 .img-focus {
     top: 0;
     left: 0;
@@ -243,19 +233,10 @@ body {
     display: none;
 }
 
+/* 放大的图片 */
 .img-focus img {
     margin: auto;
 }
-
-/* #content {
-    width: 100%;
-    resize: none;
-    box-sizing: border-box;
-    background-color: var(--vscode-editor-background);
-    color: var(--vscode-editor-foreground);
-    font-size: 16px;
-    padding: 10px;
-} */
 
 #to-bottom {
     position: absolute;
