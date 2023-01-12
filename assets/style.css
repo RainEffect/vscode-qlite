@@ -7,13 +7,8 @@ body {
     overflow: hidden;
 }
 
-body {
-    display: flex;
-}
-
 /* 聊天区域 */
-.lite-chatbox {
-    /* font-family: Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif; */
+.chat-box {
     padding: 0;
     width: 100%;
     position: relative;
@@ -21,26 +16,26 @@ body {
     overflow-x: hidden;
 }
 
-.lite-chatbox .cmsg {
+.chat-box .cmsg {
     position: relative;
     margin: 4px 7px;
     min-height: 50px;
     border: 0;
 }
 
-.lite-chatbox .cright {
+.chat-box .cright {
     text-align: right;
     margin-left: 64px;
 }
 
-.lite-chatbox .cleft {
+.chat-box .cleft {
     text-align: left;
     margin-right: 64px;
 }
 
 /* 聊天组件：全局 */
 /* 头像 */
-.lite-chatbox img.headIcon {
+.chat-box img.headIcon {
     width: 34px;
     height: 34px;
     top: 9px;
@@ -49,7 +44,7 @@ body {
 }
 
 /* 昵称 */
-.lite-chatbox .name {
+.chat-box .name {
     color: var(--vscode-input-foreground);
     font-size: 12px;
     display: block;
@@ -57,7 +52,7 @@ body {
 }
 
 /* 头衔 */
-.lite-chatbox .name .htitle {
+.chat-box .name .htitle {
     display: inline-block;
     padding: 0 3px;
     background-color: #aaa;
@@ -75,7 +70,7 @@ body {
 }
 
 /* 消息内容 */
-.lite-chatbox .content {
+.chat-box .content {
     word-break: break-all;
     word-wrap: break-word;
     text-align: left;
@@ -91,7 +86,7 @@ body {
 }
 
 /* 消息内容超链接处理 */
-.lite-chatbox .content a {
+.chat-box .content a {
     color: var(--vscode-editorLink-activeForeground);
     margin: 0 2px;
     cursor: hand;
@@ -99,14 +94,14 @@ body {
 }
 
 /* 聊天提示条 */
-.lite-chatbox .tips {
+.chat-box .tips {
     margin: 12px;
     text-align: center;
     font-size: 12px;
 }
 
 /* 聊天提示条文本 */
-.lite-chatbox .tips span {
+.chat-box .tips span {
     display: inline-block;
     padding: 4px;
     background-color: #aaa;
@@ -118,82 +113,82 @@ body {
 
 /* 聊天组件：微调 */
 /* 圆角头像 */
-.lite-chatbox img.radius {
+.chat-box img.radius {
     -moz-border-radius: 20%;
     -webkit-border-radius: 20%;
     border-radius: 20%;
 }
 
 /* 左右头像 */
-.lite-chatbox .cright img.headIcon {
+.chat-box .cright img.headIcon {
     right: 0;
 }
 
-.lite-chatbox .cleft img.headIcon {
+.chat-box .cleft img.headIcon {
     left: 0;
 }
 
 /* 左右昵称 */
-.lite-chatbox .cright .name {
+.chat-box .cright .name {
     margin: 0 48px 2px 0;
 }
 
-.lite-chatbox .cleft .name {
+.chat-box .cleft .name {
     margin: 0 0 2px 48px;
 }
 
 /* 左右聊天气泡 */
-.lite-chatbox .cright .content {
+.chat-box .cright .content {
     margin: 0 48px 0 0;
     border-radius: 20px 0 20px 20px;
     border: 2px solid var(--vscode-quickInputTitle-background);
     background: var(--vscode-sideBar-background);
 }
 
-.lite-chatbox .cleft .content {
+.chat-box .cleft .content {
     margin: 0 0 0 48px;
     border-radius: 0 20px 20px 20px;
     border: 2px solid var(--vscode-quickInputTitle-background);
     background: var(--vscode-sideBar-background);
 }
 
-.lite-chatbox .cright .content:after {
+.chat-box .cright .content:after {
     right: -12px;
     top: 8px
 }
 
-.lite-chatbox .cleft .content:after {
+.chat-box .cleft .content:after {
     left: -12px;
     top: 8px
 }
 
 /* 聊天提示条附加样式 */
-.lite-chatbox .tips .tips-primary {
+.chat-box .tips .tips-primary {
     background-color: #3986c8
 }
 
-.lite-chatbox .tips .tips-success {
+.chat-box .tips .tips-success {
     background-color: #49b649
 }
 
-.lite-chatbox .tips .tips-info {
+.chat-box .tips .tips-info {
     background-color: #5bb6d1
 }
 
-.lite-chatbox .tips .tips-warning {
+.chat-box .tips .tips-warning {
     background-color: #eea948
 }
 
-.lite-chatbox .tips .tips-danger {
+.chat-box .tips .tips-danger {
     background-color: #e24d48
 }
 
 /* 特殊头衔 */
-.lite-chatbox .name .admin {
+.chat-box .name .admin {
     background-color: #72D6A0
 }
 
-.lite-chatbox .name .owner {
+.chat-box .name .owner {
     background-color: #F2BF25
 }
 
@@ -206,14 +201,14 @@ body {
 
 /* 弹出框 */
 
-.lite-chatbox .name b.operation {
+.chat-box .name b.operation {
     cursor: pointer;
     background-color: var(--vscode-editor-background);
     padding: 0 2px;
     color: var(--vscode-editor-foreground);
 }
 
-.lite-chatbox .name b.operation:hover {
+.chat-box .name b.operation:hover {
     background-color: var(--vscode-focusBorder);
 }
 
@@ -221,7 +216,7 @@ body {
 /* 图片居中放大 */
 
 /* 图片背景蒙板 */
-.img-focus {
+.large-img {
     top: 0;
     left: 0;
     width: 100%;
@@ -234,47 +229,11 @@ body {
 }
 
 /* 放大的图片 */
-.img-focus img {
+.large-img img {
     margin: auto;
 }
 
-#to-bottom {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    margin: 10px;
-    cursor: pointer;
-}
-
-.insert-button {
-    cursor: pointer;
-    font-size: 18px;
-    padding: 2px;
-}
-
-.modal-dialog {
-    position: fixed;
-    z-index: 9999;
-    display: none;
-    width: 200px;
-    height: auto;
-    max-width: 200px;
-    border: solid 1px var(--vscode-input-foreground);
-    background-color: var(--vscode-sideBar-background);
-}
-
-.modal-title {
-    padding: 10px 20px 0px 20px;
-    line-height: 20px;
-}
-
-.modal-button {
-    position: relative;
-    bottom: 0;
-    padding: 15px 50px;
-}
-
-.menu-msg {
+.menu-option {
     position: fixed;
     display: none;
     z-index: 100;
@@ -283,7 +242,7 @@ body {
     opacity: 0.85;
 }
 
-.menu-msg hr {
+.menu-option hr {
     background-color: var(--vscode-sideBar-background);
     height: 2px;
     border-top: ridge 1px var(--vscode-input-foreground);
@@ -293,80 +252,13 @@ body {
     margin: 0;
 }
 
-.menu-msg div {
+.menu-option div {
     cursor: pointer;
     background-color: var(--vscode-sideBar-background);
     padding: 2px;
 }
 
-.menu-msg div:hover {
-    background-color: var(--vscode-input-foreground);
-    color: var(--vscode-editor-background);
-}
-
-.content-left {
-    flex: 1;
-}
-
-.content-right {
-    width: 200px;
-    border-left: solid 1px var(--vscode-input-foreground);
-    overflow-y: auto;
-    overflow-x: hidden;
-    display: none;
-}
-
-.group-info {
-    height: 100px;
-    position: sticky;
-    top: 0;
-    background-color: var(--vscode-editor-background);
-    border-bottom: solid 1px var(--vscode-input-foreground);
-}
-
-.group-info img {
-    width: 80px;
-    height: 80px;
-    border: 1px solid #c5d4c4;
-    border-radius: 10%;
-    margin: 10px 55px;
-}
-
-.group-members {
-    padding: 5px 0;
-    margin-bottom: 150px;
-}
-
-.group-member {
-    cursor: pointer;
-    padding: 5px 10px;
-    margin: 0;
-    width: 190px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.group-member:hover {
-    background-color: var(--vscode-sideBar-background);
-}
-
-.menu-member {
-    position: fixed;
-    display: none;
-    z-index: 100;
-    border: solid 1px var(--vscode-input-foreground);
-    width: 100px;
-    opacity: 0.85;
-}
-
-.menu-member div {
-    cursor: pointer;
-    background-color: var(--vscode-sideBar-background);
-    padding: 2px;
-}
-
-.menu-member div:hover {
+.menu-option div:hover {
     background-color: var(--vscode-input-foreground);
     color: var(--vscode-editor-background);
 }
