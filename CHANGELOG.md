@@ -3,7 +3,22 @@
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
 ## [Unreleased]
-- vscode侧边栏计划添加更多功能（删除多余的消息等）
+- 自 **v1.3** 开始将放缓对聊天页面的美化（js现学现用，能力有限），重心转移到vscode相关操作的优化上
+- 由于本人使用QQ丰富功能的占比极低，所以有频繁特殊需求的用户请提issue，我将视情况添加到扩展中
+- v1.3丰富vscode端的功能后也会更新readme，总和目前已有的功能
+
+## [1.3.0] - 2023-01-13
+
+### Added
+- 现在支持双击消息栏昵称和点击输入框上方的`@`按钮AT其他人，AT词条会加入到输入框中，可以组合其他内容发送
+- 从 <a href="https://github.com/sysnapse/vscode-qq-console-theme">sysnapse</a> 大佬魔改自前扩展的console主题页面搬运了解析更多qq消息类型的功能：对json消息的解析，视频消息的预览，文件消息对文件名和大小的显示。但以上功能并未作相关测试，希望使用相关功能的用户能反馈一下显示效果
+
+### Changed
+- 优化了整个页面的代码结构（终于完完整整地读完旧代码了）和注释，尽力作了模块化，大佬可视情况魔改
+- 发送键同步win端的QQ默认按键，Enter发送消息，Shift+Enter换行，后续可能会实现用户自定义
+
+### Removed
+- 移除了群聊中消息头像旁的菜单按钮，计划将相关功能分散到其他部分
 
 ## [1.2.8] - 2023-01-12
 
