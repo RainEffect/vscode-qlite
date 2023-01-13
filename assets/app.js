@@ -88,39 +88,65 @@ function genLabel(id) {
 
 /**
  * 生成at元素
- * @param {string} id at目标的qq或"all"
+ * @param {string} qq at目标的qq或"all"
  * @returns {string} at的HTML
  */
-function genAt(id) {
+function genAt(qq) {
     if (webview.c2c) {
         return "";
     }
     let label = "";
-    if (id === "all") {
+    if (qq === "all") {
         label = "全体成员";
     } else {
-        const member = memberInfoMap.get(Number(id));
-        label = member ? filterXss(member.card ? member.card : member.nickname) : id;
+        const member = memberInfoMap.get(Number(qq));
+        label = member ? filterXss(member.card ? member.card : member.nickname) : qq;
     }
-    return `<span class="at" id="${id}">@${label}</span>`;
+    return `<a class="at" id="${qq}" href="javascript:void(0);">@${label}</a>`;
+}
+
+/**
+ * 添加at元素到输入框
+ * @param {string} qq at目标的qq或"all"
+ */
+function appendAt(qq) {
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", genAt(qq));
 }
 
 /**
  * 构造表情元素
  * @param {number} id 表情序号
+ * @param {boolean} addable true则点击表情会添加到输入框，false不会
  * @returns {string} 表情的HTML
  */
-function genFace(id) {
-    return `<img class="face" src="${webview.faces_path + id}.png" id=${id}>`;
+function genFace(id, addable = false) {
+    return `<img class="face" src="${webview.faces_path + id}.png" id=${id} ${addable ? "onclick='appendFace(this)'" : ""}>`;
+}
+
+/**
+ * 添加表情到输入框
+ * @param {HTMLImageElement} face 表情元素
+ */
+function appendFace(face) {
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", genFace(face.id));
 }
 
 /**
  * 构造图片元素
  * @param {string} src 图片url地址
+ * @param {boolean} addable true则点击图片会添加到输入框，false不会
  * @returns {string} 图片的HTML
  */
-function genImage(src) {
-    return `<img src="${src}" onload="drawImage(this)" ondblclick="enlargeImage(this)">`;
+function genImage(src, addable = false) {
+    return `<img src="${src}" onload="drawImage(this)" ondblclick="enlargeImage(this)" ${addable ? "onclick='appendImage(this)'" : ""}>`;
+}
+
+/**
+ * 添加图片到输入框
+ * @param {HTMLImageElement} image 图片元素
+ */
+function appendImage(image) {
+    document.querySelector(".input-content").insertAdjacentHTML("beforeend", genImage(image.src));
 }
 
 /**
@@ -130,13 +156,9 @@ function genImage(src) {
 function drawImage(img) {
     const limit = 400; // 长宽上限
     if (img.width > img.height) {
-        if (img.width > limit) { // 宽图宽度超限
-            img.style.width = limit + "px";
-        }
+        img.style.maxWidth = `${limit}px`;
     } else {
-        if (img.height > limit) { // 长图高度超限
-            img.style.height = limit + "px";
-        }
+        img.style.maxHeight = `${limit}px`;
     }
 }
 
@@ -207,7 +229,7 @@ function parseMessage(msgList) {
                 html = `<a href="${msg.url}" target="_blank">[语音消息${msg.seconds ? `(${msg.seconds}s)` : ""}]</a>`;
                 break;
             case "video": // 视频
-                html = `<span onclick="javascript:let video=this.nextElementSibling.style;video.display=video.display==='block'?'none':'block';">[视频消息]</span>
+                html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[视频消息]</span>
                     <video height=200 style="display:none;" src="${msg.url}" controls>`;
                 break;
             case "xml":
@@ -215,10 +237,10 @@ function parseMessage(msgList) {
                 if (dom.querySelector("msg")?.getAttribute("serviceID") === "35") {
                     try {
                         const resid = /resid="[^"]+"/.exec(msg.data)[0].replace("resid=\"", "").replace("\"", "");
-                        html = `<a href="javascript:void(0)" onclick="triggerForwardMsg(this)" id="${resid}">[合并转发]</a>
+                        html = `<span onclick="triggerForwardMsg(this)" id="${resid}">[合并转发]</span>
                         <span class="msg-forward"></span>`;
                     } catch {
-                        html = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[嵌套转发]</a>
+                        html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[嵌套转发]</span>
                         <span style="display:none">${filterXss(msg.data)}</span>`;
                     }
                 } else {
@@ -227,7 +249,7 @@ function parseMessage(msgList) {
                         const url = dom.querySelector("msg").getAttribute("url");
                         html = `<a href="${filterXss(url)}">${filterXss(title)}</a><br>` + filterXss(dom.querySelector("summary")?.innerHTML);
                     } else {
-                        html = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[XML卡片消息]</a>
+                        html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[XML卡片消息]</span>
                         <span style="display:none">${filterXss(msg.data)}</span>`;
                     }
                 }
@@ -243,7 +265,7 @@ function parseMessage(msgList) {
                     },
                     "com.tencent.miniapp_01": (data) => { // app小组件分享
                         const { desc: title, preview, qqdocurl: url, title: platform } = data.meta.detail_1;
-                        const btn = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[${platform}分享]</a>`;
+                        const btn = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[${platform}分享]</span>`;
                         const img = preview.startsWith('http') ? preview : `https://${preview}`;
                         const content = `<span style="display:none;">
                             <a href="${url}" target="_blank">${title}</a><br>
@@ -254,7 +276,7 @@ function parseMessage(msgList) {
                     "com.tencent.structmsg": (data) => {
                         const prompt = data.prompt;
                         const { title, preview, jumpUrl: url, tag: platform, desc } = data.meta.news;
-                        const btn = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">${prompt}[${platform}]</a>`;
+                        const btn = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">${prompt}[${platform}]</span>`;
                         const content = `<span style="display:none;">
                             <a href="${url}" target="_blank">${title}</a>${title === desc ? '' : `<h5>${desc}</h5>`}<br>
                             <a href="${preview}" target="_blank">[封面]</a>
@@ -267,7 +289,7 @@ function parseMessage(msgList) {
                     if (jsonCardHandler[jsonObj.app] instanceof Function) {
                         html = jsonCardHandler[jsonObj.app](jsonObj);
                     } else {
-                        html = `<a href="javascript:void(0)" onclick="javascript:var s=this.nextElementSibling.style;if(s.display=='block')s.display='none';else s.display='block'">[JSON卡片消息]</a>
+                        html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[JSON卡片消息]</span>
                         <span style="display:none">${filterXss(JSON.stringify(jsonObj, null, 4))}</span>`;
                     }
                 } catch { }
@@ -307,6 +329,7 @@ function genUserMessage(msg) {
     if (document.getElementById(msg.seq)) { // 重复消息
         return "";
     }
+    // 获取头衔和昵称
     let title = "", name = "";
     if (msg.sub_type === "anonymous") {
         title = `<span class="htitle member">匿名</span>`;
@@ -320,10 +343,11 @@ function genUserMessage(msg) {
         name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
     return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="${msg.seq}", time="${msg.time}">
-        <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}" />
-        <span class="name" uid="${msg.sender.user_id}" ondblclick="addAt(${msg.sender.user_id})" title="${filterXss(msg.sender.nickname)}(${msg.sender.user_id}) ${webview.datetime(msg.time)}">
-            ${webview.c2c ? "" : '<b class="operation">...</b>'}
-            ${title} ${webview.c2c ? "" : name} ${webview.timestamp(msg.time)}
+        <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}">
+        <span class="name" uid="${msg.sender.user_id}" title="${msg.sender.user_id} ${webview.datetime(msg.time)}">
+            <span>${title}</span>
+            <span ondblclick="appendAt(${msg.sender.user_id})">${webview.c2c ? "" : name}</span>
+            <span>${webview.timestamp(msg.time)}</span>
         </span>
         <span class="content">${parseMessage(msg.message)}</span>
     </div>`;
@@ -397,7 +421,7 @@ function genSystemMessage(event) {
  * 添加新消息元素到聊天窗口末尾
  * @param {string} msg HTML格式的消息
  */
-function appendMsg(msg) {
+function appendMessage(msg) {
     const chatbox = document.querySelector(".chat-box");
     chatbox.insertAdjacentHTML("beforeend", msg);
     if (chatbox.scrollHeight - chatbox.scrollTop < chatbox.clientHeight * 1.5) { // 浏览历史记录时收到新消息不滑动窗口
@@ -434,36 +458,100 @@ function getChatHistory(seq, count = 20) {
     });
 }
 
+/**
+ * 发送消息
+ */
+function sendMessage() {
+    /** @type {NodeListOf<ChildNode>} */
+    const nodes = document.querySelector(".input-content").childNodes;
+    if (sending || !nodes) { // 消息正在发送or输入框为空
+        return;
+    }
+    sending = true;
+    document.querySelector(".send").disabled = true; // 禁用发送按钮
+
+    /** @type {(string | oicq.MessageElem)[]} */
+    const messageList = [];
+    nodes.forEach(value => {
+        let segment;
+        if (value.nodeName === "#text") { // 文字
+            segment = value.textContent;
+        } else if (value.nodeName === "IMG") { // 图片
+            if (value.className === "face") { // qq表情
+                segment = {
+                    id: Number(value.id),
+                    type: "face"
+                };
+            } else { // 图片
+                const file = value.currentSrc.startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
+                segment = {
+                    file: file,
+                    type: "image"
+                };
+            }
+        } else if (value.nodeName === "A") { // at
+            segment = {
+                qq: value.id === "all" ? value.id : Number(value.id),
+                type: "at"
+            };
+        } else { // 暂不支持的类型
+            segment = "";
+        }
+        messageList.push(segment);
+    });
+    // 调用上层方法
+    webview.sendMsg(messageList).then(value => {
+        if (value.seq && webview.c2c) {
+            // const html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
+            //     <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
+            //     <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
+            //         ${webview.timestamp()}
+            //     </span>
+            //     <span class="content">${document.querySelector(".input-content").innerHTML}</span>
+            // </div>`;
+            document.querySelector(".chat-box").insertAdjacentHTML("beforeend", genUserMessage({
+                message: messageList,
+                sender: {
+                    nickname: webview.nickname,
+                    user_id: webview.self_uin,
+                },
+                seq: value.seq,
+                time: value.time
+            }));
+        }
+    }).finally(() => {
+        sending = false;
+        document.querySelector(".send").disabled = false;
+        document.querySelector(".input-content").textContent = "";
+        document.querySelector(".chat-box").scroll(0, document.querySelector(".chat-box").scrollHeight);
+    });
+}
+
 // 主体框架
 document.querySelector("body").insertAdjacentHTML("beforeend",
     `<div class="chat-box"></div>
     <div class="large-img" onclick="this.style.display='none';"></div>
-    <div class="menu-option">
-        <div class="menu-at">@ TA</div>
-        <div class="menu-poke">戳一戳</div>
-        <div class="menu-recall">撤回消息</div>
-        <div class="menu-mute">禁言TA</div>
-        <div class="menu-kick">踢出本群</div>
-    </div>
     <div class="chat-tool stamp-box" style="display: none;"></div>
     <div class="chat-tool face-box" style="display: none;"></div>
+    <div class="chat-tool at-box" style="display: none;"></div>
     <div class="chat-input">
         <hr class="boundary">
         <button class="tool-button show-stamp-box" type="button" title="漫游表情">🧡</button>
         <button class="tool-button show-face-box" type="button" title="QQ表情">😀</button>
+        ${webview.c2c ? "" : `<button class="tool-button show-at-box" type="button" title="@ AT">@</button>`}
         <div class="input-content" contenteditable="true"></div>
-        <button class="send" onclick="sendMsg()">发送</button>
+        <button class="send" onclick="sendMessage()">发送</button>
     </div>`
 );
 
 // 监听消息事件
 webview.on("message", (event) => {
-    appendMsg(genUserMessage(event.detail));
+    appendMessage(genUserMessage(event.detail));
 });
 
 // 监听通知事件
 webview.on("notice", (event) => {
-    appendMsg(genSystemMessage(event.detail));
+    appendMessage(genSystemMessage(event.detail));
 });
 
 // 滑动消息窗口时
@@ -482,7 +570,7 @@ document.querySelector(".boundary").onmousedown = (mouseEvent) => {
     document.onmousemove = (ev) => { // 拖动鼠标时
         const diff = ev.clientY - dy; // 移动的距离（上移为负，下移为正）
         if (100 < (upperHeight + diff) && 100 < (downHeight - diff)) { // 两个div的最小高度都为100px
-            document.queryselSelector(".chat-box").style.height = `calc(100% - ${downHeight - diff}px)`;
+            document.querySelector(".chat-box").style.height = `calc(100% - ${downHeight - diff}px)`;
             document.querySelector(".chat-input").style.height = (downHeight - diff) + "px";
             document.querySelectorAll(".chat-tool").forEach((element) => {
                 element.style.bottom = document.querySelector(".chat-input").clientHeight + "px";
@@ -495,17 +583,60 @@ document.querySelector(".boundary").onmousedown = (mouseEvent) => {
     };
 };
 
-// 点击表情栏图片时
-document.querySelectorAll(".chat-tool").forEach((tool) => {
-    tool.onclick = ev => {
-        const parentClassName = ev.target.parentElement.className;
-        if (parentClassName.includes("face")) { // QQ表情
-            inputContent.insertAdjacentHTML("beforeend", genFace(ev.target.id));
-        } else if (parentClassName.includes("stamp")) { // 漫游表情
-            inputContent.insertAdjacentHTML("beforeend", genImage(ev.target.url));
+// 界面点击时
+document.querySelector("body").onclick = ev => {
+    if (!ev.target.className.includes("show-stamp-box")) { // 关闭漫游表情栏
+        document.querySelector(".stamp-box").style.display = "none";
+    }
+    if (!ev.target.className.includes("show-face-box")) { // 关闭QQ表情栏
+        document.querySelector(".face-box").style.display = "none";
+    }
+    if (!ev.target.className.includes("show-at-box")) { // 关闭AT列表
+        document.querySelector(".at-box").style.display = "none";
+    }
+};
+
+// 打开漫游表情栏
+document.querySelector(".show-stamp-box").onclick = () => {
+    document.querySelector(".stamp-box").style.display = "block";
+    if (!document.querySelector(".stamp-box img")) {
+        webview.getRoamingStamp().then((stampList) => {
+            stampList.forEach((stampUrl) => {
+                document.querySelector(".stamp-box").insertAdjacentHTML("afterbegin", genImage(stampUrl, true));
+            });
+        });
+    }
+};
+
+// 打开QQ表情栏
+document.querySelector(".show-face-box").onclick = () => {
+    document.querySelector(".face-box").style.display = "block";
+    if (!document.querySelector(".face-box img")) {
+        for (let i = 0; i < 325; i++) {
+            if (i === 275 || (i > 247 && i < 260)) {
+                continue;
+            }
+            document.querySelector(".face-box").insertAdjacentHTML("beforeend", genFace(i, true));
         }
-    };
-});
+    }
+};
+
+// 打开AT列表
+document.querySelector(".show-at-box").onclick = () => {
+    document.querySelector(".at-box").style.display = "block";
+    if (!document.querySelector(".at-box div")) {
+        // 成员按昵称排序，方便查找
+        const memberList = [...memberInfoMap.values()].sort((a, b) => {
+            const nameA = a.card ? a.card : a.nickname;
+            const nameB = b.card ? b.card : b.nickname;
+            return nameA.localeCompare(nameB, "zh-CN");
+        });
+        memberList.forEach((memberInfo) => {
+            document.querySelector(".at-box").insertAdjacentHTML("beforeend", `<div title="${memberInfo.user_id}" onclick="appendAt(${memberInfo.user_id})">${memberInfo.card ? memberInfo.card : memberInfo.nickname}</div>`);
+        });
+        document.querySelector(".at-box").insertAdjacentHTML("afterbegin", `<div title="all" onclick="appendAt('all')">全体成员</div>`);
+    }
+};
 
 // 粘贴到输入框时
 document.querySelector(".input-content").onpaste = (ev) => {
@@ -534,7 +665,7 @@ document.querySelector(".input-content").onpaste = (ev) => {
     });
 };
 
-// ctrl+Enter组合键发送消息
+// Enter发送消息，Shift+Enter换行
 window.onkeydown = (event) => {
     if (event.keyCode !== 13) {
         return;
