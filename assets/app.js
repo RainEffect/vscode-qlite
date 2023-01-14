@@ -264,15 +264,13 @@ function parseMessage(msgList) {
                         return `<span class="jsonMsgTitle">${filterXss(title)}</span>
                         <span class="jsonMsgContent">${filterXss(content)}</span>`;
                     },
-                    "com.tencent.miniapp_01": (data) => { // app小组件分享
+                    "com.tencent.miniapp_01": (data) => { // APP小程序分享
                         const { desc: title, preview, qqdocurl: url, title: platform } = data.meta.detail_1;
-                        const btn = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[${platform}分享]</span>`;
                         const img = preview.startsWith('http') ? preview : `https://${preview}`;
-                        const content = `<span style="display:none;">
-                            <a href="${url}" target="_blank">${title}</a><br>
-                            <a href="${img}" target="_blank">[封面]</a>
-                        </span>`;
-                        return `${btn}${content}`;
+                        return `<div class="miniapp" title="From ${platform}">
+                            <a href="${url}" target="_blank">${title}</a>
+                            <br>${genImage(img)}
+                        </div>`;
                     },
                     "com.tencent.structmsg": (data) => {
                         const prompt = data.prompt;
@@ -544,7 +542,7 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
         <hr class="boundary">
         <button class="tool-button show-stamp-box" type="button" title="漫游表情">🧡</button>
         <button class="tool-button show-face-box" type="button" title="QQ表情">😀</button>
-        <button class="tool-button show-at-box" type="button" title="@ AT" display="${webview.c2c ? 'none' : 'flex'}">@</button>
+        <button class="tool-button show-at-box" type="button" title="@ AT" style="display: ${webview.c2c ? 'none' : 'flex'};">@</button>
         <div class="input-content" contenteditable="true"></div>
         <button class="send" onclick="sendMessage()">发送</button>
     </div>`
