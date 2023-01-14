@@ -48,7 +48,6 @@
     z-index: 1;
     border: none;
     border-radius: 6px;
-    border: 2px;
 }
 
 .chat-input .send:hover {
