@@ -488,7 +488,7 @@ function sendMessage() {
                     id: Number(value.id)
                 };
             } else { // 图片
-                const file = value.currentSrc; // .startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
+                const file = value.currentSrc.startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
                 segment = {
                     type: "image",
                     file: file,
