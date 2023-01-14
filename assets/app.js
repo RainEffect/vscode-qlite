@@ -475,24 +475,28 @@ function sendMessage() {
     nodes.forEach(value => {
         let segment;
         if (value.nodeName === "#text") { // 文字
-            segment = value.textContent;
+            segment = {
+                type: "text",
+                text: value.textContent
+            };
         } else if (value.nodeName === "IMG") { // 图片
             if (value.className === "face") { // qq表情
                 segment = {
-                    id: Number(value.id),
-                    type: "face"
+                    type: "face",
+                    id: Number(value.id)
                 };
             } else { // 图片
-                const file = value.currentSrc.startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
+                const file = value.currentSrc; // .startsWith("https") ? value.currentSrc : value.currentSrc.split(";")[1].replace(",", "://");
                 segment = {
+                    type: "image",
                     file: file,
-                    type: "image"
+                    url: file
                 };
             }
         } else if (value.nodeName === "A") { // at
             segment = {
-                qq: value.id === "all" ? value.id : Number(value.id),
-                type: "at"
+                type: "at",
+                qq: value.id === "all" ? value.id : Number(value.id)
             };
         } else { // 暂不支持的类型
             segment = "";
@@ -538,7 +542,7 @@ document.querySelector("body").insertAdjacentHTML("beforeend",
         <hr class="boundary">
         <button class="tool-button show-stamp-box" type="button" title="漫游表情">🧡</button>
         <button class="tool-button show-face-box" type="button" title="QQ表情">😀</button>
-        ${webview.c2c ? "" : `<button class="tool-button show-at-box" type="button" title="@ AT">@</button>`}
+        <button class="tool-button show-at-box" type="button" title="@ AT" display="${webview.c2c ? 'none' : 'flex'}">@</button>
         <div class="input-content" contenteditable="true"></div>
         <button class="send" onclick="sendMessage()">发送</button>
     </div>`
