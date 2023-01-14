@@ -490,7 +490,7 @@ function sendMessage() {
                 segment = {
                     type: "image",
                     file: file,
-                    url: file
+                    url: value.currentSrc
                 };
             }
         } else if (value.nodeName === "A") { // at
