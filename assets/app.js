@@ -229,6 +229,7 @@ function parseMessage(msgList) {
                 html = `<a href="${msg.url}" target="_blank">[语音消息${msg.seconds ? `(${msg.seconds}s)` : ""}]</a>`;
                 break;
             case "video": // 视频
+                // TODO: 获取视频链接无法同步执行
                 html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[视频消息]</span>
                     <video height=200 style="display:none;" src="${await webview.getFileUrl(msg.fid)}" controls>`;
                 break;
@@ -295,6 +296,7 @@ function parseMessage(msgList) {
                 } catch { }
                 break;
             case "file": // 文件
+                // TODO: 获取文件链接无法同步执行
                 html = `<a class="file" href="${await webview.getFileUrl(msg.fid)}" target="_blank">文件：${filterXss(msg.name)}(${msg.size / 1e6}MB)</a>`;
                 break;
             case "rps": // 石头剪刀布
