@@ -506,13 +506,6 @@ function sendMessage() {
     // 调用上层方法
     webview.sendMsg(messageList).then(value => {
         if (value.seq && webview.c2c) {
-            // const html = `<div class="cright cmsg", id="${value.seq}" time="${value.time}">
-            //     <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(webview.self_uin)}" />
-            //     <span class="name" title="${webview.nickname}(${webview.self_uin}) ${webview.datetime()}">
-            //         ${webview.timestamp()}
-            //     </span>
-            //     <span class="content">${document.querySelector(".input-content").innerHTML}</span>
-            // </div>`;
             document.querySelector(".chat-box").insertAdjacentHTML("beforeend", genUserMessage({
                 message: messageList,
                 sender: {
