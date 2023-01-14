@@ -474,7 +474,12 @@ function sendMessage() {
     const messageList = [];
     nodes.forEach(value => {
         let segment;
-        if (value.nodeName === "#text") { // 文字
+        if (value.nodeName === "BR") { // 回车特判
+            segment = {
+                type: "text",
+                text: "\n"
+            };
+        } else if (value.nodeName === "#text") { // 文字
             segment = {
                 type: "text",
                 text: value.textContent
