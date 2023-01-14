@@ -7,6 +7,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 - 由于本人使用QQ丰富功能的占比极低，所以有频繁特殊需求的用户请提issue，我将视情况添加到扩展中
 - v1.3丰富vscode端的功能后也会更新readme，总和目前已有的功能
 
+## [Unsolved]
+- 文件和视频消息无法正常显示
+
+## [1.3.1] - 2023-01-14
+
+### Fixed
+- 修复上一版本中私聊消息无法加载的bug
+
 ## [1.3.0] - 2023-01-13
 
 ### Added
