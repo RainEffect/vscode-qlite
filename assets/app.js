@@ -593,17 +593,27 @@ document.querySelector(".boundary").onmousedown = (mouseEvent) => {
 };
 
 // 界面点击时
-document.querySelector("body").onmousedown = () => {
-    // 关闭漫游表情栏
-    document.querySelector(".stamp-box").style.display = "none";
-    // 关闭QQ表情栏
-    document.querySelector(".face-box").style.display = "none";
-    // 关闭AT列表
-    document.querySelector(".at-box").style.display = "none";
+document.querySelector("body").onclick = ev => {
+    let elem = ev.target;
+    if (elem.nodeName === "path") {
+        elem = ev.target.parentElement.parentElement;
+    }
+    if (elem.nodeName === "svg") {
+        elem = ev.target.parentElement;
+    }
+    if (!elem.className.includes("show-stamp-box")) { // 关闭漫游表情栏
+        document.querySelector(".stamp-box").style.display = "none";
+    }
+    if (!elem.className.includes("show-face-box")) { // 关闭QQ表情栏
+        document.querySelector(".face-box").style.display = "none";
+    }
+    if (!elem.className.includes("show-at-box")) { // 关闭AT列表
+        document.querySelector(".at-box").style.display = "none";
+    }
 };
 
 // 打开漫游表情栏
-document.querySelector(".show-stamp-box").onmouseup = () => {
+document.querySelector(".show-stamp-box").onclick = () => {
     document.querySelector(".stamp-box").style.display = "block";
     if (!document.querySelector(".stamp-box img")) {
         webview.getRoamingStamp().then((stampList) => {
@@ -615,7 +625,7 @@ document.querySelector(".show-stamp-box").onmouseup = () => {
 };
 
 // 打开QQ表情栏
-document.querySelector(".show-face-box").onmouseup = () => {
+document.querySelector(".show-face-box").onclick = () => {
     document.querySelector(".face-box").style.display = "block";
     if (!document.querySelector(".face-box img")) {
         for (let i = 0; i < 325; i++) {
@@ -628,7 +638,7 @@ document.querySelector(".show-face-box").onmouseup = () => {
 };
 
 // 打开AT列表
-document.querySelector(".show-at-box").onmouseup = () => {
+document.querySelector(".show-at-box").onclick = () => {
     document.querySelector(".at-box").style.display = "block";
     if (!document.querySelector(".at-box div")) {
         // 成员按昵称排序，方便查找
