@@ -62,9 +62,10 @@
     border: none;
     margin: 4px;
     float: left;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     text-align: center;
+    border-radius: 6px;
 }
 
 .chat-input .tool-button:hover {
