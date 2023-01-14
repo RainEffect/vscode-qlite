@@ -202,7 +202,7 @@ function triggerForwardMsg(trigger) {
  */
 function parseMessage(msgList) {
     let html = "";
-    msgList.forEach((msg) => {
+    msgList.forEach(async (msg) => {
         switch (msg.type) {
             case "text": // 纯文本，替换链接
                 html += filterXss(msg.text).replace(/(https?:\/\/[^\s]+)/g, "<a href='$1'>$1</a>");
@@ -230,7 +230,7 @@ function parseMessage(msgList) {
                 break;
             case "video": // 视频
                 html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[视频消息]</span>
-                    <video height=200 style="display:none;" src="${msg.url}" controls>`;
+                    <video height=200 style="display:none;" src="${await webview.getFileUrl(msg.fid)}" controls>`;
                 break;
             case "xml":
                 const dom = new DOMParser().parseFromString(msg.data, "text/xml");
@@ -295,7 +295,7 @@ function parseMessage(msgList) {
                 } catch { }
                 break;
             case "file": // 文件
-                html = `<a class="file" href="${msg.url}" target="_blank">文件：${filterXss(msg.name)}(${msg.size / 1e6}MB)</a>`;
+                html = `<a class="file" href="${await webview.getFileUrl(msg.fid)}" target="_blank">文件：${filterXss(msg.name)}(${msg.size / 1e6}MB)</a>`;
                 break;
             case "rps": // 石头剪刀布
                 const fingers = {
