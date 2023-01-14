@@ -87,7 +87,6 @@ body {
 
 /* 消息内容超链接处理 */
 .chat-box .content a {
-    color: var(--vscode-editorLink-activeForeground);
     margin: 0 2px;
     cursor: hand;
     text-decoration: none;
