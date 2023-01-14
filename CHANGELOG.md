@@ -10,6 +10,12 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 文件和视频消息无法正常显示
 
+## [1.3.3] - 2023-01-14
+
+### Fixed
+- 修复无法有效点击工具栏内容的bug
+- 修复输入框编辑多行文本时发送无法识别换行符的bug
+
 ## [1.3.2] - 2023-01-14
 
 ### Fixed
