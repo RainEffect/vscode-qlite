@@ -10,6 +10,16 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 文件和视频消息无法正常显示
 
+## [1.3.2] - 2023-01-14
+
+### Fixed
+- 修复发送图片无法在消息中正常显示的bug
+- 修复连续点击不同的工具栏按钮时前一个工具栏不会消失的bug
+
+### Changed
+- 更换消息页面工具栏的按钮样式，并美化了样式
+- 优化了小程序分享的json消息的显示效果
+
 ## [1.3.1] - 2023-01-14
 
 ### Fixed
