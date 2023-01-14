@@ -674,9 +674,7 @@ window.onkeydown = (event) => {
     if (event.keyCode !== 13) {
         return;
     }
-    if (event.shiftKey) {
-        querySelector("input-content").insertAdjacentText("\n");
-    } else {
+    if (!event.shiftKey) {
         sendMessage();
     }
 };
