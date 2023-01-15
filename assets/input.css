@@ -4,7 +4,7 @@
     height: calc(100% - 150px);
 }
 
-/* 输入框 */
+/* 输入框主体 */
 .chat-input {
     width: 100%;
     height: 150px;
@@ -37,35 +37,24 @@
     color: var(--vscode-editor-foreground);
 }
 
-/* 发送按钮 */
-.chat-input .send {
-    position: absolute;
-    bottom: 12px;
-    right: 40px;
-    padding: 4px 20px;
-    background-color: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    z-index: 1;
-    border: none;
-    border-radius: 6px;
-}
-
-.chat-input .send:hover {
-    background-color: var(--vscode-button-hoverBackground);
-    cursor: pointer;
-}
-
-/* 输入框上方的输入表情等功能按钮 */
+/* 输入框上方的功能按钮 */
 .chat-input .tool-button {
     padding: 0px;
     background: none;
     border: none;
     margin: 4px;
-    float: left;
     width: 24px;
     height: 24px;
     text-align: center;
     border-radius: 6px;
+}
+
+.chat-input .left {
+    float: left;
+}
+
+.chat-input .right {
+    float: right;
 }
 
 .chat-input .tool-button:hover {
@@ -134,4 +123,22 @@
 .at-box div:hover {
     background-color: var(--vscode-input-foreground);
     color: var(--vscode-editor-background);
+}
+
+/* 发送按钮 */
+.chat-input .send {
+    position: absolute;
+    bottom: 12px;
+    right: 40px;
+    padding: 4px 20px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    z-index: 1;
+    border: none;
+    border-radius: 6px;
+}
+
+.chat-input .send:hover {
+    background-color: var(--vscode-button-hoverBackground);
+    cursor: pointer;
 }
