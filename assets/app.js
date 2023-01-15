@@ -185,7 +185,7 @@ function triggerForwardMsg(trigger) {
         webview.getForwardMsg(trigger.id).then((msgList) => { // 尝试重新获取消息
             let html = "";
             msgList.forEach((msg) => {
-                html += `<p>👤${filterXss(msg.nickname)}(${msg.user_id})} ${webview.datetime(msg.time)}</p>${parseMessage(msg.message)}`;
+                html += `<p>👤${filterXss(msg.nickname)}(${msg.user_id})} ${webview.datetime(msg.time)}</p>${parseMessage(msg.message, msg.seq)}`;
             });
             if (!html) {
                 html = "加载失败";
@@ -198,11 +198,12 @@ function triggerForwardMsg(trigger) {
 /**
  * 生成消息元素
  * @param {import("oicq").MessageElem[]} msgList 消息元素列表
+ * @param {string} seq 消息序列号
  * @returns {string} 消息的HTML
  */
-function parseMessage(msgList) {
+function parseMessage(msgList, seq) {
     let html = "";
-    msgList.forEach(async (msg) => {
+    msgList.forEach((msg) => {
         switch (msg.type) {
             case "text": // 纯文本，替换链接
                 html += filterXss(msg.text).replace(/(https?:\/\/[^\s]+)/g, "<a href='$1'>$1</a>");
@@ -228,11 +229,12 @@ function parseMessage(msgList) {
                 // 语音消息不支援HTML播放, 因为HTML不支援 .amr / .silk 格式 
                 html = `<a href="${msg.url}" target="_blank">[语音消息${msg.seconds ? `(${msg.seconds}s)` : ""}]</a>`;
                 break;
-            case "video": // 视频
-                // TODO: 获取视频链接无法同步执行
-                html = `<span onclick="javascript:var s=this.nextElementSibling.style;s.display=s.display==='none'?'block':'none';">[视频消息]</span>
-                    <video height=200 style="display:none;" src="${await webview.getFileUrl(msg.fid)}" controls>`;
-                break;
+            case "video": // 视频，由于获取的文件信息是protobuf格式的数据流，暂时不支持解析
+                html = `<a class="file" href="javascript:void(0)" target="_blank">视频：(${(msg.size / 1e6).toFixed(2)}MB)</a>`;
+                webview.getFileUrl(msg.fid).then((url) => {
+                    document.getElementById("seq" + seq).querySelector(".content a").href = url;
+                });
+            break;
             case "xml":
                 const dom = new DOMParser().parseFromString(msg.data, "text/xml");
                 if (dom.querySelector("msg")?.getAttribute("serviceID") === "35") {
@@ -294,8 +296,10 @@ function parseMessage(msgList) {
                 } catch { }
                 break;
             case "file": // 文件
-                // TODO: 获取文件链接无法同步执行
-                html = `<a class="file" href="${await webview.getFileUrl(msg.fid)}" target="_blank">文件：${filterXss(msg.name)}(${msg.size / 1e6}MB)</a>`;
+                html = `<a class="file" href="javascript:void(0)" target="_blank" download="${msg.name}">文件：${msg.name}(${(msg.size / 1e6).toFixed(2)}MB)</a>`;
+                webview.getFileUrl(msg.fid).then((url) => {
+                    document.getElementById("seq" + seq).querySelector(".content a").href = url;
+                });
                 break;
             case "rps": // 石头剪刀布
                 const fingers = {
@@ -325,8 +329,7 @@ function parseMessage(msgList) {
  * @returns 一条完整的消息的HTML
  */
 function genUserMessage(msg) {
-    // TODO: 重复消息判断只在chatbox的子元素中查找
-    if (document.getElementById(msg.seq)) { // 重复消息
+    if (document.getElementById("seq" + msg.seq)) { // 重复消息
         return "";
     }
     // 获取头衔和昵称
@@ -342,14 +345,14 @@ function genUserMessage(msg) {
         }
         name = filterXss(msg.sender.card ? msg.sender.card : msg.sender.nickname);
     }
-    return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="${msg.seq}", time="${msg.time}">
+    return `<div class="${msg.sender.user_id === webview.self_uin ? "cright" : "cleft"} cmsg", id="seq${msg.seq}", time="${msg.time}">
         <img class="headIcon radius" src="${webview.getUserAvatarUrlSmall(msg.sender.user_id)}">
         <span class="name" uid="${msg.sender.user_id}" title="${msg.sender.user_id} ${webview.datetime(msg.time)}">
             <span>${title}</span>
             <span ondblclick="appendAt(${msg.sender.user_id})">${webview.c2c ? "" : name}</span>
             <span>${webview.timestamp(msg.time)}</span>
         </span>
-        <span class="content">${parseMessage(msg.message)}</span>
+        <span class="content">${parseMessage(msg.message, msg.seq)}</span>
     </div>`;
 }
 
@@ -521,6 +524,8 @@ function sendMessage() {
                 time: value.time
             }));
         }
+    }).catch((reason) => {
+        alert("消息发送失败：" + reason);
     }).finally(() => {
         sending = false;
         document.querySelector(".send").disabled = false;
@@ -572,7 +577,7 @@ webview.on("notice", (event) => {
 document.querySelector(".chat-box").onscroll = () => {
     if (document.querySelector(".chat-box").scrollTop === 0) { // 滑动到顶部加载历史消息
         const msgNode = document.querySelector(".cmsg").attributes;
-        getChatHistory((webview.c2c ? msgNode.time.value : msgNode.id.value) ?? "");
+        getChatHistory((webview.c2c ? msgNode.time.value : msgNode.id.value.substring(3)) ?? "");
     }
 };
 
