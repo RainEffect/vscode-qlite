@@ -35,6 +35,14 @@
         "command": "qlite.search",
         "icon": "$(search)",
         "title": "搜索"
+      },
+      {
+        "command": "qlite.friendProfile",
+        "title": "好友资料"
+      },
+      {
+        "command": "qlite.groupProfile",
+        "title": "群聊资料"
       }
     ],
     "viewsContainers": {
@@ -65,6 +73,16 @@
           "command": "qlite.search",
           "when": "view == qliteExplorer",
           "group": "navigation@0"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "qlite.friendProfile",
+          "when": "viewItem == FriendInfoTreeItem"
+        },
+        {
+          "command": "qlite.groupProfile",
+          "when": "viewItem == GroupInfoTreeItem"
         }
       ]
     }

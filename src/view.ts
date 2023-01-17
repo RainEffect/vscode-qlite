@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as oicq from 'oicq';
 import { bind } from './chat';
 import { Global } from './global';
 
@@ -115,6 +116,7 @@ class ItemListTree extends vscode.TreeItem {
 
 // 好友/群信息
 class InfoTreeItem extends vscode.TreeItem {
+    uid: number;
     constructor(label: string | vscode.TreeItemLabel, uid: number, c2c: boolean, description?: string) {
         super(label);
         this.command = {
@@ -123,6 +125,8 @@ class InfoTreeItem extends vscode.TreeItem {
             arguments: [uid, c2c]
         };
         this.description = description;
+        this.contextValue = c2c ? "FriendInfoTreeItem" : "GroupInfoTreeItem";
+        this.uid = uid;
     }
 }
 
@@ -136,6 +140,8 @@ function createTreeView() {
     let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
+    Global.context.subscriptions.push(vscode.commands.registerCommand("qlite.friendProfile", showFriendProfile));
+    Global.context.subscriptions.push(vscode.commands.registerCommand("qlite.groupProfile", showGroupProfile));
     // 注册通知事件处理
     Global.client.on("notice.friend.decrease", (event) => {
         vscode.window.showInformationMessage("你删除了好友：" + event.nickname + `(${event.user_id})`);
@@ -217,4 +223,31 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
     qliteTreeDataProvider.refresh();
 }
 
-export { createTreeView, refreshContacts, qliteTreeDataProvider };
+function showFriendProfile(item: InfoTreeItem) {
+    const info = Global.client.pickFriend(item.uid).info as oicq.FriendInfo;
+    const profile = [
+        "昵称：" + info.nickname,
+        "性别：" + (info.sex === "male" ? "男" : info.sex === "female" ? "女" : "未知"),
+        "QQ：" + info.user_id,
+        "备注：" + info.remark,
+        "分组：" + Global.client.classes.get(info.class_id)
+    ];
+    vscode.window.showQuickPick(profile, {
+        "title": info.remark + "的好友资料"
+    }).then(value => {});
+}
+
+function showGroupProfile(item: InfoTreeItem) {
+    const info = Global.client.pickGroup(item.uid).info as oicq.GroupInfo;
+    const profile = [
+        "群名：" + info.group_name,
+        "QQ：" + info.group_id,
+        "群主QQ：" + info.owner_id,
+        "成员数：" + info.member_count
+    ];
+    vscode.window.showQuickPick(profile, {
+        "title": info.group_name + "的群聊资料"
+    }).then(value => {});
+}
+
+export { qliteTreeDataProvider, createTreeView, refreshContacts };
