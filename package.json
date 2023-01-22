@@ -1,27 +1,20 @@
 {
   "name": "vscode-qlite",
-  "displayName": "VSCode-QLite",
-  "description": "A lite qq in vscode",
   "version": "1.3.4",
+  "publisher": "Vi-brance",
   "engines": {
     "vscode": "^1.74.0"
   },
-  "icon": "ico.ico",
-  "publisher": "Vi-brance",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Vi-brance/vscode-qlite"
-  },
-  "keywords": [
-    "qq",
-    "oicq"
-  ],
+  "license": "GPL-3.0",
+  "displayName": "VSCode-QLite",
+  "description": "An extension that allows you to use QQ in vscode",
   "categories": [
     "Other"
   ],
-  "license": "GPL-3.0",
-  "activationEvents": [
-    "onView:qliteExplorer"
+  "keywords": [
+    "qq",
+    "oicq",
+    "chat"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -30,6 +23,11 @@
         "command": "qlite.login",
         "icon": "$(sign-in)",
         "title": "登录"
+      },
+      {
+        "command": "qlite.setting",
+        "icon": "$(settings-gear)",
+        "title": "设置"
       },
       {
         "command": "qlite.search",
@@ -57,21 +55,39 @@
     "views": {
       "qlite": [
         {
+          "id": "emptyView",
+          "name": "QLite",
+          "when": "!qlite.isOnline"
+        },
+        {
           "id": "qliteExplorer",
-          "name": "QLite"
+          "name": "QLite",
+          "when": "qlite.isOnline"
+        },
+        {
+          "id": "profile",
+          "name": "资料",
+          "when": "qlite.isOnline"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "emptyView",
+        "contents": "请登录QLITE。\n[LOGIN](command:qlite.login)",
+        "when": "!qlite.isOnline"
+      }
+    ],
     "menus": {
       "view/title": [
         {
-          "command": "qlite.login",
-          "when": "view == qliteExplorer",
+          "command": "qlite.setting",
+          "when": "view == qliteExplorer && qlite.isOnline",
           "group": "navigation@1"
         },
         {
           "command": "qlite.search",
-          "when": "view == qliteExplorer",
+          "when": "view == qliteExplorer && qlite.isOnline",
           "group": "navigation@0"
         }
       ],
@@ -87,13 +103,15 @@
       ]
     }
   },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+  "activationEvents": [
+    "onView:qliteExplorer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vi-brance/vscode-qlite"
+  },
+  "dependencies": {
+    "oicq": "^2.3.1"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
@@ -108,7 +126,13 @@
     "mocha": "^10.1.0",
     "typescript": "^4.9.3"
   },
-  "dependencies": {
-    "oicq": "^2.3.1"
-  }
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "icon": "ico.ico"
 }
