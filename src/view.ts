@@ -136,12 +136,11 @@ class InfoTreeItem extends vscode.TreeItem {
 function createTreeView() {
     // 创建树视图
     qliteTreeDataProvider = new QliteTreeDataProvider;
-    vscode.window.registerTreeDataProvider("qliteExplorer", qliteTreeDataProvider);
-    let qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
+    Global.qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
-    Global.context.subscriptions.push(vscode.commands.registerCommand("qlite.friendProfile", showFriendProfile));
-    Global.context.subscriptions.push(vscode.commands.registerCommand("qlite.groupProfile", showGroupProfile));
+    Global.qliteTreeView.title = Global.client.nickname;
+    Global.qliteTreeView.description = String(Global.client.uin);
     // 注册通知事件处理
     Global.client.on("notice.friend.decrease", (event) => {
         vscode.window.showInformationMessage("你删除了好友：" + event.nickname + `(${event.user_id})`);
@@ -234,7 +233,7 @@ function showFriendProfile(item: InfoTreeItem) {
     ];
     vscode.window.showQuickPick(profile, {
         "title": info.remark + "的好友资料"
-    }).then(value => {});
+    }).then(value => { });
 }
 
 function showGroupProfile(item: InfoTreeItem) {
@@ -247,7 +246,7 @@ function showGroupProfile(item: InfoTreeItem) {
     ];
     vscode.window.showQuickPick(profile, {
         "title": info.group_name + "的群聊资料"
-    }).then(value => {});
+    }).then(value => { });
 }
 
-export { qliteTreeDataProvider, createTreeView, refreshContacts };
+export { qliteTreeDataProvider, createTreeView, refreshContacts, showFriendProfile, showGroupProfile };
