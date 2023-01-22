@@ -5,17 +5,11 @@ import * as config from './config';
 import { Global } from './global';
 import * as view from './view';
 
-// 登陆状态
+/** 登陆状态 */
 let logining: boolean = false;
-// 登录选项
-const settings: Array<string> = [
-    "$(log-out) 切换账号",
-    "$(account) 我的状态",
-    "$(warning) 登出账号"
-];
-// 当前状态
+/** 当前状态 */
 let selectedStatus: number = 11;
-// 状态选项
+/** 状态选项 */
 const statusMap: Map<number, string> = new Map([
     [11, "在线"],
     [60, "Q我吧"],
@@ -26,18 +20,15 @@ const statusMap: Map<number, string> = new Map([
 ]);
 
 /**
- * 生成一个客户端对象
+ * 构造一个client实例
  * @param uin 用户账号
  */
 function createClient(uin: number) {
     Global.client = oicq.createClient(uin, config.genClientConfig());
     // 登陆失败
-    Global.client.on("system.login.error", ({ message }) => {
+    Global.client.on("system.login.error", (event) => {
         logining = false;
-        if (message.includes("密码错误")) {
-            config.setConfig();
-        }
-        vscode.window.showErrorMessage(message);
+        vscode.window.showErrorMessage(event.message + "\nError Code: " + event.code);
     });
     // 二维码登录
     Global.client.on("system.login.qrcode", ({ image }) => {
@@ -48,47 +39,48 @@ function createClient(uin: number) {
         qrcodeWebview.webview.html = `<img width="400px" height="400px" src="data:image/png; base64, ${image.toString("base64")}" />`;
         qrcodeWebview.reveal();
         qrcodeWebview.onDidDispose(() => {
-            Global.client.login();
+            Global.client.qrcodeLogin();
         });
     });
     // 设备锁验证
     Global.client.on("system.login.device", ({ url }) => {
-        vscode.window.showInformationMessage(`[点击](${url})进行设备锁登录验证。`, "验证完成").then((value) => {
-            if (value === "验证完成") {
+        vscode.window.showInformationMessage(`[点我](${url})完成设备锁登录验证。`, "完成").then((value) => {
+            if (value === "完成") {
                 Global.client.login();
             }
         });
     });
     // 滑动验证
     Global.client.on("system.login.slider", ({ url }) => {
-        vscode.window.showInformationMessage(`[点击](${url})完成滑动验证`);
+        vscode.window.showInformationMessage(`[点我](${url})完成滑动验证`);
         inputTicket();
     });
     // 离线
     Global.client.on("system.offline", ({ message }) => {
+        vscode.commands.executeCommand("setContext", "qlite.isOnline", false);
         logining = false;
         vscode.window.showErrorMessage(message);
     });
     // 上线
     Global.client.on("system.online", () => {
         logining = false;
-        config.setConfig({
-            account: Global.client.uin,
-            password: Global.client.password_md5 ? Global.client.password_md5.toString("hex") : "qrcode"
-        });
+        config.setConfig(
+            Global.client.uin,
+            Global.client.password_md5 ? Global.client.password_md5.toString("hex") : "qrcode"
+        );
         vscode.window.showInformationMessage(`${Global.client.nickname}(${Global.client.uin}) 已上线。`);
         view.createTreeView();
+        vscode.commands.executeCommand("setContext", "qlite.isOnline", true);
     });
     inputPassword();
 }
 
 /**
- * 输入账号
+ * 输入账号，响应login指令
  */
 function inputAccount() {
-    // 读取配置信息的账号
-    const uin = config.getConfig().account as number;
-    if (uin > 10000 && uin < 0xffffffff) {
+    const uin = config.getConfig().recentLogin;
+    if (uin) {
         return createClient(uin);
     }
     vscode.window.showInputBox({
@@ -109,21 +101,22 @@ function inputAccount() {
  * 输入密码
  */
 function inputPassword() {
-    let password = config.getConfig().password;
+    const conf = config.getConfig();
+    let password = conf.accounts.get(conf.recentLogin);
     if (password === "qrcode") {
-        return Global.client.login();
+        return Global.client.qrcodeLogin();
     } else if (password) {
         return Global.client.login(password);
     }
     vscode.window.showInputBox({
-        placeHolder: "请输入密码",
+        placeHolder: "请输入密码，此处留空则使用二维码登录",
         password: true
     }).then((value) => {
         if (!value) {
-            return Global.client.login();
+            return Global.client.qrcodeLogin();
         }
         logining = true;
-        Global.client.login(crypto.createHash('md5').update(value).digest());
+        Global.client.login(crypto.createHash("md5").update(value).digest());
     });
 }
 
@@ -133,58 +126,81 @@ function inputPassword() {
 function inputTicket() {
     vscode.window.showInputBox({
         placeHolder: "请输入验证码"
-    }).then((value) => {
-        if (!value) {
+    }).then((ticket) => {
+        if (!ticket) {
             inputTicket();
         } else {
-            Global.client.submitSlider(value);
+            Global.client.submitSlider(ticket);
         }
     });
 }
 
 /**
- * 登录入口
+ * 设置，响应setting指令
  */
-export function login() {
-    if (Global.client === undefined || !Global.client.isOnline()) {
-        inputAccount();
-        return;
-    }
+function setting() {
+    /** 设置选项 */
+    const settings: vscode.QuickPickItem[] = [
+        {
+            "label": "$(account) 切换账号",
+            "description": `${Global.client.nickname}(${Global.client.uin})`
+        },
+        {
+            "label": "$(bell) 我的状态",
+            "description": statusMap.get(selectedStatus)
+        }
+    ];
     vscode.window.showQuickPick(settings).then((value) => {
-        if (value === settings[0]) {
-            vscode.window.showWarningMessage("将会退出当前帐号，是否继续？", "是", "否").then((value) => {
-                if (value === "是") {
+        switch (value) {
+            case settings[0]:
+                const accounts: vscode.QuickPickItem[] = [];
+                accounts.push({ label: "$(warning) 直接退出" });
+                accounts.push({ label: "$(log-in) 登录新账号"});
+                for (let [account] of config.getConfig().accounts) {
+                    accounts.push({
+                        label: String(account),
+                        description: config.getConfig().recentLogin === account ? "最近登录" : ""
+                    });
+                }
+                vscode.window.showQuickPick(accounts).then((account) => {
+                    if (!account) {
+                        return;
+                    }
                     Global.client.logout();
-                    config.setConfig();
-                    view.qliteTreeDataProvider.refresh();
-                    inputAccount();
-                }
-            });
-        } else if (value === settings[1]) {
-            const statusArray = [...statusMap.values()];
-            vscode.window.showQuickPick([...statusMap.values()], {
-                placeHolder: "当前状态：" + statusMap.get(Global.client.status),
-                title: "我的状态"
-            }).then((value) => {
-                if (value === undefined) {
-                    return;
-                }
-                if (logining) {
-                    vscode.window.showInformationMessage("登陆中...");
-                    return;
-                }
-                selectedStatus = [...statusMap.keys()][statusArray.indexOf(value)];
-                if (Global.client.isOnline()) {
-                    Global.client.setOnlineStatus(selectedStatus);
-                }
-            });
-        } else if (value === settings[2]) {
-            vscode.window.showWarningMessage("是否退出登录？", "是", "否").then((value) => {
-                if (value === "是") {
-                    Global.client.logout();
-                    view.qliteTreeDataProvider.refresh();
-                }
-            });
+                    vscode.commands.executeCommand("setContext", "qlite.isOnline", false);
+                    Global.qliteTreeView.dispose();
+                    if (account === accounts[0]) {
+                        return;
+                    } else if (account === accounts[1]) {
+                        config.setConfig();
+                        inputAccount();
+                    } else {
+                        const uin = Number(account.label);
+                        config.setConfig(uin);
+                        createClient(uin);
+                    }
+                });
+                break;
+            case settings[1]:
+                const statusArray = [...statusMap.values()];
+                vscode.window.showQuickPick([...statusMap.values()], {
+                    placeHolder: "当前状态：" + statusMap.get(Global.client.status)
+                }).then((value) => {
+                    if (value === undefined) {
+                        return;
+                    }
+                    if (logining) {
+                        vscode.window.showInformationMessage("登陆中...");
+                        return;
+                    }
+                    selectedStatus = [...statusMap.keys()][statusArray.indexOf(value)];
+                    if (Global.client.isOnline()) {
+                        Global.client.setOnlineStatus(selectedStatus);
+                    }
+                });
+                break;
         }
     });
 }
+
+export { setting, inputAccount };
