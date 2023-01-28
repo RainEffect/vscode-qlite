@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as oicq from 'oicq';
 import * as path from 'path';
 import { Global } from './global';
-import { refreshContacts } from './view';
+import { refreshContact } from './view';
 
 // 发送给页面的数据类
 interface WebviewPostData {
@@ -73,7 +73,7 @@ function openChatView(uin: number, c2c: boolean) {
     });
     chatView.onDidChangeViewState((e) => {
         if (e.webviewPanel.visible) {
-            refreshContacts(c2c, uin, false);
+            refreshContact(c2c, uin, false);
         }
     });
     chatView.webview.onDidReceiveMessage(async (data: WebviewPostData) => {
@@ -112,14 +112,14 @@ function openChatView(uin: number, c2c: boolean) {
 function bind() {
     Global.client.on("message.group", (event) => {
         if (!webviewMap.get(false)?.get(event.group_id)?.active) {
-            refreshContacts(false, event.group_id, true);
+            refreshContact(false, event.group_id, true);
         }
         webviewMap.get(false)?.get(event.group_id)?.webview.postMessage(event);
     });
     Global.client.on("message.private", (event) => {
         const target_id = event.from_id === Global.client.uin ? event.to_id : event.from_id;
         if (!webviewMap.get(true)?.get(event.from_id)?.active) {
-            refreshContacts(true, target_id, event.from_id !== Global.client.uin);
+            refreshContact(true, target_id, event.from_id !== Global.client.uin);
         }
         webviewMap.get(true)?.get(target_id)?.webview.postMessage(event);
     });
