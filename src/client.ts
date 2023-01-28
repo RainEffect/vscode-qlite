@@ -68,7 +68,7 @@ function createClient(uin: number) {
             Global.client.uin,
             Global.client.password_md5 ? Global.client.password_md5.toString("hex") : "qrcode"
         );
-        vscode.window.showInformationMessage(`${Global.client.nickname}(${Global.client.uin}) 已上线。`);
+        // vscode.window.showInformationMessage(`${Global.client.nickname}(${Global.client.uin}) 已上线。`);
         view.createTreeView();
         vscode.commands.executeCommand("setContext", "qlite.isOnline", true);
     });
