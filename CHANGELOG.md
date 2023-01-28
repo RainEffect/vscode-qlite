@@ -10,6 +10,20 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.3.6] - 2023-01-28
+
+### Added
+- 支持移除消息栏中的新消息
+
+### Fixed
+- 修复快捷切换账号后消息栏的消息不刷新的bug
+
+### Changed
+- 合并查看好友/群资料的命令
+
+### Removed
+- 移除登录提示
+
 ## [1.3.5] - 2023-01-23
 
 ### Added
