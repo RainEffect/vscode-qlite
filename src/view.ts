@@ -127,6 +127,8 @@ class InfoTreeItem extends vscode.TreeItem {
         this.description = description;
         this.contextValue = c2c ? "FriendInfoTreeItem" : "GroupInfoTreeItem";
         this.uid = uid;
+        this.iconPath = vscode.Uri.parse(c2c ? Global.client.pickFriend(uid).getAvatarUrl(40) : Global.client.pickGroup(uid).getAvatarUrl(40), true);
+        this.tooltip = String(uid);
     }
 }
 
