@@ -26,9 +26,7 @@ class QliteTreeDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
         return element;
     }
     getChildren(element?: vscode.TreeItem | undefined): vscode.ProviderResult<vscode.TreeItem[]> {
-        if (!Global.client.isOnline()) { // 离线不显示列表
-            return [];
-        } else if (element === undefined) { // 根目录
+        if (element === undefined) { // 根目录
             return [this.newsListTree, this.contactsListTree];
         } else if (element instanceof NewsListTree) {
             return element.newsList;
@@ -117,7 +115,14 @@ class ItemListTree extends vscode.TreeItem {
 // 好友/群信息
 class InfoTreeItem extends vscode.TreeItem {
     uid: number;
-    constructor(label: string | vscode.TreeItemLabel, uid: number, c2c: boolean, description?: string) {
+    c2c: boolean;
+    constructor(
+        label: string | vscode.TreeItemLabel,
+        uid: number,
+        c2c: boolean,
+        description?: string,
+        contextValue?: string
+    ) {
         super(label);
         this.command = {
             title: "打开消息",
@@ -125,9 +130,14 @@ class InfoTreeItem extends vscode.TreeItem {
             arguments: [uid, c2c]
         };
         this.description = description;
-        this.contextValue = c2c ? "FriendInfoTreeItem" : "GroupInfoTreeItem";
+        this.contextValue = contextValue + " info";
         this.uid = uid;
-        this.iconPath = vscode.Uri.parse(c2c ? Global.client.pickFriend(uid).getAvatarUrl(40) : Global.client.pickGroup(uid).getAvatarUrl(40), true);
+        this.c2c = c2c;
+        this.iconPath = vscode.Uri.parse(
+            c2c ? Global.client.pickFriend(uid).getAvatarUrl(40)
+                : Global.client.pickGroup(uid).getAvatarUrl(40),
+            true
+        );
         this.tooltip = String(uid);
     }
 }
@@ -138,6 +148,7 @@ class InfoTreeItem extends vscode.TreeItem {
 function createTreeView() {
     // 创建树视图
     qliteTreeDataProvider = new QliteTreeDataProvider;
+    newsList = [];
     Global.qliteTreeView = vscode.window.createTreeView("qliteExplorer", {
         treeDataProvider: qliteTreeDataProvider
     });
@@ -191,7 +202,7 @@ function createTreeView() {
  * @param uin 私聊为对方账号，群聊为群号
  * @param flag 有新消息为true，已读新消息为false
  */
-function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
+function refreshContact(c2c: boolean, uin: number, flag: boolean) {
     let news: News | undefined;
     newsList.forEach((value) => {
         if (value.c2c === c2c && value.uin === uin) {
@@ -204,7 +215,7 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
         news = {
             c2c: c2c,
             uin: uin,
-            item: new InfoTreeItem(label as string, uin, c2c, flag ? "+1" : ""),
+            item: new InfoTreeItem(label as string, uin, c2c, flag ? "+1" : "", "contact"),
             cnt: flag ? 1 : 0
         };
         newsList.unshift(news);
@@ -224,31 +235,44 @@ function refreshContacts(c2c: boolean, uin: number, flag: boolean) {
     qliteTreeDataProvider.refresh();
 }
 
-function showFriendProfile(item: InfoTreeItem) {
-    const info = Global.client.pickFriend(item.uid).info as oicq.FriendInfo;
-    const profile = [
-        "昵称：" + info.nickname,
-        "性别：" + (info.sex === "male" ? "男" : info.sex === "female" ? "女" : "未知"),
-        "QQ：" + info.user_id,
-        "备注：" + info.remark,
-        "分组：" + Global.client.classes.get(info.class_id)
-    ];
-    vscode.window.showQuickPick(profile, {
-        "title": info.remark + "的好友资料"
-    }).then(value => { });
+/**
+ * 删除消息，响应removeNews命令
+ * @param item 要删除的消息
+ */
+function removeContact(item: InfoTreeItem) {
+    newsList.forEach((value) => {
+        if (value.c2c === item.c2c && value.uin === item.uid) {
+            newsList.splice(newsList.indexOf(value), 1);
+        }
+    });
+    qliteTreeDataProvider.refresh();
 }
 
-function showGroupProfile(item: InfoTreeItem) {
-    const info = Global.client.pickGroup(item.uid).info as oicq.GroupInfo;
-    const profile = [
-        "群名：" + info.group_name,
-        "QQ：" + info.group_id,
-        "群主QQ：" + info.owner_id,
-        "成员数：" + info.member_count
-    ];
-    vscode.window.showQuickPick(profile, {
-        "title": info.group_name + "的群聊资料"
-    }).then(value => { });
+function showProfile(item: InfoTreeItem) {
+    if (item.c2c) {
+        const info = Global.client.pickFriend(item.uid).info as oicq.FriendInfo;
+        const profile = [
+            "昵称：" + info.nickname,
+            "性别：" + (info.sex === "male" ? "男" : info.sex === "female" ? "女" : "未知"),
+            "QQ：" + info.user_id,
+            "备注：" + info.remark,
+            "分组：" + Global.client.classes.get(info.class_id)
+        ];
+        vscode.window.showQuickPick(profile, {
+            "title": info.remark + "的好友资料"
+        });
+    } else {
+        const info = Global.client.pickGroup(item.uid).info as oicq.GroupInfo;
+        const profile = [
+            "群名：" + info.group_name,
+            "QQ：" + info.group_id,
+            "群主QQ：" + info.owner_id,
+            "成员数：" + info.member_count
+        ];
+        vscode.window.showQuickPick(profile, {
+            "title": info.group_name + "的群聊资料"
+        });
+    }
 }
 
-export { qliteTreeDataProvider, createTreeView, refreshContacts, showFriendProfile, showGroupProfile };
+export { qliteTreeDataProvider, createTreeView, refreshContact, removeContact, showProfile };

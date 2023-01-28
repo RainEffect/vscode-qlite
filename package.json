@@ -35,12 +35,13 @@
         "title": "搜索"
       },
       {
-        "command": "qlite.friendProfile",
-        "title": "好友资料"
+        "command": "qlite.removeContact",
+        "icon": "$(close)",
+        "title": "删除消息"
       },
       {
-        "command": "qlite.groupProfile",
-        "title": "群聊资料"
+        "command": "qlite.profile",
+        "title": "查看资料"
       }
     ],
     "viewsContainers": {
@@ -62,11 +63,6 @@
         {
           "id": "qliteExplorer",
           "name": "QLite",
-          "when": "qlite.isOnline"
-        },
-        {
-          "id": "profile",
-          "name": "资料",
           "when": "qlite.isOnline"
         }
       ]
@@ -93,12 +89,13 @@
       ],
       "view/item/context": [
         {
-          "command": "qlite.friendProfile",
-          "when": "viewItem == FriendInfoTreeItem"
+          "command": "qlite.removeContact",
+          "group": "inline",
+          "when": "viewItem =~ /contact/"
         },
         {
-          "command": "qlite.groupProfile",
-          "when": "viewItem == GroupInfoTreeItem"
+          "command": "qlite.profile",
+          "when": "viewItem =~ /info/"
         }
       ]
     }

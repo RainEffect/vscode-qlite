@@ -17,8 +17,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("qlite.setting", client.setting));
 	context.subscriptions.push(vscode.commands.registerCommand("qlite.chat", chat.openChatView));
 	context.subscriptions.push(vscode.commands.registerCommand("qlite.search", chat.search));
-	context.subscriptions.push(vscode.commands.registerCommand("qlite.friendProfile", view.showFriendProfile));
-	context.subscriptions.push(vscode.commands.registerCommand("qlite.groupProfile", view.showGroupProfile));
+	context.subscriptions.push(vscode.commands.registerCommand("qlite.removeContact", view.removeContact));
+	context.subscriptions.push(vscode.commands.registerCommand("qlite.profile", view.showProfile));
+
 }
 
 // 扩展关闭
