@@ -14,6 +14,7 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ### Added
 - 支持移除消息栏中的新消息
+- 添加侧边栏好友/群头像显示
 
 ### Fixed
 - 修复快捷切换账号后消息栏的消息不刷新的bug
