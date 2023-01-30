@@ -4,8 +4,6 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## [Unreleased]
 - 自 **v1.3** 开始将放缓对聊天页面的美化（js现学现用，能力有限），重心转移到vscode相关操作的优化上
-- 由于本人使用QQ丰富功能的占比极低，所以有频繁特殊需求的用户请提issue，我将视情况添加到扩展中
-- v1.3丰富vscode端的功能后也会更新readme，总和目前已有的功能
 
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
