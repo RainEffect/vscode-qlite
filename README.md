@@ -1,20 +1,32 @@
 <h1 align="center">
-    <img src="./ico.ico" alt="QLite" />
+    <img src="./ico.ico" alt="QLite">
     <p>QLITE</p>
 </h1>
 
 <div align="center">
 
-Lite QQ for VS Code
+    Lite QQ Extension for VS Code
 
 </div>
 
-> **写在开头**：这是我的第一个vscode扩展，在完善中，若有任何功能建议，请告诉我。
+> 本扩展基于 **vscode-qq** 扩展开发，由于原作者似乎许久未更新，但是其中的核心库 **oicq** 已更新到2.X版本，有许多弃用和改写的内容，因此本扩展旨在更新原扩展接口，同时在其基础上提升日常使用体验。
 
-本扩展基于**vscode-qq**扩展开发，由于原作者似乎许久未更新此扩展，但是其中的核心库oicq已更新到2.0版本，有许多弃用和改写的内容，因此本扩展旨在更新原代码，同时在其基础上尽可能提升使用体验。
+## Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Features](#features)
+- [Release Notes](#release-notes)
+- [Acknowledgements](#acknowledgements)
 
-原扩展仓库：https://github.com/takayama-lily/vscode-qq
+## Features
+- 本扩展不在本地保存任何消息记录和图片
+- 支持好友和群聊的分组显示
+- 支持显示登录后收到新消息的联系人（重新登录后清空）
+- 支持多账号快捷切换
 
-使用的UI库：https://github.com/MorFansLab/LiteWebChat_Frame
+## Release Notes
+- [CHANGELOG.md](./CHANGELOG.md)
 
-QQ协议库：https://github.com/takayama-lily/oicq
+## Acknowledgements
+- 原扩展仓库：[vscode-qq](https://github.com/takayama-lily/vscode-qq)
+- 使用的UI库：[LiteWebChat_Frame](https://github.com/MorFansLab/LiteWebChat_Frame)
+- QQ协议库：[oicq](https://github.com/takayama-lily/oicq)
