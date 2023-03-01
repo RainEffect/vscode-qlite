@@ -537,7 +537,16 @@ function sendMessage() {
     // 调用上层方法
     webview.sendMsg(messageList).then(value => {
         if (value.seq && webview.c2c) {
-            setTimeout(syncMessage(), 1500);
+            let getMsgInterval = setInterval(() => {
+                webview.getChatHistory(Date.now(), 1).then((msgList) => {
+                    if (msgList[0].seq === value.seq) {
+                        clearInterval(getMsgInterval);
+                        appendMessage(genUserMessage(msgList[0]));
+                    } else {
+                        console.log("refreshing msg...");
+                    }
+                });
+            }, 1000);
         }
     }).catch((reason) => {
         new Error("消息发送失败：" + reason);
@@ -696,8 +705,17 @@ document.querySelector(".show-file-box").onclick = () => {
     document.querySelector(".file-box").addEventListener("change", ev => {
         const inputFile = ev.target.files[0];
         const file = { url: inputFile.path, name: inputFile.name, size: inputFile.size };
-        webview.sendFile(file.url).then(() => {
-            setTimeout(syncMessage(), 1500);
+        webview.sendFile(file.url).then((fid) => {
+            let getFileInterval = setInterval(() => {
+                webview.getChatHistory(Date.now(), 1).then((msgList) => {
+                    if (msgList[0].message[0].fid === fid) {
+                        clearInterval(getFileInterval);
+                        appendMessage(genUserMessage(msgList[0]));
+                    } else {
+                        console.log("refreshing file msg...");
+                    }
+                });
+            }, 1000);
         });
         document.querySelector(".file-box").value = "";
     });
