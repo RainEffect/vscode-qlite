@@ -100,9 +100,6 @@
       ]
     }
   },
-  "activationEvents": [
-    "onView:qliteExplorer"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Vi-brance/vscode-qlite"
