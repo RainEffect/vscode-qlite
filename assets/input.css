@@ -4,6 +4,10 @@
     height: calc(100% - 150px);
 }
 
+.chat-box>div:last-child {
+    margin-bottom: 20px;
+}
+
 /* 输入框主体 */
 .chat-input {
     width: 100%;
