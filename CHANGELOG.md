@@ -8,6 +8,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.3.7] - 2023-03-01
+
+### Added
+- 在聊天窗口底部与最后一条消息添加一段间隔，美化显示效果
+
+### Fixed
+- 再次更改消息同步逻辑，私聊中发送出去的消息/文件将会在发送完毕（上传到服务器）时获取到消息的其他信息并将消息/文件显示在聊天窗口中
+
 ## [1.3.6] - 2023-01-28
 
 ### Added
