@@ -8,6 +8,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.3.8] - 2023-03-22
+
+### Fixed
+- 修复私聊发送出去的消息/文件无法显示的bug
+
 ## [1.3.7] - 2023-03-01
 
 ### Added
