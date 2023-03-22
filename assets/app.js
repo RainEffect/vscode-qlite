@@ -538,7 +538,7 @@ function sendMessage() {
     webview.sendMsg(messageList).then(value => {
         if (value.seq && webview.c2c) {
             let getMsgInterval = setInterval(() => {
-                webview.getChatHistory(Date.now(), 1).then((msgList) => {
+                webview.getChatHistory(Date.now() / 1000 - 1, 1).then((msgList) => {
                     if (msgList[0].seq === value.seq) {
                         clearInterval(getMsgInterval);
                         appendMessage(genUserMessage(msgList[0]));
@@ -707,7 +707,7 @@ document.querySelector(".show-file-box").onclick = () => {
         const file = { url: inputFile.path, name: inputFile.name, size: inputFile.size };
         webview.sendFile(file.url).then((fid) => {
             let getFileInterval = setInterval(() => {
-                webview.getChatHistory(Date.now(), 1).then((msgList) => {
+                webview.getChatHistory(Date.now() / 1000 - 1, 1).then((msgList) => {
                     if (msgList[0].message[0].fid === fid) {
                         clearInterval(getFileInterval);
                         appendMessage(genUserMessage(msgList[0]));
