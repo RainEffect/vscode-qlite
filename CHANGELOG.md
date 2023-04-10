@@ -8,6 +8,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.3.9] - 2023-04-10
+
+### Changed
+- 将核心库oicq更换为icqq，解决QQ版本过低的问题
+
 ## [1.3.8] - 2023-03-22
 
 ### Fixed
