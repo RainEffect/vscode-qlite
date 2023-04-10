@@ -6,19 +6,19 @@ var webview;
 
 /**
  * 群员列表
- * @type {Map<number, import("oicq").MemberInfo>}
+ * @type {Map<number, import("icqq").MemberInfo>}
  */
 let memberInfoMap = new Map;
 
 /**
  * 群资料
- * @type {import("oicq").GroupInfo}
+ * @type {import("icqq").GroupInfo}
  */
 let groupInfo;
 
 /**
  * 好友资料
- * @type {import("oicq").FriendInfo}
+ * @type {import("icqq").FriendInfo}
  */
 let friendInfo;
 
@@ -206,7 +206,7 @@ function triggerForwardMsg(trigger) {
 
 /**
  * 生成消息元素
- * @param {import("oicq").MessageElem[]} msgList 消息元素列表
+ * @param {import("icqq").MessageElem[]} msgList 消息元素列表
  * @param {string} seq 消息序列号
  * @returns {string} 消息的HTML
  */
@@ -337,7 +337,7 @@ function parseMessage(msgList, seq) {
 
 /**
  * 生成带头像、昵称、时间戳和消息本体的完整消息
- * @param {ipmort("oicq").PrivateMessage | import("oicq").GroupMessage} msg 私聊/群聊消息
+ * @param {ipmort("icqq").PrivateMessage | import("icqq").GroupMessage} msg 私聊/群聊消息
  * @returns 一条完整的消息的HTML
  */
 function genUserMessage(msg) {
@@ -370,7 +370,7 @@ function genUserMessage(msg) {
 
 /**
  * 生成聊天通知
- * @param {import("oicq").GroupNoticeEvent | import("oicq").PrivateMessageEvent} event 私聊/群聊通知
+ * @param {import("icqq").GroupNoticeEvent | import("icqq").PrivateMessageEvent} event 私聊/群聊通知
  * @returns 通知的HTML
  */
 function genSystemMessage(event) {
@@ -496,7 +496,7 @@ function sendMessage() {
     sending = true;
     document.querySelector(".send").disabled = true; // 禁用发送按钮
 
-    /** @type {(string | oicq.MessageElem)[]} */
+    /** @type {(string | icqq.MessageElem)[]} */
     const messageList = [];
     nodes.forEach(value => {
         let segment;

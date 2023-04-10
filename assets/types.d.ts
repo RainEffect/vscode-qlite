@@ -1,4 +1,4 @@
-import * as oicq from "oicq";
+import * as icqq from "icqq";
 
 /**
  * webview类型参考
@@ -14,9 +14,9 @@ export interface Webview extends EventTarget {
     readonly TimeoutError: typeof Error;
 
     // 监听新消息事件
-    on(type: "message", listener: (event: CustomEvent<oicq.PrivateMessageEvent | oicq.GroupMessageEvent | oicq.PrivateMessage>) => void): void;
+    on(type: "message", listener: (event: CustomEvent<icqq.PrivateMessageEvent | icqq.GroupMessageEvent | icqq.PrivateMessage>) => void): void;
     // 监听新系统通知事件
-    on(type: "notice", listener: (event: CustomEvent<oicq.FriendNoticeEvent | oicq.GroupNoticeEvent>) => void): void;
+    on(type: "notice", listener: (event: CustomEvent<icqq.FriendNoticeEvent | icqq.GroupNoticeEvent>) => void): void;
 
     scrollHome(): void;
     scrollEnd(): void;
@@ -27,52 +27,52 @@ export interface Webview extends EventTarget {
     getGroupAvatarUrlSmall(uin: number): string;
     getGroupAvatarUrlLarge(uin: number): string;
 
-    callApi(command: keyof oicq.Friend | keyof oicq.Group, params?: any[]): Promise<unknown>;
+    callApi(command: keyof icqq.Friend | keyof icqq.Group, params?: any[]): Promise<unknown>;
     // Client Api
-    getRoamingStamp: oicq.Client["getRoamingStamp"];
-    deleteStamp: oicq.Client["deleteStamp"];
+    getRoamingStamp: icqq.Client["getRoamingStamp"];
+    deleteStamp: icqq.Client["deleteStamp"];
     // Contactable Api
-    uploadImages: oicq.Friend["uploadImages"] | oicq.Group["uploadImages"];
-    uploadVideo: oicq.Friend["uploadVideo"] | oicq.Group["uploadVideo"];
-    uploadPtt: oicq.Friend["uploadPtt"] | oicq.Group["uploadPtt"];
-    makeForwardMsg: oicq.Friend["makeForwardMsg"] | oicq.Group["makeForwardMsg"];
-    getForwardMsg: oicq.Friend["getForwardMsg"] | oicq.Group["getForwardMsg"];
-    getVideoUrl: oicq.Friend["getVideoUrl"] | oicq.Group["getVideoUrl"];
+    uploadImages: icqq.Friend["uploadImages"] | icqq.Group["uploadImages"];
+    uploadVideo: icqq.Friend["uploadVideo"] | icqq.Group["uploadVideo"];
+    uploadPtt: icqq.Friend["uploadPtt"] | icqq.Group["uploadPtt"];
+    makeForwardMsg: icqq.Friend["makeForwardMsg"] | icqq.Group["makeForwardMsg"];
+    getForwardMsg: icqq.Friend["getForwardMsg"] | icqq.Group["getForwardMsg"];
+    getVideoUrl: icqq.Friend["getVideoUrl"] | icqq.Group["getVideoUrl"];
     // Friend Api: 为群聊消息时不实现
-    getSimpleInfo: oicq.Friend["getSimpleInfo"];
-    setFriendReq: oicq.Friend["setFriendReq"];
-    setGroupReq: oicq.Friend["setGroupReq"];
-    setGroupInvite: oicq.Friend["setGroupInvite"];
-    setRemark: oicq.Friend["setRemark"];
-    setClass: oicq.Friend["setClass"];
-    poke: oicq.Friend["poke"];
-    delete: oicq.Friend["delete"];
-    sendFile: oicq.Friend["sendFile"];
-    forwardFile: oicq.Friend["forwardFile"];
-    recallFile: oicq.Friend["recallFile"];
+    getSimpleInfo: icqq.Friend["getSimpleInfo"];
+    setFriendReq: icqq.Friend["setFriendReq"];
+    setGroupReq: icqq.Friend["setGroupReq"];
+    setGroupInvite: icqq.Friend["setGroupInvite"];
+    setRemark: icqq.Friend["setRemark"];
+    setClass: icqq.Friend["setClass"];
+    poke: icqq.Friend["poke"];
+    delete: icqq.Friend["delete"];
+    sendFile: icqq.Friend["sendFile"];
+    forwardFile: icqq.Friend["forwardFile"];
+    recallFile: icqq.Friend["recallFile"];
     // Group Api: 为私聊消息时不实现
-    setName: oicq.Group["setName"];
-    setAvatar: oicq.Group["setAvatar"];
-    muteAll: oicq.Group["muteAll"];
-    muteMember: oicq.Group["muteMember"];
-    muteAnony: oicq.Group["muteAnony"];
-    kickMember: oicq.Group["kickMember"];
-    pokeMember: oicq.Group["pokeMember"];
-    setCard: oicq.Group["setCard"];
-    setAdmin: oicq.Group["setAdmin"];
-    setTitle: oicq.Group["setTitle"];
-    invite: oicq.Group["invite"];
-    quit: oicq.Group["quit"];
-    getAnonyInfo: oicq.Group["getAnonyInfo"];
-    allowAnony: oicq.Group["allowAnony"];
-    getMemberMap: oicq.Group["getMemberMap"];
-    getAtAllRemainder: oicq.Group["getAtAllRemainder"];
-    renew: oicq.Group["renew"];
+    setName: icqq.Group["setName"];
+    setAvatar: icqq.Group["setAvatar"];
+    muteAll: icqq.Group["muteAll"];
+    muteMember: icqq.Group["muteMember"];
+    muteAnony: icqq.Group["muteAnony"];
+    kickMember: icqq.Group["kickMember"];
+    pokeMember: icqq.Group["pokeMember"];
+    setCard: icqq.Group["setCard"];
+    setAdmin: icqq.Group["setAdmin"];
+    setTitle: icqq.Group["setTitle"];
+    invite: icqq.Group["invite"];
+    quit: icqq.Group["quit"];
+    getAnonyInfo: icqq.Group["getAnonyInfo"];
+    allowAnony: icqq.Group["allowAnony"];
+    getMemberMap: icqq.Group["getMemberMap"];
+    getAtAllRemainder: icqq.Group["getAtAllRemainder"];
+    renew: icqq.Group["renew"];
     // User or Group Api
-    sendMsg: oicq.User["sendMsg"] | oicq.Group["sendMsg"];
-    recallMsg: oicq.User["recallMsg"] | oicq.Group["recallMsg"];
-    getChatHistory: oicq.User["getChatHistory"] | oicq.Group["getChatHistory"];
-    markRead: oicq.User["markRead"] | oicq.Group["markRead"];
-    getFileUrl: oicq.User["getFileUrl"] | oicq.Group["getFileUrl"];
-    getAvatarUrl: oicq.User["getAvatarUrl"] | oicq.Group["getAvatarUrl"];
+    sendMsg: icqq.User["sendMsg"] | icqq.Group["sendMsg"];
+    recallMsg: icqq.User["recallMsg"] | icqq.Group["recallMsg"];
+    getChatHistory: icqq.User["getChatHistory"] | icqq.Group["getChatHistory"];
+    markRead: icqq.User["markRead"] | icqq.Group["markRead"];
+    getFileUrl: icqq.User["getFileUrl"] | icqq.Group["getFileUrl"];
+    getAvatarUrl: icqq.User["getAvatarUrl"] | icqq.Group["getAvatarUrl"];
 }

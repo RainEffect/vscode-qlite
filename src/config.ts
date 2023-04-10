@@ -1,10 +1,10 @@
-import * as oicq from 'oicq';
+import * as icqq from 'icqq';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Global } from './global';
 
 /** 配置信息类 */
-interface Config extends oicq.Config {
+interface Config extends icqq.Config {
     /** 登录账号记录 */
     accounts: Map<number, string>
     /** 最近登陆的账号 */
@@ -83,7 +83,7 @@ function setConfig(account?: number, password?: string) {
  * 返回登录配置信息
  * @returns 完整的配置信息
  */
-function genClientConfig(): oicq.Config {
+function genClientConfig(): icqq.Config {
     return {
         data_dir: Global.context.globalStorageUri.fsPath,
         ignore_self: false,

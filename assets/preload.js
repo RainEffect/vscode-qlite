@@ -55,10 +55,10 @@
 
     /**
      * @type {{
-     *     client: Array<keyof import("oicq").Client>;
-     *     both: Array<keyof import("oicq").Friend> | Array<keyof import("oicq").Group>;
-     *     friend: Array<keyof import("oicq").Friend>;
-     *     group: Array<keyof import("oicq").Group>;
+     *     client: Array<keyof import("icqq").Client>;
+     *     both: Array<keyof import("icqq").Friend> | Array<keyof import("icqq").Group>;
+     *     friend: Array<keyof import("icqq").Friend>;
+     *     group: Array<keyof import("icqq").Group>;
      * }}
      */
     const available_apis = {

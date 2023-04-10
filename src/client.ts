@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as oicq from 'oicq';
+import * as icqq from 'icqq';
 import * as crypto from 'crypto';
 import * as config from './config';
 import { Global } from './global';
@@ -24,7 +24,7 @@ const statusMap: Map<number, string> = new Map([
  * @param uin 用户账号
  */
 function createClient(uin: number) {
-    Global.client = oicq.createClient(uin, config.genClientConfig());
+    Global.client = icqq.createClient(config.genClientConfig());
     // 登陆失败
     Global.client.on("system.login.error", (event) => {
         logining = false;
@@ -72,7 +72,7 @@ function createClient(uin: number) {
         view.createTreeView();
         vscode.commands.executeCommand("setContext", "qlite.isOnline", true);
     });
-    inputPassword();
+    inputPassword(uin);
 }
 
 /**
@@ -100,13 +100,13 @@ function inputAccount() {
 /**
  * 输入密码
  */
-function inputPassword() {
+function inputPassword(uin: number) {
     const conf = config.getConfig();
     let password = conf.accounts.get(conf.recentLogin);
     if (password === "qrcode") {
         return Global.client.qrcodeLogin();
     } else if (password) {
-        return Global.client.login(password);
+        return Global.client.login(uin, password);
     }
     vscode.window.showInputBox({
         placeHolder: "请输入密码，此处留空则使用二维码登录",
@@ -116,7 +116,7 @@ function inputPassword() {
             return Global.client.qrcodeLogin();
         }
         logining = true;
-        Global.client.login(crypto.createHash("md5").update(value).digest());
+        Global.client.login(uin, crypto.createHash("md5").update(value).digest());
     });
 }
 

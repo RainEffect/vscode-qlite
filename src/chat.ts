@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import * as oicq from 'oicq';
+import * as icqq from 'icqq';
 import * as path from 'path';
 import { Global } from './global';
 import { refreshContact } from './view';
 
 // 发送给页面的数据类
 interface WebviewPostData {
-    command: keyof oicq.Friend | keyof oicq.Group, // 指令
+    command: keyof icqq.Friend | keyof icqq.Group, // 指令
     params: any[], // 参数
     client: boolean, // 是否是client的函数
     echo: string // 消息的唯一标识，用于响应对应指令，由 Date.now() + Math.random() 组成
@@ -79,10 +79,10 @@ function openChatView(uin: number, c2c: boolean) {
     chatView.webview.onDidReceiveMessage(async (data: WebviewPostData) => {
         try {
             const fn: Function = data.client
-                ? Global.client[data.command as keyof oicq.Client] as Function
+                ? Global.client[data.command as keyof icqq.Client] as Function
                 : c2c
-                    ? Global.client.pickFriend(uin)[data.command as keyof oicq.Friend] as Function
-                    : Global.client.pickGroup(uin)[data.command as keyof oicq.Group] as Function;
+                    ? Global.client.pickFriend(uin)[data.command as keyof icqq.Friend] as Function
+                    : Global.client.pickGroup(uin)[data.command as keyof icqq.Group] as Function;
             let ret = fn.apply(
                 data.client
                     ? Global.client

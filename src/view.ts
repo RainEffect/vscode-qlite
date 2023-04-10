@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as oicq from 'oicq';
+import * as icqq from 'icqq';
 import { bind } from './chat';
 import { Global } from './global';
 
@@ -250,7 +250,7 @@ function removeContact(item: InfoTreeItem) {
 
 function showProfile(item: InfoTreeItem) {
     if (item.c2c) {
-        const info = Global.client.pickFriend(item.uid).info as oicq.FriendInfo;
+        const info = Global.client.pickFriend(item.uid).info as icqq.FriendInfo;
         const profile = [
             "昵称：" + info.nickname,
             "性别：" + (info.sex === "male" ? "男" : info.sex === "female" ? "女" : "未知"),
@@ -262,7 +262,7 @@ function showProfile(item: InfoTreeItem) {
             "title": info.remark + "的好友资料"
         });
     } else {
-        const info = Global.client.pickGroup(item.uid).info as oicq.GroupInfo;
+        const info = Global.client.pickGroup(item.uid).info as icqq.GroupInfo;
         const profile = [
             "群名：" + info.group_name,
             "QQ：" + info.group_id,
