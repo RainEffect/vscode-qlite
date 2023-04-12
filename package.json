@@ -48,7 +48,7 @@
       "activitybar": [
         {
           "id": "qlite",
-          "title": "QLite",
+          "title": "QLITE",
           "icon": "ico.ico"
         }
       ]
@@ -56,34 +56,29 @@
     "views": {
       "qlite": [
         {
-          "id": "emptyView",
-          "name": "QLite",
+          "id": "loginView",
+          "name": "LOGIN",
+          "type": "webview",
           "when": "!qlite.isOnline"
         },
         {
-          "id": "qliteExplorer",
-          "name": "QLite",
+          "id": "contactView",
+          "name": "CONTACT",
+          "type": "tree",
           "when": "qlite.isOnline"
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "emptyView",
-        "contents": "请登录QLITE。\n[LOGIN](command:qlite.login)",
-        "when": "!qlite.isOnline"
-      }
-    ],
     "menus": {
       "view/title": [
         {
           "command": "qlite.setting",
-          "when": "view == qliteExplorer && qlite.isOnline",
+          "when": "view == contactView && qlite.isOnline",
           "group": "navigation@1"
         },
         {
           "command": "qlite.search",
-          "when": "view == qliteExplorer && qlite.isOnline",
+          "when": "view == contactView && qlite.isOnline",
           "group": "navigation@0"
         }
       ],
@@ -102,9 +97,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Vi-brance/vscode-qlite"
+    "url": "https://github.com/Vi-brance/vscode-qlite.git"
   },
   "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.2.2",
     "icqq": "^0.2.0"
   },
   "devDependencies": {
@@ -115,18 +111,19 @@
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "@vscode/test-electron": "^2.2.0",
+    "esbuild": "~0.16.17",
+    "esbuild-plugin-copy": "^2.1.1",
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
     "typescript": "^4.9.3"
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "vscode:prepublish": "npm run package",
+    "package": "set NODE_ENV=production && ts-node ./esbuild.ts",
+    "compile": "ts-node ./esbuild.ts",
+    "watch": "ts-node ./esbuild.ts --watch",
+    "lint": "eslint src --ext ts"
   },
   "icon": "ico.ico"
 }
