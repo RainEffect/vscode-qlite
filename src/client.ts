@@ -22,8 +22,9 @@ const statusMap: Map<number, string> = new Map([
 /**
  * 构造一个client实例
  * @param uin 用户账号
+ * @param password 密码
  */
-function createClient(uin: number) {
+export function createClient(uin: number, password: string) {
     Global.client = icqq.createClient(config.genClientConfig());
     // 登陆失败
     Global.client.on("system.login.error", (event) => {
@@ -68,56 +69,10 @@ function createClient(uin: number) {
             Global.client.uin,
             Global.client.password_md5 ? Global.client.password_md5.toString("hex") : "qrcode"
         );
-        // vscode.window.showInformationMessage(`${Global.client.nickname}(${Global.client.uin}) 已上线。`);
         view.createTreeView();
         vscode.commands.executeCommand("setContext", "qlite.isOnline", true);
     });
-    inputPassword(uin);
-}
-
-/**
- * 输入账号，响应login指令
- */
-function inputAccount() {
-    const uin = config.getConfig().recentLogin;
-    if (uin) {
-        return createClient(uin);
-    }
-    vscode.window.showInputBox({
-        placeHolder: "请输入QQ账号",
-    }).then((value) => {
-        if (!value) {
-            return;
-        }
-        try {
-            createClient(Number(value));
-        } catch {
-            inputAccount();
-        }
-    });
-}
-
-/**
- * 输入密码
- */
-function inputPassword(uin: number) {
-    const conf = config.getConfig();
-    let password = conf.accounts.get(conf.recentLogin);
-    if (password === "qrcode") {
-        return Global.client.qrcodeLogin();
-    } else if (password) {
-        return Global.client.login(uin, password);
-    }
-    vscode.window.showInputBox({
-        placeHolder: "请输入密码，此处留空则使用二维码登录",
-        password: true
-    }).then((value) => {
-        if (!value) {
-            return Global.client.qrcodeLogin();
-        }
-        logining = true;
-        Global.client.login(uin, crypto.createHash("md5").update(value).digest());
-    });
+    Global.client.login(uin, password);
 }
 
 /**
@@ -138,7 +93,7 @@ function inputTicket() {
 /**
  * 设置，响应setting指令
  */
-function setting() {
+export function setting() {
     /** 设置选项 */
     const settings: vscode.QuickPickItem[] = [
         {
@@ -173,11 +128,9 @@ function setting() {
                         return;
                     } else if (account === accounts[1]) {
                         config.setConfig();
-                        inputAccount();
                     } else {
                         const uin = Number(account.label);
                         config.setConfig(uin);
-                        createClient(uin);
                     }
                 });
                 break;
@@ -202,5 +155,3 @@ function setting() {
         }
     });
 }
-
-export { setting, inputAccount };
