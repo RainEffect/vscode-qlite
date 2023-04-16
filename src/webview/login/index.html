@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QLITE</title>
+
+    <link rel="stylesheet" href="${styleUri}" />
+    <link rel="stylesheet" href="${codiconUri}" />
+    <script type="module" src="${scriptUri}"></script>
+  </head>
+  <body>
+    <form>
+      <vscode-text-field id="uin" name="uin" type="tel" placeholder="账号">
+        <span slot="start" class="codicon codicon-account"></span>
+      </vscode-text-field>
+      <vscode-text-field
+        id="password"
+        name="password"
+        type="password"
+        placeholder="密码"
+      >
+        <span slot="start" class="codicon codicon-lock"></span>
+      </vscode-text-field>
+      <div id="option">
+        <vscode-checkbox id="remember" name="remember">
+          记住密码
+        </vscode-checkbox>
+        <vscode-checkbox id="autoLogin" name="autoLogin">
+          自动登录
+        </vscode-checkbox>
+      </div>
+      <div id="button">
+        <vscode-button id="login" type="button">登录</vscode-button>
+        <vscode-option id="qrcode" title="二维码登录">
+          <span class="codicon codicon-device-camera"></span>
+        </vscode-option>
+      </div>
+    </form>
+    <img id="qrcode" src="" />
+  </body>
+</html>
