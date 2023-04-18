@@ -7,7 +7,7 @@ import { Global } from '../global';
  */
 export function loginInit() {
   Global.context.subscriptions.push(
-    // 注册webviewView
+    // 注册webviewView容器
     vscode.window.registerWebviewViewProvider(
       'loginView',
       new LoginViewProvider(Global.context.extensionUri)
