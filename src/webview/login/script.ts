@@ -18,18 +18,31 @@ const vscode = acquireVsCodeApi();
 /** 注册必要的webview组件 */
 provideVSCodeDesignSystem().register(allComponents);
 
+/** 定义表单数据 */
+interface LoginData {
+  /** QQ账号 */
+  uin: number;
+  /** 密码 */
+  password: string;
+  /** 是否记住密码 */
+  remember: boolean;
+  /** 是否自动登录 */
+  autoLogin: boolean;
+  /** 是否使用扫码登陆，若此项为真则前面信息无效 */
+  qrcode: boolean;
+}
+
 // 获取页面组件
-const form: HTMLFormElement = document.querySelector('form') as HTMLFormElement;
 const uinText: TextField = document.querySelector(
   'vscode-text-field#uin'
 ) as TextField;
 const passwordText: TextField = document.querySelector(
   'vscode-text-field#password'
 ) as TextField;
-const remember: Checkbox = document.querySelector(
+const rememberOption: Checkbox = document.querySelector(
   'vscode-checkbox#remember'
 ) as Checkbox;
-const autoLogin: Checkbox = document.querySelector(
+const autoLoginOption: Checkbox = document.querySelector(
   'vscode-checkbox#autoLogin'
 ) as Checkbox;
 const loginButton: Button = document.querySelector(
@@ -60,11 +73,26 @@ function resolveTimer(timer: NodeJS.Timer) {
  * 判断登录按钮是否可用
  * @returns 可用为true，否则false
  */
-function checkLoginStatue() {
+function checkLoginState() {
   return (
-    (uinText.value === '' || passwordText.value === '') &&
-    !qrcodeOption.selected
+    (uinText.value.length &&
+      passwordText.value.length &&
+      !qrcodeOption.selected) ||
+    qrcodeOption.selected
   );
+}
+
+/**
+ * 切换登陆方案，改变对应元素的可用性
+ * @param option 登陆方案
+ */
+function toggleLoginOption(option: boolean) {
+  uinText.disabled = option;
+  passwordText.disabled = option;
+  rememberOption.disabled = option;
+  autoLoginOption.disabled = option;
+  qrcodeOption.selected = option;
+  qrcodeImg.style.visibility = option ? 'visible' : 'hidden';
 }
 
 // 接受来自扩展主体的消息
@@ -83,28 +111,25 @@ window.addEventListener('message', (event) => {
 
 // 提交登录信息
 loginButton.addEventListener('click', () => {
-  const formData: FormData = new FormData(form);
-  let postData = {};
-  for (const [key, value] of formData.entries()) {
-    postData[key] = value;
-  }
+  // 表单数据
+  const postData: LoginData = {
+    uin: Number(uinText.value),
+    password: passwordText.value,
+    remember: rememberOption.checked,
+    autoLogin: autoLoginOption.checked,
+    qrcode: qrcodeOption.selected
+  };
   vscode.postMessage({
     command: 'login',
-    ...postData
+    data: postData
   });
 });
 
-// 获取登录二维码
+// 切换登录方案
 qrcodeOption.addEventListener('click', () => {
   // 切换组件状态
   const nextStatus = !qrcodeOption.selected;
-  uinText.disabled = nextStatus;
-  passwordText.disabled = nextStatus;
-  qrcodeOption.selected = nextStatus;
-  remember.disabled = nextStatus;
-  autoLogin.disabled = nextStatus;
-  qrcodeImg.style.visibility = nextStatus ? 'visible' : 'hidden';
-
+  toggleLoginOption(nextStatus);
   if (nextStatus) {
     // 状态为真则获取二维码
     const timer = setInterval(() => {
@@ -113,7 +138,7 @@ qrcodeOption.addEventListener('click', () => {
     }, 2000);
     vscode.postMessage({
       command: 'qrcode',
-      id: timer
+      data: timer
     });
     timers.push(timer);
   }
@@ -121,21 +146,17 @@ qrcodeOption.addEventListener('click', () => {
 
 // 动态判断登录按钮的状态
 uinText.addEventListener('input', () => {
-  loginButton.disabled = checkLoginStatue();
+  loginButton.disabled = !checkLoginState();
 });
 passwordText.addEventListener('input', () => {
-  loginButton.disabled = checkLoginStatue();
+  loginButton.disabled = !checkLoginState();
 });
 qrcodeOption.addEventListener('click', () => {
-  loginButton.disabled = checkLoginStatue();
+  loginButton.disabled = !checkLoginState();
 });
+
 // 响应回车键
-uinText.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    loginButton.click();
-  }
-});
-passwordText.addEventListener('keydown', (event) => {
+window.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     loginButton.click();
   }

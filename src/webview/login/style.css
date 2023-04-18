@@ -1,42 +1,33 @@
 /* 登录界面的样式表 */
 
-/* 页面结构纵向排列 */
 body {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 body > * {
-  margin: 8px;
+  margin: 8px auto;
   max-width: 200px;
+}
+
+vscode-tag {
+  font-size: larger;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: left;
 }
 
 form > * {
+  margin: 8px auto;
+  width: 100%;
+}
+
+vscode-divider {
   margin: 10px auto;
-  width: 100%;
 }
 
-div {
-  display: flex;
-}
-
-div {
-  justify-content: space-between;
-}
-
-vscode-button#login {
-  width: 100%;
-  margin-right: 10px;
-}
-
-vscode-option#qrcode > span {
-  margin: 5px;
+vscode-option {
+  padding: 5px;
 }
