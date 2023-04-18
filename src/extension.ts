@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { Global } from './global';
 import * as client from './client';
 import * as view from './view';
@@ -8,11 +7,7 @@ import { loginInit } from './login/login';
 
 // 扩展启动
 export function activate(context: vscode.ExtensionContext) {
-  // 创建账号目录
   Global.context = context;
-  if (!fs.existsSync(Global.context.globalStorageUri.fsPath)) {
-    fs.mkdirSync(Global.context.globalStorageUri.fsPath);
-  }
   vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
   loginInit();
   // 注册命令
