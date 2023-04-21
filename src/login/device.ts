@@ -1,7 +1,7 @@
 import EventEmitter = require('events');
 import puppeteer, { Browser, HTTPResponse, Page } from 'puppeteer';
 
-export class Device extends EventEmitter {
+export default class Device extends EventEmitter {
   private readonly _url: string;
 
   constructor(url: string) {

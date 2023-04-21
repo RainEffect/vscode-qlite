@@ -5,7 +5,7 @@ import EventEmitter = require('events');
 import * as portfinder from 'portfinder';
 
 /** 处理滑动验证码的事件类 */
-export class Slider extends EventEmitter {
+export default class Slider extends EventEmitter {
   /** 滑动验证码的网址 */
   private readonly _url: string;
   /** ws的远程调试端口 */
