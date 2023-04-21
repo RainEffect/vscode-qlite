@@ -1,18 +1,16 @@
 import * as vscode from 'vscode';
-import { Global } from './global';
-import * as client from './client';
-import * as view from './view';
+import Global from './global';
+import * as setting from './contact/setting';
 import * as chat from './chat';
-import { loginInit } from './login/login';
 
 // 扩展启动
 export function activate(context: vscode.ExtensionContext) {
-  Global.context = context;
+  // qlite.isOnline = false
   vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
-  loginInit();
-  // 注册命令
+  new Global(context);
+  // 注册扩展命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.setting', client.setting)
+    vscode.commands.registerCommand('qlite.setting', setting.setting)
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('qlite.chat', chat.openChatView)
@@ -21,10 +19,16 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('qlite.search', chat.search)
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.removeContact', view.removeContact)
+    vscode.commands.registerCommand(
+      'qlite.removeMsg',
+      Global.contactViewProvider.removeMsg.bind(Global.contactViewProvider)
+    )
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.profile', view.showProfile)
+    vscode.commands.registerCommand(
+      'qlite.profile',
+      Global.contactViewProvider.showProfile
+    )
   );
 }
 
