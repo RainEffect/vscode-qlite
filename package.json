@@ -30,7 +30,7 @@
         "title": "搜索"
       },
       {
-        "command": "qlite.removeContact",
+        "command": "qlite.removeMsg",
         "icon": "$(close)",
         "title": "删除消息"
       },
@@ -79,13 +79,13 @@
       ],
       "view/item/context": [
         {
-          "command": "qlite.removeContact",
+          "command": "qlite.removeMsg",
           "group": "inline",
-          "when": "viewItem =~ /contact/"
+          "when": "viewItem =~ /message/"
         },
         {
           "command": "qlite.profile",
-          "when": "viewItem =~ /info/"
+          "when": "viewItem =~ /leaf/"
         }
       ]
     }
