@@ -150,29 +150,28 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
    */
   private _getHtmlForWebview() {
     /** 登陆界面的所有素材的根目录 */
-    const loginUri = vscode.Uri.joinPath(
+    const webviewUri = vscode.Uri.joinPath(
       this._extensionUri,
       'out',
-      'webview',
-      'login'
+      'webview'
     );
     /** `html`文件的地址 */
-    const htmlPath = vscode.Uri.joinPath(loginUri, 'index.html').fsPath;
+    const htmlPath = vscode.Uri.joinPath(
+      webviewUri,
+      'login',
+      'index.html'
+    ).fsPath;
     /** 所有要替换的`Uri`键值对，包含`js`、`css`等文件`Uri` */
     const htmlUris: Map<string, vscode.Uri> = new Map();
-    htmlUris.set('scriptUri', this._asWebviewUri(loginUri, 'script.js'));
-    htmlUris.set('styleUri', this._asWebviewUri(loginUri, 'style.css'));
     htmlUris.set(
-      'codiconUri',
-      this._asWebviewUri(
-        this._extensionUri,
-        'node_modules',
-        '@vscode',
-        'codicons',
-        'dist',
-        'codicon.css'
-      )
+      'scriptUri',
+      this._asWebviewUri(webviewUri, 'login', 'script.js')
     );
+    htmlUris.set(
+      'styleUri',
+      this._asWebviewUri(webviewUri, 'login', 'style.css')
+    );
+    htmlUris.set('codiconUri', this._asWebviewUri(webviewUri, 'codicon.css'));
     /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
     const html: string = fs
       .readFileSync(htmlPath, 'utf-8')
