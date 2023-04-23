@@ -7,6 +7,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ## [Unsolved]
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.4.1] - 2023-04-23
+
+### Changed
+- 放弃`esbuild` ~~（玩不懂）~~ ，使用`webpack`作为打包工具
+
 ## [1.4.0] - 2023-04-21
 
 ### Added
