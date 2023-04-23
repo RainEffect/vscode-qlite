@@ -6,7 +6,7 @@
     {
       "type": "npm",
       "script": "watch",
-      "problemMatcher": "$esbuild-watch",
+      "problemMatcher": "$ts-webpack-watch",
       "isBackground": true,
       "group": {
         "kind": "build",
