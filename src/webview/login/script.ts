@@ -6,7 +6,7 @@ import {
   Checkbox,
   Option
 } from '@vscode/webview-ui-toolkit';
-import { VsCodeApi } from '../../api/webview';
+import { WebviewApi } from 'vscode-webview';
 import {
   InitReqMsg,
   InitResMsg,
@@ -18,8 +18,7 @@ import {
 import { MessageHandler } from '../message-handler';
 
 /** 与扩展主体通信的变量 */
-declare function acquireVsCodeApi(): VsCodeApi;
-const vscode = acquireVsCodeApi();
+const vscode: WebviewApi<any> = acquireVsCodeApi();
 /** 注册vscode主题的webview组件 */
 provideVSCodeDesignSystem().register(allComponents);
 const messageHandler = new MessageHandler(vscode);
