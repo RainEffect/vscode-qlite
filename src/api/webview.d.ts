@@ -1,14 +1,3 @@
-/**
- * 用于声明`acquireVsCodeApi`函数的类型
- *
- * `declare function acquireVsCodeApi(): VsCodeApi;`
- */
-export interface VsCodeApi {
-  postMessage(message: Object): void;
-  getState(): any;
-  setState(state: any): void;
-}
-
 /** `webview`与`html`的交互消息 */
 export interface WebMsg {
   /** 所有消息类都必须有的唯一标识，且在有限时间内无响应则抛出异常 */

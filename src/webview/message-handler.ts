@@ -1,16 +1,17 @@
-import { VsCodeApi, ResWebMsg, ReqWebMsg, PreReqWebMsg } from '../api/webview';
+import { WebviewApi } from 'vscode-webview';
+import { ResWebMsg, ReqWebMsg, PreReqWebMsg } from '../api/webview';
 
 /** 处理`html`与`webview`之间的消息 */
 export class MessageHandler {
   /** 所在页面的`vscode`实例，需要调用`postMessage` */
-  private _vscode: VsCodeApi;
+  private _vscode: WebviewApi<any>;
   /** 管理所有的消息处理的Map */
   private handlers: Map<NodeJS.Timeout, (data: any) => void> = new Map();
 
   /**
    * @param vscode 所在页面的`vscode`实例
    */
-  constructor(vscode: VsCodeApi) {
+  constructor(vscode: WebviewApi<any>) {
     this._vscode = vscode;
     window.addEventListener('message', (event) => {
       const message: ResWebMsg<any> = event.data;
