@@ -1,129 +1,164 @@
+import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import {
-  provideVSCodeDesignSystem,
-  allComponents,
-  Button,
-  TextField,
-  Checkbox,
-  Option
-} from '@vscode/webview-ui-toolkit';
-import { WebviewApi } from 'vscode-webview';
-import {
-  InitReqMsg,
-  InitResMsg,
   LoginReqMsg,
   LoginResMsg,
+  ErrorMsg,
   QrcodeReqMsg,
-  QrcodeResMsg
-} from '../../api/web-login';
+  QrcodeResMsg,
+  InitReqMsg,
+  InitResMsg,
+  QrcodeLoginRecord,
+  PasswordLoginRecord,
+  TokenLoginRecord
+} from '../../types/login';
+import { MessageType } from '../../types/webview';
 import { MessageHandler } from '../message-handler';
-
+/** 注册`vscode-ui`的`webview`组件 */
+webviewUiToolkit
+  .provideVSCodeDesignSystem()
+  .register(webviewUiToolkit.allComponents);
 /** 与扩展主体通信的变量 */
-const vscode: WebviewApi<any> = acquireVsCodeApi();
-/** 注册vscode主题的webview组件 */
-provideVSCodeDesignSystem().register(allComponents);
-const messageHandler = new MessageHandler(vscode);
+const vscode = acquireVsCodeApi();
+/** 消息处理器 */
+const msgHandler = new MessageHandler(vscode);
 
 // 获取页面组件
-const uinText: TextField = document.querySelector(
+const loginRadioGroup = document.querySelector(
+  'vscode-radio-group'
+) as webviewUiToolkit.RadioGroup;
+const loginRadios = loginRadioGroup.querySelectorAll(
+  'vscode-radio'
+) as NodeListOf<webviewUiToolkit.Radio>;
+const uinText = document.querySelector(
   'vscode-text-field#uin'
-) as TextField;
-const passwordText: TextField = document.querySelector(
+) as webviewUiToolkit.TextField;
+const passwordText = document.querySelector(
   'vscode-text-field#password'
-) as TextField;
-const loginButton: Button = document.querySelector(
-  'vscode-button#login'
-) as Button;
-const rememberOption: Checkbox = document.querySelector(
-  'vscode-checkbox#remember'
-) as Checkbox;
-const autoLoginOption: Checkbox = document.querySelector(
+) as webviewUiToolkit.TextField;
+const rememberOption = document.querySelector(
+  'vscode-option#remember'
+) as webviewUiToolkit.Option;
+const tokenTag = document.querySelector(
+  'vscode-tag#token-warn'
+) as webviewUiToolkit.Tag;
+const autoLoginCheckbox = document.querySelector(
   'vscode-checkbox#autoLogin'
-) as Checkbox;
-const qrcodeOption: Option = document.querySelector(
-  'vscode-option#qrcode'
-) as Option;
-const qrcodeImg: HTMLImageElement = document.querySelector(
-  'img#qrcode'
-) as HTMLImageElement;
+) as webviewUiToolkit.Checkbox;
+const qrcodeImg = document.querySelector('img#qrcode') as HTMLImageElement;
+const loginButton = document.querySelector(
+  'vscode-button#login'
+) as webviewUiToolkit.Button;
+
+/** 全局记录登录方式 */
+var loginMethod: 'password' | 'qrcode' | 'token';
+
+loginRadioGroup.addEventListener('click', (ev: MouseEvent) => {
+  console.log(ev.target);
+  try {
+    const target = ev.target as webviewUiToolkit.Radio;
+    if (target.id === loginMethod) {
+      return;
+    }
+    loginMethod = target.id as 'password' | 'qrcode' | 'token';
+    uinText.hidden = target.id === 'qrcode';
+    passwordText.hidden = target.id !== 'password';
+    tokenTag.hidden = target.id !== 'token';
+    qrcodeImg.hidden = target.id !== 'qrcode';
+    if (target.id === 'qrcode') {
+      msgHandler
+        .sendMsg(MessageType.Request, {
+          command: 'qrcode'
+        } as QrcodeReqMsg)
+        .then((payload: QrcodeResMsg) => {
+          qrcodeImg.src = payload.src;
+          qrcodeImg.hidden = false;
+        })
+        .catch((error: ErrorMsg) => {
+          console.error(error.reason);
+        });
+    }
+    checkLoginState();
+  } catch (err) {}
+});
 
 /**
- * 判断登录按钮是否可用
- * @returns 可用为true，否则false
+ * 判断登录按钮是否可用，不同登录方式的判断条件不同
  */
-function checkLoginState(button: Button) {
+function checkLoginState() {
   const state =
-    (uinText.value.length &&
-      passwordText.value.length &&
-      !qrcodeOption.selected) ||
-    qrcodeOption.selected;
-  button.disabled = !state;
+    loginMethod === 'password'
+      ? uinText.value.length && passwordText.value.length
+      : loginMethod === 'qrcode'
+      ? true
+      : uinText.value.length;
+  loginButton.disabled = !state;
   if (state) {
-    button.textContent = '登录';
+    loginButton.textContent = '登录';
   }
 }
 
-// 提交登录信息
-loginButton.addEventListener('click', () => {
-  loginButton.disabled = true;
-  loginButton.textContent = '登录中';
-  const reqMsg: LoginReqMsg = {
-    command: 'login',
-    args: {
+/**
+ * 获取页面的登录信息
+ * @throws 登录按钮不可用时禁止获取登录信息
+ * @returns 登录信息
+ */
+function getLoginInfo():
+  | PasswordLoginRecord
+  | QrcodeLoginRecord
+  | TokenLoginRecord {
+  if (loginButton.disabled) {
+    throw Error('login button is disabled');
+  }
+  if (loginMethod === 'password') {
+    return {
+      method: 'password',
       uin: Number(uinText.value),
       password: passwordText.value,
-      remember: rememberOption.checked,
-      autoLogin: autoLoginOption.checked,
-      qrcode: qrcodeOption.selected
-    }
-  };
-  messageHandler
-    .request(reqMsg)
-    .then((msg: LoginResMsg) => {
-      if (!msg.data.ret) {
-        console.error('login errer');
-      }
-    })
-    .finally(() => {
-      // 解除禁用
-      loginButton.disabled = false;
-      loginButton.textContent = '登录成功！';
-    });
+      remember: rememberOption.selected,
+      autoLogin: autoLoginCheckbox.checked
+    } as PasswordLoginRecord;
+  } else if (loginMethod === 'qrcode') {
+    return {
+      method: 'qrcode',
+      autoLogin: autoLoginCheckbox.checked
+    } as QrcodeLoginRecord;
+  } else {
+    return {
+      method: 'token',
+      uin: Number(uinText.value)
+    } as TokenLoginRecord;
+  }
+}
+
+// 暂存记住密码的选中状态
+rememberOption.addEventListener('click', () => {
+  rememberOption.selected = !rememberOption.selected;
 });
 
-// 切换登录方案
-qrcodeOption.addEventListener('click', () => {
-  /** 为`true`则扫码登陆，`false`则密码登录 */
-  const option = !qrcodeOption.selected;
-  uinText.disabled = option;
-  passwordText.disabled = option;
-  rememberOption.disabled = option;
-  autoLoginOption.disabled = option;
-  qrcodeOption.selected = option;
-  if (option) {
-    // 二维码登录时向外部请求二维码图片
-    const reqMsg: QrcodeReqMsg = {
-      command: 'qrcode',
-      args: undefined
-    };
-    messageHandler.request(reqMsg).then((msg: QrcodeResMsg) => {
-      qrcodeImg.src = msg.data.src;
-      qrcodeImg.style.visibility = 'visible';
+// 提交登录信息
+loginButton.addEventListener('click', () => {
+  msgHandler
+    .sendMsg(MessageType.Request, {
+      command: 'login',
+      data: getLoginInfo()
+    } as LoginReqMsg)
+    .then((payload: LoginResMsg) => {
+      loginButton.textContent = '登录成功！';
+    })
+    .catch((error: ErrorMsg) => {
+      console.error(error.reason);
+      checkLoginState();
     });
-  } else {
-    // 密码登录时隐藏二维码图片
-    qrcodeImg.style.visibility = 'hidden';
-  }
+  loginButton.disabled = true;
+  loginButton.textContent = '登录中';
 });
 
 // 动态判断登录按钮的状态
 uinText.addEventListener('input', () => {
-  checkLoginState(loginButton);
+  checkLoginState();
 });
 passwordText.addEventListener('input', () => {
-  checkLoginState(loginButton);
-});
-qrcodeOption.addEventListener('click', () => {
-  checkLoginState(loginButton);
+  checkLoginState();
 });
 
 // 响应回车键
@@ -135,27 +170,36 @@ window.addEventListener('keydown', (event) => {
 
 // 初始化所有组件状态
 (() => {
-  // 默认不显示二维码
-  qrcodeImg.style.visibility = 'hidden';
-  const reqMsg: InitReqMsg = {
-    command: 'init',
-    args: undefined
-  };
   // 获取登录账号历史信息
-  messageHandler.request(reqMsg).then((msg: InitResMsg) => {
-    if (!msg) {
-      return;
-    }
-    uinText.value = msg.data?.uin.toString() ?? '';
-    if (!msg.data?.remember) {
-      return;
-    }
-    rememberOption.checked = msg.data.remember;
-    passwordText.value = msg.data.password;
-    autoLoginOption.checked = msg.data.autoLogin;
-    checkLoginState(loginButton);
-    if (autoLoginOption.checked) {
-      loginButton.click();
-    }
-  });
+  msgHandler
+    .sendMsg(MessageType.Request, { command: 'init' } as InitReqMsg)
+    .then((payload: InitResMsg) => {
+      // 似乎是radio-group的bug，初始化时首次点击总是会选中最后一个radio，所以默认设置需要重复2次
+      loginRadios[0].click();
+      if (!payload) {
+        loginRadios[0].click();
+        return;
+      }
+      if (payload.method === 'password') {
+        uinText.value = payload.uin.toString();
+        if (payload.remember) {
+          loginRadios[0].checked = true;
+          rememberOption.selected = true;
+          passwordText.value = payload.password as string;
+        }
+      } else if (payload.method === 'qrcode') {
+        loginRadios[1].checked = true;
+      } else if (payload.method === 'token') {
+        loginRadios[2].checked = true;
+        uinText.value = payload.uin.toString();
+      }
+      autoLoginCheckbox.checked = payload.autoLogin;
+      checkLoginState();
+      if (autoLoginCheckbox.checked) {
+        loginButton.click();
+      }
+    })
+    .catch((error: ErrorMsg) => {
+      console.error(error.reason);
+    });
 })();

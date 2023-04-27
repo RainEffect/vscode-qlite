@@ -10,41 +10,30 @@
     <script type="module" src="${scriptUri}"></script>
   </head>
   <body>
-    <vscode-tag>QLITE</vscode-tag>
-    <form name="loginForm">
-      <vscode-text-field id="uin" name="uin" type="tel" placeholder="账号">
-        <span slot="start" class="codicon codicon-account"></span>
-      </vscode-text-field>
-      <vscode-text-field
-        id="password"
-        name="password"
-        type="password"
-        placeholder="密码"
-      >
-        <span slot="start" class="codicon codicon-lock"></span>
-      </vscode-text-field>
-      <vscode-button id="login" type="button">登录</vscode-button>
-      <vscode-divider></vscode-divider>
-      <table>
-        <tr>
-          <td>
-            <vscode-checkbox id="remember" name="remember">
-              记住密码
-            </vscode-checkbox>
-          </td>
-          <td rowspan="2">
-            <vscode-option id="qrcode" title="二维码登录">QR</vscode-option>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <vscode-checkbox id="autoLogin" name="autoLogin">
-              自动登录
-            </vscode-checkbox>
-          </td>
-        </tr>
-      </table>
-    </form>
+    <vscode-radio-group orientation="vertical">
+      <label slot="label">请选择登录方式</label>
+      <vscode-radio id="password">账号密码登录</vscode-radio>
+      <vscode-radio id="qrcode">二维码登录</vscode-radio>
+      <vscode-radio id="token">token登录</vscode-radio>
+    </vscode-radio-group>
+    <vscode-divider></vscode-divider>
+    <vscode-text-field id="uin" placeholder="请输入账号">
+      <span slot="start" class="codicon codicon-account"></span>
+    </vscode-text-field>
+    <vscode-text-field id="password" type="password" placeholder="请输入密码">
+      <span slot="start" class="codicon codicon-lock"></span>
+      <vscode-option
+        slot="end"
+        id="remember"
+        title="记住密码"
+        class="codicon codicon-shield"
+      ></vscode-option>
+    </vscode-text-field>
+    <vscode-tag id="token-warn">
+      如果你的账号没有登录记录，请更换登录方式
+    </vscode-tag>
     <img id="qrcode" src="" />
+    <vscode-checkbox id="autoLogin">自动登录</vscode-checkbox>
+    <vscode-button id="login" type="button">登录</vscode-button>
   </body>
 </html>

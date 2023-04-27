@@ -8,26 +8,10 @@ body {
 body > * {
   margin: 8px auto;
   max-width: 200px;
-}
-
-vscode-tag {
-  font-size: larger;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-}
-
-form > * {
-  margin: 8px auto;
   width: 100%;
 }
 
-vscode-divider {
-  margin: 10px auto;
-}
-
-vscode-option {
-  padding: 5px;
+vscode-tag#token-warn {
+  font-weight: bold;
+  font-size: small;
 }
