@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Global from '../global';
-import AccountManager from '../account';
+import LoginRecordManager from '../login-record';
 
 /** 当前状态 */
 export let selectedStatus: number = 11;
@@ -33,8 +33,8 @@ export function setting() {
     switch (value) {
       case settings[0]:
         const accounts: vscode.QuickPickItem[] = [];
-        AccountManager.getAll().forEach((uin: number) => {
-          accounts.push({ label: '$(account) ' + uin });
+        LoginRecordManager.getAll().forEach((nickname: string, uin: number) => {
+          accounts.push({ label: `$(account)${nickname}(${uin})` });
         });
         accounts.push({ label: '$(log-out) 退出' });
         vscode.window.showQuickPick(accounts).then((account) => {
@@ -54,7 +54,7 @@ export function setting() {
             // 切换账号
             const uin = Number(account.label.substring(11));
             Global.client.login(uin);
-            AccountManager.setRecent(uin);
+            LoginRecordManager.setRecent(uin);
           }
         });
         break;
