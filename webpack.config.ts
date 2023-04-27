@@ -1,9 +1,9 @@
-import * as webpack from 'webpack';
+import { Configuration } from 'webpack';
 import CopyPlugin from 'copy-webpack-plugin';
 import path from 'path';
 
 /** 基础配置信息 */
-const baseConfig: webpack.Configuration = {
+const baseConfig: Configuration = {
   mode: 'none',
   externals: {
     vscode: 'commonjs vscode'
@@ -27,7 +27,7 @@ const baseConfig: webpack.Configuration = {
 };
 
 /** `extension`配置信息 */
-const extensionConfig: webpack.Configuration = {
+const extensionConfig: Configuration = {
   ...baseConfig,
   target: 'node',
   entry: './src/extension.ts',
@@ -40,7 +40,7 @@ const extensionConfig: webpack.Configuration = {
 };
 
 /** `webview`配置信息 */
-const webviewConfig: webpack.Configuration = {
+const webviewConfig: Configuration = {
   ...baseConfig,
   target: ['web', 'es2020'],
   entry: './src/webview/login/script.ts',
@@ -56,12 +56,17 @@ const webviewConfig: webpack.Configuration = {
     new CopyPlugin({
       patterns: [
         {
+          from: 'node_modules/@vscode/codicons/dist/codicon.css',
+          to: path.join(__dirname, 'out/webview')
+        },
+        {
+          from: 'node_modules/@vscode/codicons/dist/codicon.ttf',
+          to: path.join(__dirname, 'out/webview')
+        },
+        {
           from: 'src/webview',
           to({ absoluteFilename }) {
-            return absoluteFilename?.replace(
-              'src/webview',
-              'out/webview'
-            ) as string;
+            return absoluteFilename?.replace('src', 'out') as string;
           },
           globOptions: {
             ignore: ['**/*.ts']
