@@ -1,79 +1,74 @@
 import * as vscode from 'vscode';
 import * as icqq from 'icqq';
 import * as fs from 'fs';
-import { WebMsg } from '../api/webview';
+import { MessageType, WebviewMessage } from '../types/webview';
 import {
-  InitResMsg,
-  LoginReqMsg,
   LoginResMsg,
-  QrcodeReqMsg,
   QrcodeResMsg,
-  ReqMsg
-} from '../api/web-login';
-import AccountManager from '../account';
+  LoginReqMsg,
+  InitReqMsg,
+  QrcodeReqMsg,
+  InitResMsg
+} from '../types/login';
+import LoginRecordManager from '../login-record';
 import Slider from './slider';
 import Device from './device';
 
 /** 登陆界面容器类 */
 export default class LoginViewProvider implements vscode.WebviewViewProvider {
   /** 是否以空表形式加载视图 */
-  private _isEmpty: boolean = false;
+  private _isEmpty = false;
   /** 显示的视图 */
   private _view?: vscode.WebviewView;
-  /** 客户端 */
-  private readonly _client: icqq.Client;
-  /** 扩展根目录 */
-  private readonly _extensionUri: vscode.Uri;
-
-  private _lastMsg?: ReqMsg;
+  private _lastMsg?: WebviewMessage;
   /**
-   * @param client 客户端实例
+   * @param client 客户端
    * @param extensionUri 扩展根目录
    */
-  constructor(client: icqq.Client, extensionUri: vscode.Uri) {
-    this._client = client;
-    this._extensionUri = extensionUri;
-    this._client.on('system.online', () => {
+  constructor(
+    private readonly client: icqq.Client,
+    private readonly extensionUri: vscode.Uri
+  ) {
+    this.client.on('system.online', () => {
       if (!this._lastMsg) {
         return;
       }
-      const msg: LoginReqMsg & WebMsg = this._lastMsg as LoginReqMsg & WebMsg;
-      if (msg.args.qrcode) {
-        msg.args.uin = this._client.uin;
-      }
+      const msg = this._lastMsg;
       // 更新账号记录
-      AccountManager.setRecent(msg.args);
-      const resMsg: LoginResMsg = {
-        timer: msg.timer,
-        data: { ret: true }
-      };
-      this._view?.webview.postMessage(resMsg);
+      LoginRecordManager.setRecent(this.client.uin, msg.payload.data);
+      this._view?.webview.postMessage({
+        type: MessageType.Response,
+        id: msg.id,
+        payload: {} as LoginResMsg
+      } as WebviewMessage);
       vscode.commands.executeCommand('setContext', 'qlite.isOnline', true);
       console.log('client online');
       this._lastMsg = undefined;
     });
-    this._client.on('system.login.qrcode', ({ image }) => {
+    this.client.on('system.login.qrcode', ({ image }) => {
       if (!this._lastMsg) {
         return;
       }
-      const msg: QrcodeReqMsg & WebMsg = this._lastMsg as QrcodeReqMsg & WebMsg;
-      const resMsg: QrcodeResMsg = {
-        timer: msg.timer,
-        data: { src: 'data:image/png; base64, ' + image.toString('base64') }
-      };
-      this._view?.webview.postMessage(resMsg);
+      const msg = this._lastMsg;
+      this._view?.webview.postMessage({
+        type: MessageType.Response,
+        id: msg.id,
+        payload: {
+          src: 'data:image/png; base64, ' + image.toString('base64')
+        } as QrcodeResMsg
+      } as WebviewMessage);
       this._lastMsg = undefined;
     });
-    this._client.on('system.login.device', ({ url }) => {
+    this.client.on('system.login.device', ({ url }) => {
       // 设备验证
       new Device(url).on('device', () => {
-        this._client.login();
+        this.client.login();
       });
     });
-    this._client.on('system.login.slider', ({ url }) => {
+    this.client.on('system.login.slider', ({ url }) => {
       // 滑动验证码验证
       new Slider(url).on('ticket', (ticket: string) => {
-        this._client.submitSlider(ticket);
+        this.client.submitSlider(ticket);
       });
     });
   }
@@ -82,34 +77,38 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri]
+      localResourceRoots: [this.extensionUri]
     };
     webviewView.webview.html = this._getHtmlForWebview();
 
-    webviewView.webview.onDidReceiveMessage((msg: ReqMsg) => {
-      if (msg.command === 'init') {
-        const resMsg: InitResMsg = {
-          timer: msg.timer,
-          data: this._isEmpty ? undefined : AccountManager.getRecent()
-        };
-        webviewView.webview.postMessage(resMsg);
-      } else if (msg.command === 'login') {
-        if (msg.args.qrcode) {
-          // 已扫二维码则直接登录
-          this._client.login();
+    webviewView.webview.onDidReceiveMessage((msg: WebviewMessage) => {
+      if (msg.type === MessageType.Request) {
+        const payload: LoginReqMsg | InitReqMsg | QrcodeReqMsg = msg.payload;
+        if (payload.command === 'init') {
+          webviewView.webview.postMessage({
+            type: MessageType.Response,
+            id: msg.id,
+            payload: this._isEmpty
+              ? undefined
+              : (LoginRecordManager.getRecent() as InitResMsg)
+          } as WebviewMessage);
+        } else if (payload.command === 'login') {
+          const loginInfo = payload.data;
+          if (loginInfo.method === 'password') {
+            this.client.login(loginInfo.uin, loginInfo.password);
+          } else if (loginInfo.method === 'qrcode') {
+            this.client.login();
+          } else {
+            this.client.login(loginInfo.uin);
+          }
+          this._lastMsg = msg;
+        } else if (payload.command === 'qrcode') {
+          // 获取二维码
+          this._lastMsg = msg;
+          this.client.fetchQrcode();
         } else {
-          // 账号密码登录
-          this._client.login(
-            msg.args.uin as number,
-            msg.args.password as string
-          );
+          console.error('unresolved message from login view');
         }
-        this._lastMsg = msg;
-      } else if (msg.command === 'qrcode') {
-        // 获取二维码
-        this._lastMsg = msg;
-      } else {
-        console.error('unresolved message from login view');
       }
     });
     webviewView.onDidDispose(() => {
@@ -150,11 +149,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
    */
   private _getHtmlForWebview() {
     /** 登陆界面的所有素材的根目录 */
-    const webviewUri = vscode.Uri.joinPath(
-      this._extensionUri,
-      'out',
-      'webview'
-    );
+    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview');
     /** `html`文件的地址 */
     const htmlPath = vscode.Uri.joinPath(
       webviewUri,
