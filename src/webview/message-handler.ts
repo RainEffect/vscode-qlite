@@ -1,51 +1,75 @@
 import { WebviewApi } from 'vscode-webview';
-import { ResWebMsg, ReqWebMsg, PreReqWebMsg } from '../api/webview';
+import { Handler, MessageType, WebviewMessage } from '../types/webview';
 
-/** 处理`html`与`webview`之间的消息 */
+/**
+ * 判断传入参数是否为{@link MessageType}类型
+ * @param message 需要判断的参数
+ * @returns 是否为{@link MessageType}类型
+ */
+function isValidMsg(message: any): message is WebviewMessage {
+  return (
+    typeof message === 'object' &&
+    typeof message.type === 'number' &&
+    typeof message.id === 'string'
+  );
+}
+
+/** 处理网页与扩展之间的消息 */
 export class MessageHandler {
-  /** 所在页面的`vscode`实例，需要调用`postMessage` */
-  private _vscode: WebviewApi<any>;
-  /** 管理所有的消息处理的Map */
-  private handlers: Map<NodeJS.Timeout, (data: any) => void> = new Map();
-
+  /** 请求消息的计数器 */
+  private requestId = 0;
+  /** 管理所有的请求消息的回调函数 */
+  private handlers: { [id: string]: Handler } = {};
   /**
+   * 处理网页与扩展之间的消息
    * @param vscode 所在页面的`vscode`实例
    */
-  constructor(vscode: WebviewApi<any>) {
-    this._vscode = vscode;
+  constructor(private readonly vscode: WebviewApi<any>) {
     window.addEventListener('message', (event) => {
-      const message: ResWebMsg<any> = event.data;
-      clearTimeout(message.timer);
-      this.handlers.get(message.timer)?.call(null, message);
-      this.handlers.delete(message.timer);
+      if (!isValidMsg(event.data)) {
+        return;
+      }
+      const message: WebviewMessage = event.data;
+      if (
+        message.type === MessageType.Response ||
+        message.type === MessageType.Error
+      ) {
+        const handler = this.handlers[message.id];
+        if (handler) {
+          handler(message);
+          delete this.handlers[message.id];
+        }
+      }
     });
   }
 
   /**
-   * 向`webview`请求信息
-   * @param reqWebMsg 请求消息
-   * @param limit 等待请求的时限，默认为`5000ms`
-   * @returns 一个`Promise`对象，`resolve`返回响应的信息，`reject`返回未及时收到消息的原因
+   * 发送请求消息
+   * @param type 消息类型，请求消息为{@link MessageType.Request}
+   * @param payload 消息包含的数据
+   * @returns 返回消息的`Promise`，`Response`消息由`resolve`传递，`Error`消息由`reject`传递
    */
-  public request(reqWebMsg: PreReqWebMsg<any>, limit: number = 5000) {
-    return new Promise(
-      (
-        resolve: (data: ResWebMsg<any>) => void,
-        reject: (reason: string) => void
-      ) => {
-        const timeout = setTimeout(() => {
-          reject('require message timeout');
-        }, limit);
-        const reqMsg: ReqWebMsg<any> = {
-          ...reqWebMsg,
-          timer: timeout
-        };
-        this._vscode.postMessage(reqMsg);
-        this.handlers.set(timeout, (data: ResWebMsg<any>) => {
-          clearTimeout(timeout);
-          resolve(data);
-        });
-      }
-    );
+  sendMsg(type: MessageType.Request, payload: any): Promise<any>;
+  /**
+   * 发送响应消息
+   * @param type 消息的类型，有{@link MessageType.Response}, {@link MessageType.Error}
+   * @param payload 消息包含的数据
+   */
+  sendMsg(type: MessageType.Error | MessageType.Response, payload: any): void;
+  sendMsg(type: MessageType, payload: any) {
+    const id = (this.requestId++).toString();
+    this.vscode.postMessage({ type, id, payload } as WebviewMessage);
+    if (type !== MessageType.Request) {
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      this.handlers[id] = (msg: WebviewMessage) => {
+        if (msg.type === MessageType.Response) {
+          resolve(msg.payload);
+        } else if (msg.type === MessageType.Error) {
+          reject(msg.payload);
+        }
+      };
+    });
   }
 }
