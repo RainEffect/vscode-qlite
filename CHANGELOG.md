@@ -8,6 +8,14 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 - 视频消息需要额外的组件处理才能在线浏览，暂未实装
 
+## [1.4.2] - 2023-04-28
+
+### Changed
+
+- 修改扩展与网页的通信协议，增强其通用性，为聊天页面的通信方式打基础
+- 优化设置选单的显示内容
+- 优化登录页面，将登录方式选框移至顶部，页面依据不同选项动态切换显示内容
+
 ## [1.4.1] - 2023-04-23
 
 ### Changed
