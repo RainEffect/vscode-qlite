@@ -1,12 +1,39 @@
-export type InitReqMsg = { command: 'init' };
-export type LoginReqMsg = { command: 'login'; data: LoginRecord };
-export type QrcodeReqMsg = { command: 'qrcode' };
+import * as icqq from 'icqq';
+import { WebMessage } from '../webview/message-handler';
 
-export type InitResMsg = LoginRecord | undefined;
-export type LoginResMsg = {};
-export type QrcodeResMsg = { src: string };
+/** login页面中用到的所有事件名 */
+export const loginMatcher: (keyof icqq.EventMap)[] = [
+  'system.online',
+  'system.login.qrcode'
+];
 
-export type ErrorMsg = { reason: string };
+/** 登录页面涉及的所有消息指令 */
+export interface CommandMap {
+  init: {
+    req: never;
+    res: LoginRecord | undefined;
+  };
+  login: {
+    req: LoginRecord;
+    res: { ret: true | string };
+  };
+  qrcode: {
+    req: never;
+    res: { src: string };
+  };
+}
+
+/** 请求消息 */
+export interface ReqMsg<T extends keyof CommandMap> extends WebMessage {
+  command: T;
+  payload: CommandMap[T]['req'];
+}
+
+/** 响应消息 */
+export interface ResMsg<T extends keyof CommandMap> extends WebMessage {
+  command: T;
+  payload: CommandMap[T]['res'];
+}
 
 /** 抽象登录记录接口 */
 interface Record {
