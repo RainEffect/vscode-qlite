@@ -1,15 +1,8 @@
 import * as vscode from 'vscode';
 import * as icqq from 'icqq';
 import * as fs from 'fs';
-import { MessageType, WebviewMessage } from '../types/webview';
-import {
-  LoginResMsg,
-  QrcodeResMsg,
-  LoginReqMsg,
-  InitReqMsg,
-  QrcodeReqMsg,
-  InitResMsg
-} from '../types/login';
+import MessageHandler from '../webview/message-handler';
+import { ResMsg, ReqMsg, LoginRecord, loginMatcher } from '../types/login';
 import LoginRecordManager from '../login-record';
 import Slider from './slider';
 import Device from './device';
@@ -17,10 +10,9 @@ import Device from './device';
 /** 登陆界面容器类 */
 export default class LoginViewProvider implements vscode.WebviewViewProvider {
   /** 是否以空表形式加载视图 */
-  private _isEmpty = false;
+  private isEmpty = false;
   /** 显示的视图 */
   private _view?: vscode.WebviewView;
-  private _lastMsg?: WebviewMessage;
   /**
    * @param client 客户端
    * @param extensionUri 扩展根目录
@@ -29,36 +21,6 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     private readonly client: icqq.Client,
     private readonly extensionUri: vscode.Uri
   ) {
-    this.client.on('system.online', () => {
-      if (!this._lastMsg) {
-        return;
-      }
-      const msg = this._lastMsg;
-      // 更新账号记录
-      LoginRecordManager.setRecent(this.client.uin, msg.payload.data);
-      this._view?.webview.postMessage({
-        type: MessageType.Response,
-        id: msg.id,
-        payload: {} as LoginResMsg
-      } as WebviewMessage);
-      vscode.commands.executeCommand('setContext', 'qlite.isOnline', true);
-      console.log('client online');
-      this._lastMsg = undefined;
-    });
-    this.client.on('system.login.qrcode', ({ image }) => {
-      if (!this._lastMsg) {
-        return;
-      }
-      const msg = this._lastMsg;
-      this._view?.webview.postMessage({
-        type: MessageType.Response,
-        id: msg.id,
-        payload: {
-          src: 'data:image/png; base64, ' + image.toString('base64')
-        } as QrcodeResMsg
-      } as WebviewMessage);
-      this._lastMsg = undefined;
-    });
     this.client.on('system.login.device', ({ url }) => {
       // 设备验证
       new Device(url).on('device', () => {
@@ -75,40 +37,58 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(webviewView: vscode.WebviewView) {
     this._view = webviewView;
+    const msgHandler = new MessageHandler(webviewView.webview);
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
     webviewView.webview.html = this._getHtmlForWebview();
 
-    webviewView.webview.onDidReceiveMessage((msg: WebviewMessage) => {
-      if (msg.type === MessageType.Request) {
-        const payload: LoginReqMsg | InitReqMsg | QrcodeReqMsg = msg.payload;
-        if (payload.command === 'init') {
-          webviewView.webview.postMessage({
-            type: MessageType.Response,
-            id: msg.id,
-            payload: this._isEmpty
-              ? undefined
-              : (LoginRecordManager.getRecent() as InitResMsg)
-          } as WebviewMessage);
-        } else if (payload.command === 'login') {
-          const loginInfo = payload.data;
-          if (loginInfo.method === 'password') {
-            this.client.login(loginInfo.uin, loginInfo.password);
-          } else if (loginInfo.method === 'qrcode') {
-            this.client.login();
-          } else {
-            this.client.login(loginInfo.uin);
-          }
-          this._lastMsg = msg;
-        } else if (payload.command === 'qrcode') {
-          // 获取二维码
-          this._lastMsg = msg;
-          this.client.fetchQrcode();
+    msgHandler.onMessage((msg) => {
+      if (msg.command === 'init') {
+        const res: ResMsg<'init'> = {
+          id: msg.id,
+          command: 'init',
+          payload: this.isEmpty ? undefined : LoginRecordManager.getRecent()
+        };
+        msgHandler.postMessage(res);
+        this.isEmpty = false;
+      } else if (msg.command === 'login') {
+        const info: LoginRecord = (msg as ReqMsg<'login'>).payload;
+        if (info.method === 'password') {
+          this.client.login(info.uin, info.password);
+        } else if (info.method === 'qrcode') {
+          this.client.login();
         } else {
-          console.error('unresolved message from login view');
+          this.client.login(info.uin);
         }
+        this.client.once('login.' + loginMatcher[0], () => {
+          // 更新账号记录
+          LoginRecordManager.setRecent(
+            this.client.uin,
+            (msg as ReqMsg<'login'>).payload
+          );
+          msgHandler.postMessage({
+            id: msg.id,
+            command: 'login',
+            payload: { ret: true }
+          } as ResMsg<'login'>);
+          vscode.commands.executeCommand('setContext', 'qlite.isOnline', true);
+          console.log('LoginView: client online');
+        });
+      } else if (msg.command === 'qrcode') {
+        this.client.once('login.' + loginMatcher[1], ({ image }) => {
+          msgHandler.postMessage({
+            id: msg.id,
+            command: 'qrcode',
+            payload: {
+              src: 'data:image/png; base64, ' + image.toString('base64')
+            }
+          } as ResMsg<'qrcode'>);
+        });
+        this.client.fetchQrcode();
+      } else {
+        console.error('LoginView: unresolved message');
       }
     });
     webviewView.onDidDispose(() => {
@@ -123,10 +103,10 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
    * @param isEmpty 视图是否设为空
    */
   setEmptyView(isEmpty: boolean) {
-    if (!this._view) {
+    if (this._view) {
       console.warn("it's not working when login view is active");
     }
-    this._isEmpty = isEmpty;
+    this.isEmpty = isEmpty;
   }
 
   /**
