@@ -27,25 +27,6 @@ function parseFile(key: string, value: any) {
   return value;
 }
 
-/**
- * 通过QQ空间的Api获取QQ昵称
- * @param uin QQ账号
- * @returns QQ昵称
- */
-async function getNickname(uin: number): Promise<string> {
-  const url = `https://users.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins=${uin}`;
-  const response: Response = await fetch(url);
-  const text: string = await response.text();
-  const match = text.match(
-    /portraitCallBack\(\{".*":\[".*",.*,-1,0,0,0,"(.*?)",0\]\}\)/
-  );
-  if (!match) {
-    console.error('failed to fetch nickname');
-    return '';
-  }
-  return match[1];
-}
-
 /** 登录记录管理器 */
 export default class LoginRecordManager {
   /**
@@ -116,12 +97,7 @@ export default class LoginRecordManager {
       this.getFilePath(),
       JSON.stringify(
         records,
-        (key, value) => {
-          if (key === 'data') {
-            return Object.fromEntries(value);
-          }
-          return value;
-        },
+        (key, value) => (key === 'data' ? Object.fromEntries(value) : value),
         2
       )
     );
@@ -129,14 +105,15 @@ export default class LoginRecordManager {
 
   /**
    * 获取登录账号列表
-   * @returns 登陆过的账号字典
+   * @returns 登录过的账号字典
    */
-  static getAll(): Map<number, string> {
+  static async getAll(): Promise<Map<number, string>> {
     const recordMap: Map<number, string> = new Map();
     const records: LoginRecords = this.readFile();
-    records.data.forEach(async (account: LoginRecord, uin: number) => {
-      recordMap.set(uin, await getNickname(uin));
-    });
+    for (const [uin, record] of records.data.entries()) {
+      const info = await Global.client.pickUser(uin).getSimpleInfo();
+      recordMap.set(uin, info.nickname);
+    }
     return recordMap;
   }
 }
