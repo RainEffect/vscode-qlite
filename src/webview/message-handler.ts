@@ -1,75 +1,95 @@
-import { WebviewApi } from 'vscode-webview';
-import { Handler, MessageType, WebviewMessage } from '../types/webview';
+import * as vscode from 'vscode';
+import * as vscodeWebview from 'vscode-webview';
 
-/**
- * 判断传入参数是否为{@link MessageType}类型
- * @param message 需要判断的参数
- * @returns 是否为{@link MessageType}类型
- */
-function isValidMsg(message: any): message is WebviewMessage {
-  return (
-    typeof message === 'object' &&
-    typeof message.type === 'number' &&
-    typeof message.id === 'string'
-  );
+/** 消息接口 */
+export interface WebMessage {
+  /** 消息标识 */
+  id: string;
+  /** 消息类型 */
+  command: string;
+  /** 发送的数据 */
+  payload?: any;
 }
 
-/** 处理网页与扩展之间的消息 */
-export class MessageHandler {
-  /** 请求消息的计数器 */
-  private requestId = 0;
+/** 待定的响应函数接口 */
+interface PendingRequest {
+  /** 消息处理回调 */
+  resolve: (response: WebMessage) => void;
+  /** 错误处理回调 */
+  reject: (error: Error) => void;
+  /** 超时timer */
+  timeoutId: NodeJS.Timeout;
+}
+
+/** 网页与扩展之间的消息处理器 */
+export default class MessageHandler {
+  /** 消息计数器 */
+  private messageId = 0;
   /** 管理所有的请求消息的回调函数 */
-  private handlers: { [id: string]: Handler } = {};
+  private pendinRequest: Map<string, PendingRequest> = new Map();
   /**
-   * 处理网页与扩展之间的消息
-   * @param vscode 所在页面的`vscode`实例
+   * 构造消息处理器
+   * @param msgApi 扩展端为{@link vscode.Webview}，网页端为{@link vscodeWebview.WebviewApi}
    */
-  constructor(private readonly vscode: WebviewApi<any>) {
-    window.addEventListener('message', (event) => {
-      if (!isValidMsg(event.data)) {
-        return;
-      }
-      const message: WebviewMessage = event.data;
-      if (
-        message.type === MessageType.Response ||
-        message.type === MessageType.Error
-      ) {
-        const handler = this.handlers[message.id];
-        if (handler) {
-          handler(message);
-          delete this.handlers[message.id];
-        }
+  constructor(
+    private readonly msgApi: vscode.Webview | vscodeWebview.WebviewApi<any>
+  ) {
+    this.onMessage((response) => {
+      const request = this.pendinRequest.get(response.id);
+      if (request) {
+        clearTimeout(request.timeoutId);
+        request.resolve(response);
+        this.pendinRequest.delete(response.id);
       }
     });
   }
 
+  /** 类型保护函数 */
+  private _isWeb(instance: any): instance is vscodeWebview.WebviewApi<any> {
+    return !!instance.setState;
+  }
+
   /**
-   * 发送请求消息
-   * @param type 消息类型，请求消息为{@link MessageType.Request}
-   * @param payload 消息包含的数据
-   * @returns 返回消息的`Promise`，`Response`消息由`resolve`传递，`Error`消息由`reject`传递
+   * 发送消息，不等待响应消息
+   * @param msg 消息
    */
-  sendMsg(type: MessageType.Request, payload: any): Promise<any>;
+  postMessage(msg: WebMessage): void;
   /**
-   * 发送响应消息
-   * @param type 消息的类型，有{@link MessageType.Response}, {@link MessageType.Error}
-   * @param payload 消息包含的数据
+   * 发送消息，等待响应消息
+   * @param msg 消息
+   * @param timeout 超时限制
+   * @returns 返回响应消息的`Promise`
    */
-  sendMsg(type: MessageType.Error | MessageType.Response, payload: any): void;
-  sendMsg(type: MessageType, payload: any) {
-    const id = (this.requestId++).toString();
-    this.vscode.postMessage({ type, id, payload } as WebviewMessage);
-    if (type !== MessageType.Request) {
+  postMessage(msg: WebMessage, timeout: number): Promise<WebMessage>;
+  postMessage(msg: WebMessage, timeout?: number) {
+    if (!timeout) {
+      this.msgApi.postMessage(msg);
       return;
     }
     return new Promise((resolve, reject) => {
-      this.handlers[id] = (msg: WebviewMessage) => {
-        if (msg.type === MessageType.Response) {
-          resolve(msg.payload);
-        } else if (msg.type === MessageType.Error) {
-          reject(msg.payload);
-        }
-      };
+      const timeoutId = setTimeout(() => {
+        reject(new Error('timeout waiting for response'));
+      }, timeout);
+      const id = String(this.messageId++);
+      msg.id = id;
+      this.pendinRequest.set(id, { resolve, reject, timeoutId });
+      this.postMessage(msg);
     });
+  }
+
+  /**
+   * 接收消息
+   * @param callback 接收到消息后的处理函数
+   */
+  onMessage(callback: (msg: WebMessage) => void) {
+    if (!this._isWeb(this.msgApi)) {
+      this.msgApi.onDidReceiveMessage((msg) => {
+        callback(msg);
+      });
+    } else {
+      window.addEventListener('message', (ev) => {
+        callback(ev.data);
+      });
+    }
   }
 }
