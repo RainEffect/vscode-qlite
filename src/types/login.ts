@@ -1,11 +1,4 @@
-import * as icqq from 'icqq';
 import { WebMessage } from '../webview/message-handler';
-
-/** login页面中用到的所有事件名 */
-export const loginMatcher: (keyof icqq.EventMap)[] = [
-  'system.online',
-  'system.login.qrcode'
-];
 
 /** 登录页面涉及的所有消息指令 */
 export interface CommandMap {

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as icqq from 'icqq';
 import * as fs from 'fs';
 import MessageHandler from '../webview/message-handler';
-import { ResMsg, ReqMsg, LoginRecord, loginMatcher } from '../types/login';
+import { ResMsg, LoginRecord, ReqMsg } from '../types/login';
 import LoginRecordManager from '../login-record';
 import Slider from './slider';
 import Device from './device';
@@ -62,7 +62,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
         } else {
           this.client.login(info.uin);
         }
-        this.client.once('login.' + loginMatcher[0], () => {
+        const onlineDispose = this.client.on('system.online', () => {
           // 更新账号记录
           LoginRecordManager.setRecent(
             this.client.uin,
@@ -75,17 +75,22 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
           } as ResMsg<'login'>);
           vscode.commands.executeCommand('setContext', 'qlite.isOnline', true);
           console.log('LoginView: client online');
+          onlineDispose();
         });
       } else if (msg.command === 'qrcode') {
-        this.client.once('login.' + loginMatcher[1], ({ image }) => {
-          msgHandler.postMessage({
-            id: msg.id,
-            command: 'qrcode',
-            payload: {
-              src: 'data:image/png; base64, ' + image.toString('base64')
-            }
-          } as ResMsg<'qrcode'>);
-        });
+        const qrcodeDispose = this.client.on(
+          'system.login.qrcode',
+          ({ image }) => {
+            msgHandler.postMessage({
+              id: msg.id,
+              command: 'qrcode',
+              payload: {
+                src: 'data:image/png; base64, ' + image.toString('base64')
+              }
+            } as ResMsg<'qrcode'>);
+            qrcodeDispose();
+          }
+        );
         this.client.fetchQrcode();
       } else {
         console.error('LoginView: unresolved message');

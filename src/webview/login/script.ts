@@ -1,13 +1,13 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import {
-  QrcodeLoginRecord,
-  PasswordLoginRecord,
-  TokenLoginRecord,
+  ReqMsg,
   ResMsg,
-  ReqMsg
+  LoginRecord,
+  PasswordLoginRecord,
+  QrcodeLoginRecord,
+  TokenLoginRecord
 } from '../../types/login';
 import MessageHandler from '../message-handler';
-import { LoginRecord } from '../../types/login';
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
   .provideVSCodeDesignSystem()
