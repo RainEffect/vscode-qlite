@@ -3,11 +3,11 @@
   "version": "1.4.2",
   "publisher": "Vi-brance",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.77.0"
   },
   "license": "GPL-3.0",
   "displayName": "VSCode-QLite",
-  "description": "An extension that allows you to use QQ in vscode",
+  "description": "在VSCode中使用QQ，让你摸鱼工作两不误",
   "categories": [
     "Other"
   ],
@@ -104,7 +104,7 @@
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.15.13",
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "^1.77.0",
     "@types/vscode-webview": "^1.57.1",
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
