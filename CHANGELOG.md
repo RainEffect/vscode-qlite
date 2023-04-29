@@ -2,12 +2,6 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
-## [Unreleased]
-
-## [Unsolved]
-
-- 视频消息需要额外的组件处理才能在线浏览，暂未实装
-
 ## [1.4.2] - 2023-04-28
 
 ### Changed
