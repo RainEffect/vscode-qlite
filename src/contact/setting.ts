@@ -1,23 +1,24 @@
 import * as vscode from 'vscode';
+import * as icqq from 'icqq';
 import Global from '../global';
 import LoginRecordManager from '../login-record';
 
 /** 当前状态 */
-export let selectedStatus: number = 11;
+let onlineStatus: number = 11;
 /** 状态选项 */
-export const statusMap: Map<number, string> = new Map([
-  [11, '在线'],
-  [60, 'Q我吧'],
-  [31, '离开'],
-  [50, '忙碌'],
-  [70, '请勿打扰'],
-  [41, '隐身']
+const statusMap: Map<number, string> = new Map([
+  [icqq.OnlineStatus.Online, '在线'],
+  [icqq.OnlineStatus.Qme, 'Q我吧'],
+  [icqq.OnlineStatus.Absent, '离开'],
+  [icqq.OnlineStatus.Busy, '忙碌'],
+  [icqq.OnlineStatus.DontDisturb, '请勿打扰'],
+  [icqq.OnlineStatus.Invisible, '隐身']
 ]);
 
 /**
  * 设置，响应setting指令
  */
-export function setting() {
+export default function setting() {
   /** 设置选项 */
   const settings: vscode.QuickPickItem[] = [
     {
@@ -26,7 +27,7 @@ export function setting() {
     },
     {
       label: '$(bell) 我的状态',
-      description: statusMap.get(selectedStatus)
+      description: statusMap.get(onlineStatus)
     }
   ];
   vscode.window.showQuickPick(settings).then(async (settingItem) => {
@@ -80,11 +81,11 @@ export function setting() {
             if (statusItem === undefined) {
               return;
             }
-            selectedStatus = [...statusMap.keys()][
+            onlineStatus = [...statusMap.keys()][
               statusArray.indexOf(statusItem)
             ];
             if (Global.client.isOnline()) {
-              Global.client.setOnlineStatus(selectedStatus);
+              Global.client.setOnlineStatus(onlineStatus);
             }
           });
         break;

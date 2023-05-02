@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Global from './global';
-import * as setting from './contact/setting';
+import setting from './contact/setting';
 import * as chat from './chat';
 
 // 扩展启动
@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
   new Global(context);
   // 注册扩展命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.setting', setting.setting)
+    vscode.commands.registerCommand('qlite.setting', setting)
   );
   context.subscriptions.push(
     vscode.commands.registerCommand('qlite.chat', chat.openChatView)
