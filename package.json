@@ -109,7 +109,7 @@
     "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
-    "@vscode/codicons": "^0.0.32",
+    "@vscode/codicons": "^0.0.33",
     "@vscode/test-electron": "^2.2.0",
     "copy-webpack-plugin": "^11.0.0",
     "eslint": "^8.39.0",
