@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import Global from './global';
 import setting from './contact/setting';
-import * as chat from './chat';
+import search from './contact/search';
 
 // 扩展启动
 export function activate(context: vscode.ExtensionContext) {
@@ -13,10 +13,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('qlite.setting', setting)
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.chat', chat.openChatView)
+    vscode.commands.registerCommand(
+      'qlite.chat',
+      Global.chatViewManager.newChat,
+      Global.chatViewManager
+    )
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.search', chat.search)
+    vscode.commands.registerCommand('qlite.search', search)
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(
