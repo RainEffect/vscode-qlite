@@ -5,16 +5,12 @@ import path from 'path';
 /** 基础配置信息 */
 const baseConfig: Configuration = {
   mode: 'none',
-  externals: {
-    vscode: 'commonjs vscode'
-  },
+  externals: { vscode: 'commonjs vscode' },
   resolve: {
     extensions: ['.ts', '.js']
   },
   devtool: 'nosources-source-map',
-  infrastructureLogging: {
-    level: 'log'
-  },
+  infrastructureLogging: { level: 'log' },
   module: {
     rules: [
       {
@@ -40,11 +36,15 @@ const extensionConfig: Configuration = {
 };
 
 /** `webview`配置信息 */
-const webviewConfig: Configuration = {
+const webConfig: Configuration = {
   ...baseConfig,
   target: ['web', 'es2020'],
+  experiments: { outputModule: true }
+};
+
+const loginConfig: Configuration = {
+  ...webConfig,
   entry: './src/webview/login/script.ts',
-  experiments: { outputModule: true },
   output: {
     path: path.resolve(__dirname, 'out', 'webview', 'login'),
     filename: 'script.js',
@@ -77,5 +77,16 @@ const webviewConfig: Configuration = {
   ]
 };
 
+const chatConfig: Configuration = {
+  ...webConfig,
+  entry: './src/webview/chat/script.ts',
+  output: {
+    path: path.resolve(__dirname, 'out', 'webview', 'chat'),
+    filename: 'script.js',
+    libraryTarget: 'module',
+    chunkFormat: 'module'
+  }
+};
+
 // 导出配置信息
-module.exports = [extensionConfig, webviewConfig];
+module.exports = [extensionConfig, loginConfig, chatConfig];
