@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHAT</title>
+
+    <link rel="stylesheet" href="${styleUri}" />
+    <link rel="stylesheet" href="${codiconUri}" />
+  </head>
+  <body>
+    <div class="message"></div>
+    <div class="chat">
+      <div class="tool-box">
+        <vscode-button appearance="icon">
+          <span class="codicon codicon-check"></span>
+        </vscode-button>
+        <vscode-button appearance="icon">
+          <span class="codicon codicon-check"></span>
+        </vscode-button>
+      </div>
+      <div class="input-box">
+        <div class="input" contenteditable></div>
+        <vscode-button appearance="icon" class="send">
+          <span class="codicon codicon-send"></span>
+        </vscode-button>
+      </div>
+    </div>
+    <script src="${scriptUri}"></script>
+  </body>
+</html>
