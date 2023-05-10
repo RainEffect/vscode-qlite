@@ -42,7 +42,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
-    webviewView.webview.html = this._getHtmlForWebview();
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     msgHandler.onMessage((msg) => {
       if (msg.command === 'init') {
@@ -115,24 +115,11 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * 构造`webviewUri`格式的文件目录
-   * @param base 起始目录
-   * @param pathSegments 子目录
-   * @returns 可用于`webview`的`Uri`路径
-   */
-  private _asWebviewUri(
-    base: vscode.Uri,
-    ...pathSegments: string[]
-  ): vscode.Uri {
-    return this._view?.webview.asWebviewUri(
-      vscode.Uri.joinPath(base, ...pathSegments)
-    ) as vscode.Uri;
-  }
-
-  /**
    * 获取`webview`的`html`
+   * @param webview 目标`webview`实例
+   * @returns 生成的`html`
    */
-  private _getHtmlForWebview() {
+  private _getHtmlForWebview(webview: vscode.Webview) {
     /** 登陆界面的所有素材的根目录 */
     const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview');
     /** `html`文件的地址 */
@@ -145,13 +132,20 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     const htmlUris: Map<string, vscode.Uri> = new Map();
     htmlUris.set(
       'scriptUri',
-      this._asWebviewUri(webviewUri, 'login', 'script.js')
+      webview.asWebviewUri(
+        vscode.Uri.joinPath(webviewUri, 'login', 'script.js')
+      )
     );
     htmlUris.set(
       'styleUri',
-      this._asWebviewUri(webviewUri, 'login', 'style.css')
+      webview.asWebviewUri(
+        vscode.Uri.joinPath(webviewUri, 'login', 'style.css')
+      )
     );
-    htmlUris.set('codiconUri', this._asWebviewUri(webviewUri, 'codicon.css'));
+    htmlUris.set(
+      'codiconUri',
+      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'codicon.css'))
+    );
     /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
     const html: string = fs
       .readFileSync(htmlPath, 'utf-8')
