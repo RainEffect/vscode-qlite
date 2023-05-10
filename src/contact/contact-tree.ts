@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import * as icqq from 'icqq';
-import { bind } from '../chat';
+import { ChatType } from '../types/chat';
 
 /** 叶节点信息 */
 interface LeafInfo {
   /** 账号 */
   uin: number;
   /** 是否为私聊 */
-  isPrivate: boolean;
+  type: ChatType;
   /** 头像地址 */
   avatarUrl: string;
 }
@@ -27,13 +27,17 @@ class ContactTreeItem<
     super(label);
     this.children = children;
     if (!leafInfo) {
-      this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      if (label === '联系人' || label === '消息') {
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+      } else {
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      }
     } else {
       this.collapsibleState = vscode.TreeItemCollapsibleState.None;
       this.command = {
         title: '打开聊天',
         command: 'qlite.chat',
-        arguments: [leafInfo.uin, leafInfo.isPrivate]
+        arguments: [leafInfo.uin, leafInfo.type]
       };
       this.contextValue = 'leaf';
       this.iconPath = vscode.Uri.parse(leafInfo.avatarUrl);
@@ -46,7 +50,7 @@ class ContactTreeItem<
 /** 消息列表子节点 */
 class MessageTreeItem extends ContactTreeItem<any> {
   readonly uin: number;
-  readonly isPrivate: boolean;
+  readonly type: ChatType;
   private cnt: number = 0;
   /**
    * @param label 好友昵称/群聊名
@@ -55,7 +59,7 @@ class MessageTreeItem extends ContactTreeItem<any> {
   constructor(label: string, leafInfo: LeafInfo) {
     super(label, leafInfo);
     this.uin = leafInfo.uin;
-    this.isPrivate = leafInfo.isPrivate;
+    this.type = leafInfo.type;
     this.contextValue = 'message';
   }
 
@@ -138,19 +142,13 @@ export default class ContactTreeDataProvider
         this.refreshContacts(false);
       }
     });
-    client.on('message.group', (event: icqq.GroupMessageEvent) => {
-      this.refreshMessages(false, event.group_id, true);
-    });
-    client.on('message.private', (event: icqq.PrivateMessageEvent) => {
-      this.refreshMessages(true, event.from_id, true);
-    });
     // 热重启
     client.on('system.online', () => {
       this.refreshContacts(false);
       this.refreshContacts(true);
       this._messages.children = [];
     });
-    bind(); // 绑定命令
+    // bind(); // 绑定命令
   }
 
   getTreeItem(element: ContactTreeItem<any>): ContactTreeItem<any> {
@@ -187,7 +185,7 @@ export default class ContactTreeDataProvider
                   info.remark.length ? info.remark : info.nickname,
                   {
                     uin: info.user_id,
-                    isPrivate: true,
+                    type: ChatType.Friend,
                     avatarUrl: this._client
                       .pickFriend(info.user_id)
                       .getAvatarUrl(40)
@@ -227,7 +225,7 @@ export default class ContactTreeDataProvider
                   info.group_name,
                   {
                     uin: info.group_id,
-                    isPrivate: false,
+                    type: ChatType.Group,
                     avatarUrl: this._client
                       .pickGroup(info.group_id)
                       .getAvatarUrl(40)
@@ -243,26 +241,26 @@ export default class ContactTreeDataProvider
 
   /**
    * 更新新消息列表
-   * @param isPrivate 私聊为`true`，群聊为`false`
+   * @param type 聊天类型：私聊or群聊
    * @param uin 私聊为对方账号，群聊为群号
    * @param flag 有新消息为`true`，已读新消息为`false`
    */
-  refreshMessages(isPrivate: boolean, uin: number, flag: boolean) {
+  refreshMessages(type: ChatType, uin: number, flag: boolean) {
     const target: number = this._messages.children.findIndex(
-      (msg) => msg.isPrivate === isPrivate && msg.uin === uin
+      (msg) => msg.type === type && msg.uin === uin
     );
     if (target === -1) {
       // 消息列表中没有该消息
-      const label: string | undefined = isPrivate
+      const label: string | undefined = type
         ? this._client.pickFriend(uin).remark?.length
           ? this._client.pickFriend(uin).remark
           : this._client.pickFriend(uin).nickname
         : this._client.pickGroup(uin).name;
-      const avatarUrl: string = isPrivate
+      const avatarUrl: string = type
         ? this._client.pickFriend(uin).getAvatarUrl(40)
         : this._client.pickGroup(uin).getAvatarUrl(40);
       this._messages.children.unshift(
-        new MessageTreeItem(label as string, { uin, isPrivate, avatarUrl })
+        new MessageTreeItem(label as string, { uin, type, avatarUrl })
       );
     } else {
       // 在现有消息上修改
