@@ -8,6 +8,7 @@ import {
   TokenLoginRecord
 } from '../../types/login';
 import MessageHandler from '../message-handler';
+
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
   .provideVSCodeDesignSystem()
