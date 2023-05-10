@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import LoginViewProvider from './login/login-view';
 import ContactTreeDataProvider from './contact/contact-tree';
+import ChatViewManager from './chat/chat-view';
 
 /** 管理全局静态变量，启动时创建所有变量 */
 export default class Global {
@@ -18,17 +19,18 @@ export default class Global {
   static loginViewProvider: LoginViewProvider;
   /** 联系人视图容器 */
   static contactViewProvider: ContactTreeDataProvider;
+  /** 聊天页面容器 */
+  static chatViewManager: ChatViewManager;
 
   constructor(context: vscode.ExtensionContext) {
     Global.context = context;
-
     Global.rootDir = path.join(os.homedir(), '.qlite');
     // 创建根目录文件夹
     if (!fs.existsSync(Global.rootDir)) {
       fs.mkdirSync(Global.rootDir);
     }
 
-    /** {@link Global.client client} 的配置参数 */
+    /** {@link Global.client} 的配置参数 */
     const defaultConf: icqq.Config = {
       log_level: 'off',
       platform: 5,
@@ -45,7 +47,7 @@ export default class Global {
       vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
       vscode.window.showWarningMessage(`${message}\nclient offline`);
     });
-    // 注册登录视图容器
+    // 初始化视图容器
     Global.loginViewProvider = new LoginViewProvider(
       Global.client,
       context.extensionUri
@@ -58,6 +60,10 @@ export default class Global {
     vscode.window.registerTreeDataProvider(
       'contactView',
       Global.contactViewProvider
+    );
+    Global.chatViewManager = new ChatViewManager(
+      Global.client,
+      Global.context.extensionUri
     );
   }
 }
