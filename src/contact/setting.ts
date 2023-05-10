@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as icqq from 'icqq';
+import { OnlineStatus } from 'icqq';
 import Global from '../global';
 import LoginRecordManager from '../login-record';
 
@@ -7,12 +7,12 @@ import LoginRecordManager from '../login-record';
 let onlineStatus: number = 11;
 /** 状态选项 */
 const statusMap: Map<number, string> = new Map([
-  [icqq.OnlineStatus.Online, '在线'],
-  [icqq.OnlineStatus.Qme, 'Q我吧'],
-  [icqq.OnlineStatus.Absent, '离开'],
-  [icqq.OnlineStatus.Busy, '忙碌'],
-  [icqq.OnlineStatus.DontDisturb, '请勿打扰'],
-  [icqq.OnlineStatus.Invisible, '隐身']
+  [OnlineStatus.Online, '在线'],
+  [OnlineStatus.Qme, 'Q我吧'],
+  [OnlineStatus.Absent, '离开'],
+  [OnlineStatus.Busy, '忙碌'],
+  [OnlineStatus.DontDisturb, '请勿打扰'],
+  [OnlineStatus.Invisible, '隐身']
 ]);
 
 /**
