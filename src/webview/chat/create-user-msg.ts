@@ -1,5 +1,5 @@
 import { GroupMessage, GroupRole, MessageElem, PrivateMessage } from 'icqq';
-import parseMessage from './parseMessage';
+import msgElemToNode from './msgelem-to-node';
 import { msgHandler, user } from './script';
 import { ReqMsg, ResMsg } from '../../types/chat';
 import { Tag } from '@vscode/webview-ui-toolkit';
@@ -83,7 +83,7 @@ function createHeaderElem(name: string, time: number, role?: GroupRole) {
 function createContentElem(message: MessageElem[]) {
   const elem = document.createElement('div');
   elem.className = 'content';
-  elem.append(...parseMessage(message));
+  elem.append(...msgElemToNode(message));
   return elem;
 }
 
