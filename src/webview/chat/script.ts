@@ -2,15 +2,14 @@ import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import { UserInfo, ReqMsg, ResMsg } from '../../types/chat';
 import MessageHandler from '../message-handler';
 import {
-  AtElem,
-  FaceElem,
   GroupMessage,
-  ImageElem,
+  GroupMessageEvent,
   MessageElem,
   PrivateMessage,
-  TextElem
+  PrivateMessageEvent
 } from 'icqq';
-import createUserMsg from './createUserMsg';
+import createUserMsg from './create-user-msg';
+import nodeToMsgElem from './node-to-msgelem';
 
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
@@ -36,6 +35,9 @@ export let user: UserInfo;
 /** 请求历史消息的状态，避免重复请求 */
 let requestHistoryState = false;
 
+/** 上一次滑动时的页面与顶部的距离 */
+let lastTop = 0;
+
 /**
  * 获取目标消息的`html`对象
  * @param message_id 按`id`查找消息
@@ -47,91 +49,6 @@ function getMessage(message_id: string): HTMLDivElement | undefined {
     (msg) => msg.getAttribute('msgid') === message_id
   ) as HTMLDivElement | undefined;
 }
-
-// 点击发送按钮发送消息
-sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
-  const inputNodes = inputArea.childNodes;
-  if (this.disabled) {
-    console.warn('ChatView sendMessage: 消息发送中');
-    return;
-  } else if (!inputNodes.length) {
-    return;
-  }
-  this.disabled = true;
-  const msgElems: MessageElem[] = [];
-  // 消息序列化
-  inputNodes.forEach((inputNode) => {
-    let msgElem: MessageElem | undefined;
-    switch (inputNode.nodeName) {
-      case 'BR': // 换行符
-        msgElem = { type: 'text', text: '\n' } as TextElem;
-        break;
-      case '#text': // 文本
-        msgElem = { type: 'text', text: inputNode.textContent } as TextElem;
-        break;
-      case 'IMG': // 图片
-        const imgElem = inputNode as HTMLImageElement;
-        if (imgElem.className === 'face') {
-          // 表情
-          msgElem = {
-            type: 'face',
-            id: Number(imgElem.id)
-          } as FaceElem;
-        } else {
-          // 图片
-          const file = imgElem.currentSrc.startsWith('http')
-            ? imgElem.currentSrc
-            : imgElem.currentSrc.split(';')[1].replace(',', '://');
-          msgElem = {
-            type: 'image',
-            file,
-            url: imgElem.currentSrc
-          } as ImageElem;
-        }
-        break;
-      case 'A': // AT
-        const qq = (inputNode as HTMLAnchorElement).id;
-        msgElem = { type: 'at', qq: qq === 'all' ? qq : Number(qq) } as AtElem;
-        break;
-      default:
-        console.warn('ChatView sendMessage: 不支持的消息元素');
-        break;
-    }
-    if (!msgElem) {
-      return;
-    }
-    msgElems.push(msgElem);
-  });
-  msgHandler
-    .postMessage(
-      {
-        id: '',
-        command: 'sendMsg',
-        payload: { content: msgElems }
-      } as ReqMsg<'sendMsg'>,
-      3000
-    )
-    .then((msg) => {
-      const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
-      msgContainer.insertAdjacentElement('beforeend', createUserMsg(retMsg));
-    })
-    .catch((error: Error) =>
-      console.error('ChatView sendMessage: ' + error.message)
-    )
-    .finally(() => {
-      sendButton.disabled = false;
-      inputArea.textContent = '';
-      msgContainer.scrollTo(0, msgContainer.scrollHeight);
-    });
-});
-
-// 输入框的编辑判断
-inputArea.addEventListener('keydown', (ev: KeyboardEvent) => {
-  if (ev.key === 'Enter' && !ev.shiftKey) {
-    ev.preventDefault();
-    sendButton.click();
-  }
-});
 
 /**
  * 获取历史消息，调用此函数前请先判断 {@link requestHistoryState} 是否为真，为真则不要调用此函数
@@ -167,8 +84,66 @@ function getChatHistory(
   });
 }
 
-/** 上一次滑动时的页面与顶部的距离 */
-let lastTop = 0;
+// 接受来自扩展的消息
+msgHandler.onMessage((msg) => {
+  console.log('receive msg: ' + msg.command);
+  switch (msg.command) {
+    case 'messageEvent':
+      const message = msg.payload as GroupMessageEvent | PrivateMessageEvent;
+      if (getMessage(message.message_id)) {
+        break;
+      }
+      msgContainer.insertAdjacentElement('beforeend', createUserMsg(message));
+      break;
+    case 'noticeEvent':
+      break;
+  }
+});
+
+// 输入框按下按键时
+inputArea.addEventListener('keydown', (ev: KeyboardEvent) => {
+  if (ev.key === 'Enter' && !ev.shiftKey) {
+    // 按下Enter键时发送消息
+    ev.preventDefault();
+    sendButton.click();
+  }
+});
+
+// 点击发送按钮发送消息
+sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
+  const inputNodes = inputArea.childNodes;
+  if (this.disabled) {
+    console.warn('ChatView sendMessage: 消息发送中');
+    return;
+  } else if (!inputNodes.length) {
+    return;
+  }
+  this.disabled = true;
+  const msgElems: MessageElem[] = nodeToMsgElem(inputNodes);
+  msgHandler
+    .postMessage(
+      {
+        id: '',
+        command: 'sendMsg',
+        payload: { content: msgElems }
+      } as ReqMsg<'sendMsg'>,
+      3000
+    )
+    .then((msg) => {
+      const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
+      msgContainer.insertAdjacentElement('beforeend', createUserMsg(retMsg));
+    })
+    .catch((error: Error) =>
+      console.error('ChatView sendMessage: ' + error.message)
+    )
+    .finally(() => {
+      sendButton.disabled = false;
+      inputArea.textContent = '';
+      msgContainer.scrollTo(0, msgContainer.scrollHeight);
+    });
+});
+
+// 页面滑动时
 msgContainer.addEventListener('scroll', function (ev: Event) {
   const curTop = (ev.target as HTMLDivElement).scrollTop;
   // 当用户滑动方向为上且接近顶部时加载历史消息

@@ -21,8 +21,8 @@ function createAtElem(target: string) {
  * @param msgElemList 消息链
  * @returns `html`对象列表
  */
-export default function parseMessage(msgElemList: MessageElem[]) {
-  const message: (HTMLElement | Text)[] = [];
+export default function msgElemToNode(msgElemList: MessageElem[]): ChildNode[] {
+  const message: ChildNode[] = [];
   msgElemList.forEach((msgElem) => {
     switch (msgElem.type) {
       case 'at':
