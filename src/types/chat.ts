@@ -1,4 +1,12 @@
-import { Sendable, Quotable, PrivateMessage, GroupMessage } from 'icqq';
+import {
+  Sendable,
+  Quotable,
+  PrivateMessage,
+  GroupMessage,
+  GroupMessageEvent,
+  PrivateMessageEvent,
+  DiscussMessageEvent
+} from 'icqq';
 import { WebMessage } from '../webview/message-handler';
 
 /** 聊天类型 */
@@ -88,6 +96,14 @@ export interface CommandMap {
   getUserAvatar: {
     req: { uin: number };
     res: { src: string };
+  };
+  messageEvent: {
+    req: GroupMessageEvent | PrivateMessageEvent | DiscussMessageEvent;
+    res: never;
+  };
+  noticeEvent: {
+    req: any;
+    res: never;
   };
 }
 
