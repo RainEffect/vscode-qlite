@@ -1,4 +1,13 @@
-import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
+import {
+  provideVSCodeDesignSystem,
+  allComponents,
+  Radio,
+  TextField,
+  Option,
+  Tag,
+  Checkbox,
+  Button
+} from '@vscode/webview-ui-toolkit';
 import {
   ReqMsg,
   ResMsg,
@@ -10,56 +19,38 @@ import {
 import MessageHandler from '../message-handler';
 
 /** 注册`vscode-ui`的`webview`组件 */
-webviewUiToolkit
-  .provideVSCodeDesignSystem()
-  .register(webviewUiToolkit.allComponents);
+provideVSCodeDesignSystem().register(allComponents);
 /** 与扩展主体通信的变量 */
 const vscode = acquireVsCodeApi();
 /** 消息处理器 */
 const msgHandler = new MessageHandler(vscode);
 
 // 获取页面组件
-const loginRadioGroup = document.querySelector(
-  'vscode-radio-group'
-) as webviewUiToolkit.RadioGroup;
-const loginRadios = loginRadioGroup.querySelectorAll(
-  'vscode-radio'
-) as NodeListOf<webviewUiToolkit.Radio>;
-const uinText = document.querySelector(
-  'vscode-text-field#uin'
-) as webviewUiToolkit.TextField;
-const passwordText = document.querySelector(
-  'vscode-text-field#password'
-) as webviewUiToolkit.TextField;
-const rememberOption = document.querySelector(
-  'vscode-option#remember'
-) as webviewUiToolkit.Option;
-const tokenTag = document.querySelector(
-  'vscode-tag#token-warn'
-) as webviewUiToolkit.Tag;
-const autoLoginCheckbox = document.querySelector(
-  'vscode-checkbox#autoLogin'
-) as webviewUiToolkit.Checkbox;
-const qrcodeImg = document.querySelector('img#qrcode') as HTMLImageElement;
-const loginButton = document.querySelector(
-  'vscode-button#login'
-) as webviewUiToolkit.Button;
+const loginRadios = document.querySelectorAll(
+  'vscode-radio-group vscode-radio'
+) as NodeListOf<Radio>;
+const uinText = document.getElementById('uin') as TextField;
+const passwordText = document.getElementById('password') as TextField;
+const rememberOption = document.getElementById('remember') as Option;
+const tokenTag = document.getElementById('token-warn') as Tag;
+const autoLoginCheckbox = document.getElementById('autoLogin') as Checkbox;
+const qrcodeImg = document.getElementById('qrcode') as HTMLImageElement;
+const loginButton = document.getElementById('login') as Button;
 
 /** 全局记录登录方式 */
 var loginMethod: 'password' | 'qrcode' | 'token';
 
-loginRadioGroup.addEventListener('click', (ev: MouseEvent) => {
-  try {
-    const target = ev.target as webviewUiToolkit.Radio;
-    if (target.id === loginMethod) {
+loginRadios.forEach((loginRadio) =>
+  loginRadio.addEventListener('click', () => {
+    if (loginRadio.value === loginMethod) {
       return;
     }
-    loginMethod = target.id as 'password' | 'qrcode' | 'token';
-    uinText.hidden = target.id === 'qrcode';
-    passwordText.hidden = target.id !== 'password';
-    tokenTag.hidden = target.id !== 'token';
-    qrcodeImg.hidden = target.id !== 'qrcode';
-    if (target.id === 'qrcode') {
+    loginMethod = loginRadio.value as 'password' | 'qrcode' | 'token';
+    uinText.hidden = loginRadio.value === 'qrcode';
+    passwordText.hidden = loginRadio.value !== 'password';
+    tokenTag.hidden = loginRadio.value !== 'token';
+    qrcodeImg.hidden = loginRadio.value !== 'qrcode';
+    if (loginRadio.value === 'qrcode') {
       msgHandler
         .postMessage({ id: '', command: 'qrcode' } as ReqMsg<'qrcode'>, 1000)
         .then((msg) => {
@@ -71,8 +62,8 @@ loginRadioGroup.addEventListener('click', (ev: MouseEvent) => {
         });
     }
     checkLoginState();
-  } catch (err) {}
-});
+  })
+);
 
 /**
  * 判断登录按钮是否可用，不同登录方式的判断条件不同
@@ -135,9 +126,10 @@ function getLoginInfo(): LoginRecord {
 }
 
 // 暂存记住密码的选中状态
-rememberOption.addEventListener('click', () => {
-  rememberOption.selected = !rememberOption.selected;
-});
+rememberOption.addEventListener(
+  'click',
+  () => (rememberOption.selected = !rememberOption.selected)
+);
 
 // 提交登录信息
 loginButton.addEventListener('click', () => {
@@ -157,6 +149,9 @@ loginButton.addEventListener('click', () => {
     })
     .catch((error: Error) => {
       console.error('LoginView login: ' + error.message);
+    })
+    .finally(() => {
+      toggleReadonlyState();
       checkLoginState();
     });
   loginButton.textContent = '登录中';
@@ -164,12 +159,8 @@ loginButton.addEventListener('click', () => {
 });
 
 // 动态判断登录按钮的状态
-uinText.addEventListener('input', () => {
-  checkLoginState();
-});
-passwordText.addEventListener('input', () => {
-  checkLoginState();
-});
+uinText.addEventListener('input', checkLoginState);
+passwordText.addEventListener('input', checkLoginState);
 
 // 响应回车键
 window.addEventListener('keydown', (event) => {
@@ -179,13 +170,14 @@ window.addEventListener('keydown', (event) => {
 });
 
 // 初始化所有组件状态
-(() => {
+(() =>
   // 获取登录账号历史信息
   msgHandler
     .postMessage({ id: '', command: 'init' } as ReqMsg<'init'>, 2000)
     .then((msg) => {
       const record = (msg as ResMsg<'init'>).payload;
-      // 似乎是radio-group的bug，初始化时首次点击总是会选中最后一个radio，所以默认设置需要重复2次
+      // radio-group的bug: https://github.com/microsoft/vscode-webview-ui-toolkit/issues/476
+      // 初始化时首次点击总是会选中最后一个radio，所以默认设置需要重复2次
       loginRadios[0].click();
       if (!record) {
         loginRadios[0].click();
@@ -212,5 +204,4 @@ window.addEventListener('keydown', (event) => {
     })
     .catch((error: Error) => {
       console.error('LoginView init: ' + error.message);
-    });
-})();
+    }))();
