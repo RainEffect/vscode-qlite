@@ -2,6 +2,16 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.4.3] - 2023-05-12
+
+### Changed
+- 由于icqq更新后不支持扫码登录，所以暂时禁用扫码登录手段
+- 修改icqq的日志等级，如果出现错误可以通过日志发现问题
+
+### Fixed
+- 修复设置中切换账号失败的bug
+- 修复登录页面中登录失败无法重新输入的bug
+
 ## [1.4.2] - 2023-04-28
 
 ### Changed
