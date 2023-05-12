@@ -32,7 +32,7 @@ export default class Global {
 
     /** {@link Global.client} 的配置参数 */
     const defaultConf: icqq.Config = {
-      log_level: 'off',
+      log_level: 'error',
       platform: 5,
       ignore_self: false,
       data_dir: Global.rootDir
