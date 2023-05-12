@@ -38,8 +38,7 @@ export default function setting() {
         recordMap.forEach((nickname: string, uin: number) => {
           accounts.push({
             label: '$(account) ' + nickname,
-            description: uin.toString(),
-            picked: uin === Global.client.uin
+            description: uin.toString()
           });
         });
         accounts.push(
@@ -65,7 +64,7 @@ export default function setting() {
               );
             } else {
               // 切换账号
-              const uin = Number(accountItem.label.substring(11));
+              const uin = Number(accountItem.description);
               Global.client.login(uin);
               LoginRecordManager.setRecent(uin);
             }
