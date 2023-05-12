@@ -7,14 +7,13 @@
 
     <link rel="stylesheet" href="${styleUri}" />
     <link rel="stylesheet" href="${codiconUri}" />
-    <script type="module" src="${scriptUri}"></script>
   </head>
   <body>
     <vscode-radio-group orientation="vertical">
       <label slot="label">请选择登录方式</label>
-      <vscode-radio id="password">账号密码登录</vscode-radio>
-      <vscode-radio id="qrcode">二维码登录</vscode-radio>
-      <vscode-radio id="token">token登录</vscode-radio>
+      <vscode-radio value="password">账号密码登录</vscode-radio>
+      <vscode-radio value="qrcode" disabled>二维码登录</vscode-radio>
+      <vscode-radio value="token">token登录</vscode-radio>
     </vscode-radio-group>
     <vscode-divider></vscode-divider>
     <vscode-text-field id="uin" placeholder="请输入账号">
@@ -35,5 +34,6 @@
     <img id="qrcode" src="" />
     <vscode-checkbox id="autoLogin">自动登录</vscode-checkbox>
     <vscode-button id="login" type="button">登录</vscode-button>
+    <script type="module" src="${scriptUri}"></script>
   </body>
 </html>
