@@ -82,12 +82,9 @@ export interface CommandMap {
     req: never;
     res: UserInfo;
   };
-  sendMsg: {
-    req: {
-      content: Sendable;
-      source?: Quotable;
-    };
-    res: { retMsg: PrivateMessage | GroupMessage };
+  getStamp: {
+    req: never;
+    res: { stamps: string[] };
   };
   getChatHistory: {
     req: { message_id: string } | undefined;
@@ -96,6 +93,13 @@ export interface CommandMap {
   getUserAvatar: {
     req: { uin: number };
     res: { src: string };
+  };
+  sendMsg: {
+    req: {
+      content: Sendable;
+      source?: Quotable;
+    };
+    res: { retMsg: PrivateMessage | GroupMessage };
   };
   messageEvent: {
     req: GroupMessageEvent | PrivateMessageEvent | DiscussMessageEvent;
