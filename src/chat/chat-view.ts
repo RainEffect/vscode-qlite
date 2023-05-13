@@ -174,8 +174,11 @@ export default class ChatViewManager {
           const friend: Friend = this.client.pickFriend(uin);
           const ret: MessageRet = await friend.sendMsg(content);
           const interval = setInterval(async () => {
-            retMsg = (await friend.getChatHistory(Date.now() / 1000, 1))[0];
-            if (retMsg.time === ret.time) {
+            /**
+             * @todo 缺少`interval`的异常终止操作
+             */
+            retMsg = (await friend.getChatHistory(ret.time, 1))[0];
+            if (retMsg.message_id === ret.message_id) {
               clearInterval(interval);
               msgHandler.postMessage({
                 id: msg.id,
@@ -183,13 +186,16 @@ export default class ChatViewManager {
                 payload: { retMsg }
               } as ResMsg<'sendMsg'>);
             }
-          }, 100);
+          }, 200);
         } else {
           const group: Group = this.client.pickGroup(uin);
           const ret: MessageRet = await group.sendMsg(content);
           const interval = setInterval(async () => {
+            /**
+             * @todo 缺少`interval`的异常终止操作
+             */
             retMsg = (await group.getChatHistory(ret.seq, 1))[0];
-            if (retMsg.time === ret.time) {
+            if (retMsg.message_id === ret.message_id) {
               clearInterval(interval);
               msgHandler.postMessage({
                 id: msg.id,
@@ -197,7 +203,7 @@ export default class ChatViewManager {
                 payload: { retMsg }
               } as ResMsg<'sendMsg'>);
             }
-          }, 100);
+          }, 200);
         }
       }
     });
