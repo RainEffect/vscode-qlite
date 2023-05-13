@@ -58,12 +58,12 @@ function createTimeTag(time: number) {
 
 /**
  * 群聊调用，创建消息头组件
- * @param name 发送名，用于 {@link createNameTag}
  * @param time 发送时间，用于 {@link createTimeTag}
+ * @param name 发送名，用于 {@link createNameTag}
  * @param role 管理头衔，用于 {@link createFlagTag}
  * @returns `div`组件
  */
-function createHeaderElem(name: string, time: number, role?: GroupRole) {
+function createHeaderElem(time: number, name?: string, role?: GroupRole) {
   const elem = document.createElement('div');
   elem.className = 'header';
   if (role && role !== 'member') {
@@ -71,7 +71,10 @@ function createHeaderElem(name: string, time: number, role?: GroupRole) {
     const flagElem = createFlagTag(role);
     elem.append(flagElem);
   }
-  elem.append(createNameTag(name), createTimeTag(time));
+  if (name) {
+    elem.append(createNameTag(name));
+  }
+  elem.append(createTimeTag(time));
   return elem;
 }
 
@@ -130,13 +133,13 @@ export default function createUserMsg(message: PrivateMessage | GroupMessage) {
   const header =
     message.message_type === 'group'
       ? message.sub_type === 'anonymous'
-        ? createHeaderElem(message.anonymous?.name as string, message.time)
+        ? createHeaderElem(message.time, message.anonymous?.name as string)
         : createHeaderElem(
-            message.sender.nickname,
             message.time,
+            message.sender.nickname,
             message.sender.role
           )
-      : createHeaderElem(message.sender.nickname, message.time);
+      : createHeaderElem(message.time);
   const content = createContentElem(message.message);
   container.append(header, content);
   const avatar = createAvatarElem(
