@@ -48,15 +48,6 @@ export default class ChatViewManager {
   }
 
   /**
-   *
-   * @param msgHandler 页面的消息处理器
-   * @returns 所有添加的响应器列表，页面关闭时销毁
-   */
-  private postEvent(msgHandler: MessageHandler) {
-    return;
-  }
-
-  /**
    * 创建一个新页面
    * @param uin 页面的目标账号
    * @param type 聊天类型
@@ -83,19 +74,33 @@ export default class ChatViewManager {
     this.panelMap[type].set(uin, chatView);
     /** 所有需要发送到页面的事件处理器列表，页面关闭时销毁 */
     const toDispose = [
-      this.client.on('message', (event) => {
-        msgHandler.postMessage({
-          id: '',
-          command: 'messageEvent',
-          payload: event
-        });
-      }),
+      type === ChatType.Friend
+        ? this.client.on('message.private', (event) => {
+            if (event.friend.uid !== uin) {
+              return;
+            }
+            msgHandler.postMessage({
+              id: '',
+              command: 'messageEvent',
+              payload: event
+            } as ReqMsg<'messageEvent'>);
+          })
+        : this.client.on('message.group', (event) => {
+            if (event.group_id !== uin) {
+              return;
+            }
+            msgHandler.postMessage({
+              id: '',
+              command: 'messageEvent',
+              payload: event
+            } as ReqMsg<'messageEvent'>);
+          }),
       this.client.on('notice', (event) => {
         msgHandler.postMessage({
           id: '',
           command: 'noticeEvent',
           payload: event
-        });
+        } as ReqMsg<'noticeEvent'>);
       })
     ];
     chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
@@ -162,20 +167,38 @@ export default class ChatViewManager {
       } else if (msg.command === 'sendMsg') {
         const content = msg.payload.content;
         let retMsg: PrivateMessage | GroupMessage;
+        /**
+         * @todo 无法获取发送后的消息数据
+         */
         if (type === ChatType.Friend) {
           const friend: Friend = this.client.pickFriend(uin);
           const ret: MessageRet = await friend.sendMsg(content);
-          retMsg = (await friend.getChatHistory(ret.time, 1))[0];
+          const interval = setInterval(async () => {
+            retMsg = (await friend.getChatHistory(Date.now() / 1000, 1))[0];
+            if (retMsg.time === ret.time) {
+              clearInterval(interval);
+              msgHandler.postMessage({
+                id: msg.id,
+                command: msg.command,
+                payload: { retMsg }
+              } as ResMsg<'sendMsg'>);
+            }
+          }, 100);
         } else {
           const group: Group = this.client.pickGroup(uin);
           const ret: MessageRet = await group.sendMsg(content);
-          retMsg = (await group.getChatHistory(ret.seq, 1))[0];
+          const interval = setInterval(async () => {
+            retMsg = (await group.getChatHistory(ret.seq, 1))[0];
+            if (retMsg.time === ret.time) {
+              clearInterval(interval);
+              msgHandler.postMessage({
+                id: msg.id,
+                command: msg.command,
+                payload: { retMsg }
+              } as ResMsg<'sendMsg'>);
+            }
+          }, 100);
         }
-        msgHandler.postMessage({
-          id: msg.id,
-          command: msg.command,
-          payload: { retMsg }
-        } as ResMsg<'sendMsg'>);
       }
     });
   }
