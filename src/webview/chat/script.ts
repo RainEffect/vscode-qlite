@@ -10,6 +10,7 @@ import {
 } from 'icqq';
 import createUserMsg from './create-user-msg';
 import nodeToMsgElem from './node-to-msgelem';
+import { sface } from '../../types/sface';
 
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
@@ -22,10 +23,14 @@ const vscode = acquireVsCodeApi();
 export const msgHandler = new MessageHandler(vscode);
 
 // 获取页面组件
-const msgContainer = document.querySelector('.message') as HTMLDivElement;
-const chatContainer = document.querySelector('.chat') as HTMLDivElement;
-const toolBox = chatContainer.querySelector('.tool-box') as HTMLDivElement;
-const inputBox = chatContainer.querySelector('.input-box') as HTMLDivElement;
+const msgBox = document.querySelector('.message') as HTMLDivElement;
+const chatBox = document.querySelector('.chat') as HTMLDivElement;
+const toolBox = chatBox.querySelector('.tool-box') as HTMLDivElement;
+const stampBtn = toolBox.querySelector('.stamp') as webviewUiToolkit.Button;
+const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
+const faceBtn = toolBox.querySelector('.face') as webviewUiToolkit.Button;
+const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
+const inputBox = chatBox.querySelector('.input-box') as HTMLDivElement;
 const inputArea = inputBox.querySelector('.input') as HTMLDivElement;
 const sendButton = inputBox.querySelector('.send') as webviewUiToolkit.Button;
 
@@ -44,7 +49,7 @@ let lastTop = 0;
  * @returns 消息对象，没找到为`undefined`
  */
 function getMessage(message_id: string): HTMLDivElement | undefined {
-  const messageList = msgContainer.querySelectorAll('.msg');
+  const messageList = msgBox.querySelectorAll('.msg');
   return Array.from(messageList).find(
     (msg) => msg.getAttribute('msgid') === message_id
   ) as HTMLDivElement | undefined;
@@ -93,10 +98,42 @@ msgHandler.onMessage((msg) => {
       if (getMessage(message.message_id)) {
         break;
       }
-      msgContainer.insertAdjacentElement('beforeend', createUserMsg(message));
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
       break;
     case 'noticeEvent':
       break;
+  }
+});
+
+stampBtn.addEventListener('click', () => {
+  stampBox.style.display = 'flex';
+  stampBtn.disabled = true;
+});
+document.addEventListener('click', (ev) => {
+  if (
+    ev.target !== stampBox &&
+    ev.target !== stampBtn &&
+    !stampBox.contains(ev.target as Node) &&
+    !stampBtn.contains(ev.target as Node)
+  ) {
+    stampBox.style.display = 'none';
+    stampBtn.disabled = false;
+  }
+});
+
+faceBtn.addEventListener('click', () => {
+  faceBox.style.display = 'flex';
+  faceBtn.disabled = true;
+});
+document.addEventListener('click', (ev) => {
+  if (
+    ev.target !== faceBox &&
+    ev.target !== faceBtn &&
+    !faceBtn.contains(ev.target as Node) &&
+    !faceBtn.contains(ev.target as Node)
+  ) {
+    faceBox.style.display = 'none';
+    faceBtn.disabled = false;
   }
 });
 
@@ -131,7 +168,7 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
     )
     .then((msg) => {
       const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
-      msgContainer.insertAdjacentElement('beforeend', createUserMsg(retMsg));
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(retMsg));
     })
     .catch((error: Error) =>
       console.error('ChatView sendMessage: ' + error.message)
@@ -139,12 +176,12 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
     .finally(() => {
       sendButton.disabled = false;
       inputArea.textContent = '';
-      msgContainer.scrollTo(0, msgContainer.scrollHeight);
+      msgBox.scrollTo(0, msgBox.scrollHeight);
     });
 });
 
 // 页面滑动时
-msgContainer.addEventListener('scroll', function (ev: Event) {
+msgBox.addEventListener('scroll', function (ev: Event) {
   const curTop = (ev.target as HTMLDivElement).scrollTop;
   // 当用户滑动方向为上且接近顶部时加载历史消息
   if (curTop < 10 && lastTop > curTop) {
@@ -178,9 +215,29 @@ msgContainer.addEventListener('scroll', function (ev: Event) {
   // 初次获取历史消息
   getChatHistory().then((msgList) => {
     msgList.forEach((msg) =>
-      msgContainer.insertAdjacentElement('afterbegin', createUserMsg(msg))
+      msgBox.insertAdjacentElement('afterbegin', createUserMsg(msg))
     );
     // 滑动窗口到底部
-    msgContainer.scrollTop = msgContainer.offsetTop + msgContainer.offsetHeight;
+    msgBox.scrollTop = msgBox.offsetTop + msgBox.offsetHeight;
+  });
+  stampBox.style.display = 'none';
+  faceBox.style.display = 'none';
+  msgHandler
+    .postMessage({ id: '', command: 'getStamp' } as ReqMsg<'getStamp'>, 2000)
+    .then((msg) => {
+      const stamps = (msg as ResMsg<'getStamp'>).payload.stamps;
+      stamps.forEach((stamp) => {
+        const img = document.createElement('img');
+        img.className = 'stamp';
+        img.src = stamp;
+        stampBox.append(img);
+      });
+    });
+  sface.forEach((desc: string, id: number) => {
+    const face = document.createElement('img');
+    face.src = `https://qq-face.vercel.app/static/s${id}.png`;
+    face.className = 'sface';
+    face.title = face.alt = desc;
+    faceBox.append(face);
   });
 })();
