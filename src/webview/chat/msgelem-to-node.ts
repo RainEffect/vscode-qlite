@@ -1,6 +1,5 @@
 import { Link } from '@vscode/webview-ui-toolkit';
 import { MessageElem } from 'icqq';
-import xss from 'xss';
 
 /**
  * 创建AT组件
