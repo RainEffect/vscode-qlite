@@ -205,6 +205,13 @@ export default class ChatViewManager {
             }
           }, 200);
         }
+      } else if (msg.command === 'getStamp') {
+        const stamps = await this.client.getRoamingStamp();
+        msgHandler.postMessage({
+          id: msg.id,
+          command: msg.command,
+          payload: { stamps }
+        } as ResMsg<'getStamp'>);
       }
     });
   }
