@@ -128,7 +128,8 @@ export default class ChatViewManager {
               type === ChatType.Friend
                 ? this.client.nickname
                 : this.client.pickGroup(uin).pickMember(this.client.uin).card ??
-                  this.client.nickname
+                  this.client.nickname,
+            type
           }
         } as ResMsg<'getSimpleInfo'>);
       } else if (msg.command === 'getChatHistory') {

@@ -42,6 +42,8 @@ export interface UserInfo {
   uin: number;
   /** 昵称 */
   name: string;
+  /** 聊天对象类型 */
+  type: ChatType;
 }
 
 /**
