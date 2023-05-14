@@ -1,6 +1,3 @@
-/**
- * 表情获取自 https://qq-face.vercel.app
- */
 export const sface = new Map<number, string>([
   [0, '惊讶'],
   [1, '撇嘴'],
