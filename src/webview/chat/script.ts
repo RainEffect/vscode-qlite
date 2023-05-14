@@ -10,7 +10,7 @@ import {
 } from 'icqq';
 import createUserMsg from './create-user-msg';
 import nodeToMsgElem from './node-to-msgelem';
-import { sface } from '../../types/sface';
+import { sface } from './sface';
 
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
@@ -23,15 +23,25 @@ const vscode = acquireVsCodeApi();
 export const msgHandler = new MessageHandler(vscode);
 
 // 获取页面组件
+/** 上半部分的消息容器 */
 const msgBox = document.querySelector('.message') as HTMLDivElement;
+/** 下半部分的聊天容器 */
 const chatBox = document.querySelector('.chat') as HTMLDivElement;
+/** 工具栏 */
 const toolBox = chatBox.querySelector('.tool-box') as HTMLDivElement;
+/** 漫游表情工具 */
 const stampBtn = toolBox.querySelector('.stamp') as webviewUiToolkit.Button;
+/** 漫游表情栏 */
 const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
+/** sface表情工具 */
 const faceBtn = toolBox.querySelector('.face') as webviewUiToolkit.Button;
+/** sface表情栏 */
 const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
+/** 输入容器 */
 const inputBox = chatBox.querySelector('.input-box') as HTMLDivElement;
+/** 输入框 */
 const inputArea = inputBox.querySelector('.input') as HTMLDivElement;
+/** 发送按钮 */
 const sendButton = inputBox.querySelector('.send') as webviewUiToolkit.Button;
 
 /** 用户的基本信息 */
@@ -91,7 +101,6 @@ function getChatHistory(
 
 // 接受来自扩展的消息
 msgHandler.onMessage((msg) => {
-  console.log('receive msg: ' + msg.command);
   switch (msg.command) {
     case 'messageEvent':
       const message = msg.payload as GroupMessageEvent | PrivateMessageEvent;
@@ -101,14 +110,20 @@ msgHandler.onMessage((msg) => {
       msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
       break;
     case 'noticeEvent':
+      console.log(
+        'ChatView receive noticeEvent: ' +
+          (msg as ReqMsg<'noticeEvent'>).payload
+      );
       break;
   }
 });
 
+// 打开漫游表情工具栏
 stampBtn.addEventListener('click', () => {
   stampBox.style.display = 'flex';
   stampBtn.disabled = true;
 });
+// 点击其他地方关闭工具栏
 document.addEventListener('click', (ev) => {
   if (
     ev.target !== stampBox &&
@@ -121,10 +136,12 @@ document.addEventListener('click', (ev) => {
   }
 });
 
+// 打开sface表情工具栏
 faceBtn.addEventListener('click', () => {
   faceBox.style.display = 'flex';
   faceBtn.disabled = true;
 });
+// 点击其他地方关闭工具栏
 document.addEventListener('click', (ev) => {
   if (
     ev.target !== faceBox &&
@@ -212,7 +229,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   } catch (error: any) {
     console.error('ChatView getSimpleInfo: ' + error.message);
   }
-  // 初次获取历史消息
+  // 初次加载历史消息
   getChatHistory().then((msgList) => {
     msgList.forEach((msg) =>
       msgBox.insertAdjacentElement('afterbegin', createUserMsg(msg))
@@ -220,8 +237,10 @@ msgBox.addEventListener('scroll', function (ev: Event) {
     // 滑动窗口到底部
     msgBox.scrollTop = msgBox.offsetTop + msgBox.offsetHeight;
   });
+  // 工具栏不显示
   stampBox.style.display = 'none';
   faceBox.style.display = 'none';
+  // 加载漫游表情
   msgHandler
     .postMessage({ id: '', command: 'getStamp' } as ReqMsg<'getStamp'>, 2000)
     .then((msg) => {
@@ -232,7 +251,11 @@ msgBox.addEventListener('scroll', function (ev: Event) {
         img.src = stamp;
         stampBox.append(img);
       });
-    });
+    })
+    .catch((error: Error) =>
+      console.error('ChatView getStamp: ' + error.message)
+    );
+  // 加载sface表情
   sface.forEach((desc: string, id: number) => {
     const face = document.createElement('img');
     face.src = `https://qq-face.vercel.app/static/s${id}.png`;
