@@ -260,9 +260,12 @@ msgBox.addEventListener('scroll', function (ev: Event) {
       const stamps = (msg as ResMsg<'getStamp'>).payload.stamps;
       stamps.forEach((stamp) => {
         const img = document.createElement('img');
-        img.className = 'stamp';
         img.src = stamp;
-        stampBox.append(img);
+        const elem = new webviewUiToolkit.Button();
+        elem.appearance = 'icon';
+        elem.append(img);
+        elem.className = 'stamp';
+        stampBox.append(elem);
       });
     })
     .catch((error: Error) =>
@@ -272,8 +275,11 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   sface.forEach((desc: string, id: number) => {
     const face = document.createElement('img');
     face.src = `https://qq-face.vercel.app/static/s${id}.png`;
-    face.className = 'sface';
     face.title = face.alt = desc;
-    faceBox.append(face);
+    const elem = new webviewUiToolkit.Button();
+    elem.appearance = 'icon';
+    elem.append(face);
+    elem.className = 'sface';
+    faceBox.append(elem);
   });
 })();

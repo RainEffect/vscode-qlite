@@ -31,6 +31,9 @@ body {
   height: 100%;
   position: relative;
 }
+.message > * {
+  margin: 1px;
+}
 
 /* 消息 */
 .msg {
@@ -112,6 +115,9 @@ body {
 .chat {
   border-top: 1px solid;
 }
+.chat > * {
+  margin: 1px;
+}
 
 .tool-box,
 .input-box {
@@ -122,33 +128,31 @@ body {
   margin: 2px;
 }
 
-/* 图片容器 */
+/* 工具栏 */
 .stamp-box,
 .face-box {
   display: flex;
   flex-wrap: wrap;
-  max-height: 100px;
+  max-height: 200px;
   overflow-y: auto;
 }
 
-/* 漫游表情容器 */
-.stamp-box > img {
-  margin: 2px;
-  cursor: pointer;
-  max-width: 50px;
-  max-height: 40px;
+/* 漫游表情 */
+.stamp-box > .stamp {
+  object-fit: contain;
+  max-width: 64px;
+  max-height: 64px;
   vertical-align: middle;
 }
 
-/* Sface表情容器 */
-.face-box > img {
-  margin: 2px;
-  cursor: pointer;
-  max-width: 20px;
-  max-height: 20px;
+/* sface表情 */
+.face-box > .sface {
+  max-width: 32px;
+  max-height: 32px;
   vertical-align: middle;
 }
 
+/* 输入框 */
 .input {
   flex: 1;
   padding: 4px 6px;
@@ -156,6 +160,7 @@ body {
   border: 1px solid;
 }
 
+/* 发送按钮 */
 .send {
   padding: 4px;
 }
