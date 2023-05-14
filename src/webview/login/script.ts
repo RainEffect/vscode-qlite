@@ -26,20 +26,29 @@ const vscode = acquireVsCodeApi();
 const msgHandler = new MessageHandler(vscode);
 
 // 获取页面组件
+/** 登录选项组 */
 const loginRadios = document.querySelectorAll(
   'vscode-radio-group vscode-radio'
 ) as NodeListOf<Radio>;
+/** 账号输入框 */
 const uinText = document.getElementById('uin') as TextField;
+/** 密码输入框 */
 const passwordText = document.getElementById('password') as TextField;
+/** 记住密码选项 */
 const rememberOption = document.getElementById('remember') as Option;
+/** token登录提示信息 */
 const tokenTag = document.getElementById('token-warn') as Tag;
+/** 自动登录选项 */
 const autoLoginCheckbox = document.getElementById('autoLogin') as Checkbox;
+/** 二维码图片 */
 const qrcodeImg = document.getElementById('qrcode') as HTMLImageElement;
+/** 登录按钮 */
 const loginButton = document.getElementById('login') as Button;
 
 /** 全局记录登录方式 */
 var loginMethod: 'password' | 'qrcode' | 'token';
 
+// 切换登录选项
 loginRadios.forEach((loginRadio) =>
   loginRadio.addEventListener('click', () => {
     if (loginRadio.value === loginMethod) {
@@ -81,6 +90,9 @@ function checkLoginState() {
   }
 }
 
+/**
+ * 切换可读状态，登录中时禁止修改表单信息
+ */
 function toggleReadonlyState() {
   const state = !loginButton.disabled;
   loginButton.disabled = state;
@@ -96,13 +108,9 @@ function toggleReadonlyState() {
 
 /**
  * 获取页面的登录信息
- * @throws 登录按钮不可用时禁止获取登录信息
  * @returns 登录信息
  */
 function getLoginInfo(): LoginRecord {
-  if (loginButton.disabled) {
-    throw Error('LoginView: login button is disabled');
-  }
   if (loginMethod === 'password') {
     return {
       method: 'password',
@@ -125,7 +133,7 @@ function getLoginInfo(): LoginRecord {
   }
 }
 
-// 暂存记住密码的选中状态
+// 记录记住密码的选中状态
 rememberOption.addEventListener(
   'click',
   () => (rememberOption.selected = !rememberOption.selected)
@@ -169,7 +177,6 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-// 初始化所有组件状态
 (() =>
   // 获取登录账号历史信息
   msgHandler
@@ -180,9 +187,11 @@ window.addEventListener('keydown', (event) => {
       // 初始化时首次点击总是会选中最后一个radio，所以默认设置需要重复2次
       loginRadios[0].click();
       if (!record) {
+        // 默认密码登录
         loginRadios[0].click();
         return;
       }
+      // 判断各个登录方式
       if (record.method === 'password') {
         uinText.value = record.uin.toString();
         if (record.remember) {
@@ -199,6 +208,7 @@ window.addEventListener('keydown', (event) => {
       autoLoginCheckbox.checked = record.autoLogin;
       checkLoginState();
       if (autoLoginCheckbox.checked) {
+        // 自动登录
         loginButton.click();
       }
     })
