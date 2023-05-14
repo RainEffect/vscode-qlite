@@ -1,5 +1,5 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
-import { UserInfo, ReqMsg, ResMsg } from '../../types/chat';
+import { UserInfo, ReqMsg, ResMsg, ChatType } from '../../types/chat';
 import MessageHandler from '../message-handler';
 import {
   GroupMessage,
@@ -37,6 +37,10 @@ const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
 const faceBtn = toolBox.querySelector('.face') as webviewUiToolkit.Button;
 /** sface表情栏 */
 const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
+/** at工具 */
+const atBtn = toolBox.querySelector('.at') as webviewUiToolkit.Button;
+/** at列表 */
+const atBox = chatBox.querySelector('.at-box') as HTMLDivElement;
 /** 输入容器 */
 const inputBox = chatBox.querySelector('.input-box') as HTMLDivElement;
 /** 输入框 */
@@ -226,6 +230,14 @@ msgBox.addEventListener('scroll', function (ev: Event) {
       2000
     )) as ResMsg<'getSimpleInfo'>;
     user = msg.payload;
+    if (user.type === ChatType.Friend) {
+      // 私聊隐藏at工具
+      atBtn.style.display = 'none';
+    } else {
+      /**
+       * @todo 加载at列表，添加at工具点击事件
+       */
+    }
   } catch (error: any) {
     console.error('ChatView getSimpleInfo: ' + error.message);
   }
@@ -240,6 +252,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   // 工具栏不显示
   stampBox.style.display = 'none';
   faceBox.style.display = 'none';
+  atBox.style.display = 'none';
   // 加载漫游表情
   msgHandler
     .postMessage({ id: '', command: 'getStamp' } as ReqMsg<'getStamp'>, 2000)
