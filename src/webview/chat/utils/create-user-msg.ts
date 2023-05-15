@@ -1,7 +1,6 @@
 import { GroupMessage, GroupRole, MessageElem, PrivateMessage } from 'icqq';
 import msgElemToNode from './msgelem-to-node';
-import { msgHandler, user } from './script';
-import { ReqMsg, ResMsg } from '../../types/chat';
+import { user } from '../script';
 import { Tag } from '@vscode/webview-ui-toolkit';
 
 /**
@@ -103,21 +102,7 @@ function createAvatarElem(name: string, uin: number, color?: string) {
   if (color) {
     elem.style.borderColor = color;
   }
-  msgHandler
-    .postMessage(
-      {
-        id: '',
-        command: 'getUserAvatar',
-        payload: { uin }
-      } as ReqMsg<'getUserAvatar'>,
-      2000
-    )
-    .then((msg) => {
-      elem.src = (msg as ResMsg<'getUserAvatar'>).payload.src;
-    })
-    .catch((error: Error) =>
-      console.error('ChatView getUserAvatar: ' + error.message)
-    );
+  elem.src = `https://q1.qlogo.cn/g?b=qq&s=40&nk=${uin}`;
   elem.title = name;
   return elem;
 }
