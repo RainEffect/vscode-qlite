@@ -1,8 +1,8 @@
 :root {
-  /* 管理头衔颜色变量 */
+  /* 头衔颜色 */
   --badge-fill-owner: #f2bf25;
   --badge-fill-admin: #72d6a0;
-  /* 头像各项参数 */
+  /* 头像参数 */
   --avatar-size: 40px;
   --avatar-margin: 8px;
   --avatar-border-width: 2px;
@@ -29,8 +29,8 @@ body {
   scroll-behavior: smooth;
   overflow: hidden auto;
   height: 100%;
-  position: relative;
 }
+/* 所有聊天内容的外边距 */
 .message > * {
   margin: 1px;
 }
@@ -59,7 +59,7 @@ body {
 .msg > .container {
   display: flex;
   flex-direction: column;
-  margin: 1px 0;
+  /* 通过头像宽度计算消息主体的宽度 */
   max-width: calc(
     100% - 2 *
       (
@@ -95,7 +95,7 @@ body {
 }
 
 /* 消息内容 */
-.msg .content {
+.content {
   word-wrap: break-word;
   word-break: break-all;
   text-align: left;
@@ -107,23 +107,42 @@ body {
   border: 1px solid;
 }
 
-.content vscode-link {
+.content vscode-tag {
+  white-space: normal;
+}
+.content vscode-tag:hover {
+  cursor: pointer;
+}
+/* 放大的图片 */
+.content img.enlarge {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90vw;
+  max-height: 90vw;
+}
+
+.content .at {
   white-space: normal;
 }
 
-/* 输入框 */
-.chat {
-  border-top: 1px solid;
-}
-.chat > * {
-  margin: 1px;
+.content .face {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
 }
 
-.tool-box,
-.input-box {
+/* 输入框 */
+.chat > * {
+  margin: 1px;
   display: flex;
 }
 
+/* 工具导航栏 */
+.tool-box {
+  border-top: 1px solid;
+}
 .tool-box > vscode-button {
   margin: 2px;
 }
@@ -134,19 +153,19 @@ body {
   display: flex;
   flex-wrap: wrap;
   max-height: 200px;
-  overflow-y: auto;
+  overflow: hidden auto;
 }
 
 /* 漫游表情 */
-.stamp-box > .stamp {
+.stamp-box > * {
   object-fit: contain;
   max-width: 64px;
   max-height: 64px;
   vertical-align: middle;
 }
 
-/* sface表情 */
-.face-box > .sface {
+/* QQ表情 */
+.face-box > * {
   max-width: 32px;
   max-height: 32px;
   vertical-align: middle;
@@ -155,9 +174,6 @@ body {
 /* 输入框 */
 .input {
   flex: 1;
-  padding: 4px 6px;
-  border-radius: 10px;
-  border: 1px solid;
 }
 
 /* 发送按钮 */
