@@ -275,3 +275,8 @@ export const sface = new Map<number, string>([
   [347, '大展宏兔'],
   [348, '福萝卜']
 ]);
+
+export enum FaceType {
+  static,
+  gif
+}
