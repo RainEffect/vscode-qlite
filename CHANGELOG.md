@@ -2,6 +2,11 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.4.4] - 2023-05-15
+
+### Added
+- 为电脑中没有`chromium`工具的用户提供备选方案（手动输入信息）
+
 ## [1.4.3] - 2023-05-12
 
 ### Changed
