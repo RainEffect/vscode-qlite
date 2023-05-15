@@ -22,16 +22,50 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     private readonly extensionUri: vscode.Uri
   ) {
     this.client.on('system.login.device', ({ url }) => {
-      // 设备验证
-      new Device(url).on('device', () => {
-        this.client.login();
-      });
+      try {
+        // 设备验证
+        new Device(url).on('device', () => {
+          this.client.login();
+        });
+      } catch (error: any) {
+        vscode.window
+          .showErrorMessage(
+            '无法打开自动化验证窗口，请进入以下网址进行验证：\n' + url,
+            '已验证'
+          )
+          .then((value: string | undefined) => {
+            if (!value) {
+              vscode.window.showInformationMessage('已取消登录');
+            } else {
+              this.client.login();
+            }
+          });
+      }
     });
     this.client.on('system.login.slider', ({ url }) => {
-      // 滑动验证码验证
-      new Slider(url).on('ticket', (ticket: string) => {
-        this.client.submitSlider(ticket);
-      });
+      try {
+        // 滑动验证码验证
+        new Slider(url).on('ticket', (ticket: string) => {
+          this.client.submitSlider(ticket);
+        });
+      } catch (error: any) {
+        vscode.window.showErrorMessage(
+          '无法打开自动化验证窗口，请进入以下网址并手动输入ticket：\n' + url
+        );
+        vscode.window
+          .showInputBox({
+            placeHolder: '请输入验证ticket',
+            prompt:
+              '如何获取ticket：https://github.com/takayama-lily/node-onebot/issues/28'
+          })
+          .then((ticket: string | undefined) => {
+            if (!ticket) {
+              vscode.window.showInformationMessage('已取消登录');
+            } else {
+              this.client.submitSlider(ticket);
+            }
+          });
+      }
     });
   }
 
