@@ -103,8 +103,9 @@ body {
   padding: 4px 6px;
   line-height: 20px;
   white-space: pre-wrap;
-  border-radius: 10px;
-  border: 1px solid;
+  border-radius: calc(2 * var(--button-icon-corner-radius));
+  border: 1px solid var(--vscode-input-border);
+  background-color: var(--vscode-input-background);
 }
 
 .content vscode-tag {
@@ -128,8 +129,7 @@ body {
 }
 
 .content .face {
-  width: 20px;
-  height: 20px;
+  width: var(--vscode-font-size);
   vertical-align: middle;
 }
 
