@@ -113,16 +113,23 @@ function getChatHistory(
  * @param node 被插入的元素节点
  */
 function insertInput(node: Node) {
-  let position = window.getSelection()?.getRangeAt(0);
-  if (!position) {
-    // 光标不在输入框中则将光标移动到末尾
-    inputArea.focus();
-    const range = window.getSelection() as Selection;
-    range.selectAllChildren(inputArea);
-    range.collapseToEnd();
-    position = range.getRangeAt(0);
+  let selection = window.getSelection() as Selection;
+  if (document.activeElement !== inputArea) {
+    // 光标不在输入框中
+    const range = document.createRange();
+    range.setStart(inputArea, inputArea.childNodes.length);
+    range.setEnd(inputArea, inputArea.childNodes.length);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
-  position?.insertNode(node);
+  let range = selection.getRangeAt(0);
+  // 插入目标节点
+  range.insertNode(node);
+  selection.collapseToEnd();
+  range = selection.getRangeAt(0);
+  // 插入空字符
+  range.insertNode(document.createTextNode(' '));
+  selection.collapseToEnd();
 }
 
 // 接受来自扩展的消息
@@ -186,6 +193,41 @@ inputArea.addEventListener('keydown', (ev: KeyboardEvent) => {
     // 按下Enter键时发送消息
     ev.preventDefault();
     sendButton.click();
+  }
+  if (ev.key === 'Delete' || ev.key === 'Backspace') {
+    // 删除非文本和表情时将其整体移除
+    const selection = window.getSelection() as Selection;
+    const node = selection.anchorNode?.parentNode;
+    if (node?.nodeName === 'VSCODE-TAG' || node?.nodeName === 'SPAN') {
+      // 光标在非文本组件中
+      ev.preventDefault();
+      node.parentElement?.removeChild(node);
+    } else if (node?.nodeName === 'DIV') {
+      const text = selection.anchorNode as Text;
+      if (ev.key === 'Backspace') {
+        const prev = text.previousSibling;
+        if (
+          prev &&
+          (prev.nodeName === 'VSCODE-TAG' || prev.nodeName === 'SPAN') &&
+          selection.anchorOffset === 0
+        ) {
+          // 光标的左侧紧贴非文本组件且为backspace键
+          ev.preventDefault();
+          node.removeChild(prev);
+        }
+      } else {
+        const next = text.nextSibling;
+        if (
+          next &&
+          (next.nodeName === 'VSCODE-TAG' || next.nodeName === 'SPAN') &&
+          selection.anchorOffset === text.length
+        ) {
+          // 光标的右侧紧贴非文本组件且为delete键
+          ev.preventDefault();
+          node.removeChild(next);
+        }
+      }
+    }
   }
 });
 
