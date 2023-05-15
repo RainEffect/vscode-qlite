@@ -57,7 +57,7 @@ export function createImgElem(src: string, asface?: boolean) {
  * @returns `vscode-tag`组件
  */
 export function createStampElem(src: string) {
-  const elem = document.createElement('vscode-tage') as Tag;
+  const elem = document.createElement('vscode-tag') as Tag;
   elem.textContent = '漫游表情';
   elem.className = 'stamp';
   addTagClickEvent(elem, src);
