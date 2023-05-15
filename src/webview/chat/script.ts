@@ -8,9 +8,15 @@ import {
   PrivateMessage,
   PrivateMessageEvent
 } from 'icqq';
-import createUserMsg from './create-user-msg';
-import nodeToMsgElem from './node-to-msgelem';
-import { sface } from './sface';
+import createUserMsg from './utils/create-user-msg';
+import nodeToMsgElem from './utils/node-to-msgelem';
+import { FaceType, sface } from './utils/sface';
+import { inHTMLData } from 'xss-filters';
+import {
+  createFaceElem,
+  createImgElem,
+  createStampElem
+} from './utils/msgelem-to-node';
 
 /** 注册`vscode-ui`的`webview`组件 */
 webviewUiToolkit
@@ -27,20 +33,20 @@ export const msgHandler = new MessageHandler(vscode);
 const msgBox = document.querySelector('.message') as HTMLDivElement;
 /** 下半部分的聊天容器 */
 const chatBox = document.querySelector('.chat') as HTMLDivElement;
+/** 漫游表情栏 */
+const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
+/** QQ表情栏 */
+const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
+/** at列表 */
+const atBox = chatBox.querySelector('.at-box') as HTMLDivElement;
 /** 工具栏 */
 const toolBox = chatBox.querySelector('.tool-box') as HTMLDivElement;
 /** 漫游表情工具 */
-const stampBtn = toolBox.querySelector('.stamp') as webviewUiToolkit.Button;
-/** 漫游表情栏 */
-const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
+const stampBtn = toolBox.querySelector('.stamp-btn') as webviewUiToolkit.Button;
 /** sface表情工具 */
-const faceBtn = toolBox.querySelector('.face') as webviewUiToolkit.Button;
-/** sface表情栏 */
-const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
+const faceBtn = toolBox.querySelector('.face-btn') as webviewUiToolkit.Button;
 /** at工具 */
-const atBtn = toolBox.querySelector('.at') as webviewUiToolkit.Button;
-/** at列表 */
-const atBox = chatBox.querySelector('.at-box') as HTMLDivElement;
+const atBtn = toolBox.querySelector('.at-btn') as webviewUiToolkit.Button;
 /** 输入容器 */
 const inputBox = chatBox.querySelector('.input-box') as HTMLDivElement;
 /** 输入框 */
@@ -62,11 +68,10 @@ let lastTop = 0;
  * @param message_id 按`id`查找消息
  * @returns 消息对象，没找到为`undefined`
  */
-function getMessage(message_id: string): HTMLDivElement | undefined {
-  const messageList = msgBox.querySelectorAll('.msg');
-  return Array.from(messageList).find(
+function getMessage(message_id: string) {
+  return Array.from(msgBox.querySelectorAll('.msg')).find(
     (msg) => msg.getAttribute('msgid') === message_id
-  ) as HTMLDivElement | undefined;
+  );
 }
 
 /**
@@ -101,6 +106,23 @@ function getChatHistory(
       })
       .finally(() => (requestHistoryState = false));
   });
+}
+
+/**
+ * 向光标位置插入元素
+ * @param node 被插入的元素节点
+ */
+function insertInput(node: Node) {
+  let position = window.getSelection()?.getRangeAt(0);
+  if (!position) {
+    // 光标不在输入框中则将光标移动到末尾
+    inputArea.focus();
+    const range = window.getSelection() as Selection;
+    range.selectAllChildren(inputArea);
+    range.collapseToEnd();
+    position = range.getRangeAt(0);
+  }
+  position?.insertNode(node);
 }
 
 // 接受来自扩展的消息
@@ -167,6 +189,33 @@ inputArea.addEventListener('keydown', (ev: KeyboardEvent) => {
   }
 });
 
+// 粘贴信息到输入框
+inputArea.addEventListener('paste', (ev: ClipboardEvent) => {
+  if (!ev.clipboardData || !ev.clipboardData.items) {
+    return;
+  }
+  ev.preventDefault();
+  const clipBoardData = ev.clipboardData as DataTransfer;
+  Array.from(clipBoardData.items).map((item) => {
+    if (item.kind === 'string') {
+      if (item.type === 'text/plain') {
+        item.getAsString((str) =>
+          insertInput(document.createTextNode(inHTMLData(str)))
+        );
+      }
+    } else if (item.kind === 'file') {
+      if (item.type.startsWith('image')) {
+        const reader = new FileReader();
+        reader.onload = () =>
+          insertInput(createImgElem(reader.result as string));
+        reader.readAsDataURL(item.getAsFile() as File);
+      }
+    } else {
+      console.warn('ChatView paste: unsupported data');
+    }
+  });
+});
+
 // 点击发送按钮发送消息
 sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
   const inputNodes = inputArea.childNodes;
@@ -195,7 +244,7 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
       console.error('ChatView sendMessage: ' + error.message)
     )
     .finally(() => {
-      sendButton.disabled = false;
+      this.disabled = false;
       inputArea.textContent = '';
       msgBox.scrollTo(0, msgBox.scrollHeight);
     });
@@ -264,7 +313,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
         const elem = new webviewUiToolkit.Button();
         elem.appearance = 'icon';
         elem.append(img);
-        elem.className = 'stamp';
+        elem.onclick = () => insertInput(createStampElem(stamp));
         stampBox.append(elem);
       });
     })
@@ -279,7 +328,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
     const elem = new webviewUiToolkit.Button();
     elem.appearance = 'icon';
     elem.append(face);
-    elem.className = 'sface';
+    elem.onclick = () => insertInput(createFaceElem(id, FaceType.static));
     faceBox.append(elem);
   });
 })();
