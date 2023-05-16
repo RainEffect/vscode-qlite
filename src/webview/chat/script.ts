@@ -8,11 +8,12 @@ import {
   PrivateMessage,
   PrivateMessageEvent
 } from 'icqq';
+import { facemap } from './utils/face';
 import createUserMsg from './utils/create-user-msg';
 import nodeToMsgElem from './utils/node-to-msgelem';
-import { FaceType, sface } from './utils/sface';
 import { inHTMLData } from 'xss-filters';
 import {
+  FaceType,
   createFaceElem,
   createImgElem,
   createStampElem
@@ -276,7 +277,7 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
         command: 'sendMsg',
         payload: { content: msgElems }
       } as ReqMsg<'sendMsg'>,
-      3000
+      5000
     )
     .then((msg) => {
       const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
@@ -362,15 +363,16 @@ msgBox.addEventListener('scroll', function (ev: Event) {
     .catch((error: Error) =>
       console.error('ChatView getStamp: ' + error.message)
     );
-  // 加载sface表情
-  sface.forEach((desc: string, id: number) => {
+  // 加载face表情
+  for (const id in facemap) {
     const face = document.createElement('img');
     face.src = `https://qq-face.vercel.app/static/s${id}.png`;
-    face.title = face.alt = desc;
+    face.title = face.alt = facemap[id];
     const elem = new webviewUiToolkit.Button();
     elem.appearance = 'icon';
     elem.append(face);
-    elem.onclick = () => insertInput(createFaceElem(id, FaceType.static));
+    elem.onclick = () =>
+      insertInput(createFaceElem(Number(id), FaceType.static, facemap[id]));
     faceBox.append(elem);
-  });
+  }
 })();
