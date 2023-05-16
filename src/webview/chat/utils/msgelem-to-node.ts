@@ -1,6 +1,13 @@
 import { Tag } from '@vscode/webview-ui-toolkit';
 import { MessageElem } from 'icqq';
-import { FaceType, sface } from './sface';
+
+/** face表情类型 */
+export enum FaceType {
+  /** 静态表情 */
+  static,
+  /** 动态表情 */
+  gif
+}
 
 /**
  * 添加`elem`元素的点击显示图片交互事件
@@ -47,6 +54,7 @@ export function createImgElem(src: string, asface?: boolean) {
   const elem = document.createElement('vscode-tag') as Tag;
   elem.textContent = asface ? '表情' : '图片';
   elem.className = 'image';
+  elem.setAttribute('src', src);
   addTagClickEvent(elem, src);
   return elem;
 }
@@ -58,37 +66,41 @@ export function createImgElem(src: string, asface?: boolean) {
  */
 export function createStampElem(src: string) {
   const elem = document.createElement('vscode-tag') as Tag;
-  elem.textContent = '漫游表情';
+  elem.textContent = '表情';
   elem.className = 'stamp';
+  elem.setAttribute('src', src);
   addTagClickEvent(elem, src);
   return elem;
 }
 
 /**
  * 创建QQ表情组件
- * @param id 表情的`id`，对应 {@link sface} 中的`id`
+ * @param id 表情的`id`
  * @param type 显示的表情类型：静态or动态
+ * @param desc 标签
  * @returns `image`组件
  */
-export function createFaceElem(id: number, type: FaceType) {
+export function createFaceElem(id: number, type: FaceType, desc?: string) {
   const elem = document.createElement('img');
   elem.src =
     `https://qq-face.vercel.app/` +
     `${type ? 'gif' : 'static'}/s${id}.${type ? 'gif' : 'png'}`;
-  elem.title = elem.alt = sface.get(id) ?? '表情';
+  elem.title = elem.alt = desc ?? 'QQ表情';
   elem.className = 'face';
   return elem;
 }
 
 /**
  * 创建AT组件
+ * @param qq AT对象的QQ，为`'all'`说明AT全体成员
  * @param target AT的对象，包含`@`符号
  * @returns `span`组件
  */
-export function createAtElem(target: string) {
+export function createAtElem(qq: number | 'all', target?: string) {
   const elem = document.createElement('span');
   elem.className = 'at';
-  elem.textContent = target;
+  elem.textContent = qq === 'all' ? '@全体成员' : target ?? String(qq);
+  elem.setAttribute('qq', String(qq));
   return elem;
 }
 
@@ -103,18 +115,14 @@ export default function msgElemToNode(msgElemList: MessageElem[]): ChildNode[] {
   msgElemList.forEach((msgElem) => {
     switch (msgElem.type) {
       case 'at':
-        message.push(
-          createAtElem(
-            msgElem.qq === 'all' ? '@全体成员' : msgElem.text ?? 'null'
-          )
-        );
+        message.push(createAtElem(msgElem.qq, msgElem.text));
         break;
       case 'bface':
         break;
       case 'dice':
         break;
       case 'face':
-        message.push(createFaceElem(msgElem.id, FaceType.static));
+        message.push(createFaceElem(msgElem.id, FaceType.static, msgElem.text));
         break;
       case 'file':
         break;
@@ -144,7 +152,10 @@ export default function msgElemToNode(msgElemList: MessageElem[]): ChildNode[] {
       case 'rps':
         break;
       case 'sface':
-        message.push(createFaceElem(msgElem.id, FaceType.gif));
+        /**
+         * @todo sface的id不明，不建议使用face表情解析
+         */
+        message.push(createFaceElem(msgElem.id, FaceType.gif, msgElem.text));
         break;
       case 'share':
         break;
