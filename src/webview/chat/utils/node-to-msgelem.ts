@@ -1,3 +1,4 @@
+import { Tag } from '@vscode/webview-ui-toolkit';
 import { AtElem, FaceElem, ImageElem, MessageElem, TextElem } from 'icqq';
 
 /**
@@ -21,25 +22,28 @@ export default function nodeToMsgElem(
           text: childNode.textContent
         } as TextElem);
         break;
-      case 'IMG': // 图片
+      case 'IMG':
         const imgElem = childNode as HTMLImageElement;
         if (imgElem.className === 'face') {
           // 表情
           msgElems.push({ type: 'face', id: Number(imgElem.id) } as FaceElem);
-        } else {
-          // 图片
-          const file = imgElem.currentSrc.startsWith('http')
-            ? imgElem.currentSrc
-            : imgElem.currentSrc.split(';')[1].replace(',', '://');
-          msgElems.push({
-            type: 'image',
-            file,
-            url: imgElem.currentSrc
-          } as ImageElem);
         }
         break;
-      case 'A': // AT
-        const qq = (childNode as HTMLAnchorElement).id;
+      case 'VSCODE-TAG': // 图片
+        const tagElem = childNode as Tag;
+        const src = tagElem.getAttribute('src') as string;
+        const file = src.startsWith('http')
+          ? src
+          : src.split(';')[1].replace(',', '://');
+        msgElems.push({
+          type: 'image',
+          file,
+          url: src,
+          asface: tagElem.className === 'stamp'
+        } as ImageElem);
+        break;
+      case 'SPAN': // AT
+        const qq = (childNode as HTMLSpanElement).getAttribute('qq');
         msgElems.push({
           type: 'at',
           qq: qq === 'all' ? qq : Number(qq)
