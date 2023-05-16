@@ -122,6 +122,7 @@ body {
   transform: translate(-50%, -50%);
   max-width: 90vw;
   max-height: 90vw;
+  box-shadow: 10px 10px 20px 5px var(--vscode-widget-shadow);
 }
 
 .content .at {
@@ -129,8 +130,8 @@ body {
 }
 
 .content .face {
-  width: var(--vscode-font-size);
-  vertical-align: middle;
+  width: var(--vscode-editor-font-size);
+  vertical-align: text-bottom;
 }
 
 /* 输入框 */
