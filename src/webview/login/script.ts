@@ -82,8 +82,8 @@ function checkLoginState() {
     loginMethod === 'password'
       ? uinText.value.length && passwordText.value.length
       : loginMethod === 'qrcode'
-      ? true
-      : uinText.value.length;
+        ? true
+        : uinText.value.length;
   loginButton.disabled = !state;
   if (state) {
     loginButton.textContent = '登录';

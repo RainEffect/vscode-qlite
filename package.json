@@ -1,6 +1,6 @@
 {
   "name": "vscode-qlite",
-  "version": "1.4.3",
+  "version": "1.4.5",
   "publisher": "Vi-brance",
   "engines": {
     "vscode": "^1.77.0"
@@ -88,7 +88,43 @@
           "when": "viewItem =~ /leaf/"
         }
       ]
-    }
+    },
+    "configuration": [
+      {
+        "title": "QLite",
+        "properties": {
+          "qlite.platform": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "enumDescriptions": [
+              "",
+              "功能有限，不建议使用",
+              "功能有限，不建议使用",
+              "",
+              "",
+              "默认设备登录失败请选择此项"
+            ],
+            "enumItemLabels": [
+              "Android",
+              "aPad",
+              "Watch",
+              "iMac",
+              "iPad",
+              "old_Android"
+            ],
+            "default": 1,
+            "description": "登录时使用的设备类型"
+          }
+        }
+      }
+    ]
   },
   "repository": {
     "type": "git",
@@ -96,32 +132,27 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.2",
-    "icqq": "^0.3.10",
-    "portfinder": "^1.0.32",
-    "puppeteer": "^19.10.1",
-    "xss-filters": "^1.2.7"
+    "icqq": "^0.3.15"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.16.9",
+    "@types/node": "^20.2.5",
     "@types/vscode": "^1.77.0",
     "@types/vscode-webview": "^1.57.1",
-    "@types/ws": "^8.5.4",
-    "@types/xss-filters": "^0.0.27",
-    "@typescript-eslint/eslint-plugin": "^5.59.5",
-    "@typescript-eslint/parser": "^5.59.5",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
     "@vscode/codicons": "^0.0.33",
     "@vscode/test-electron": "^2.2.0",
     "copy-webpack-plugin": "^11.0.0",
     "eslint": "^8.40.0",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
-    "ts-loader": "^9.4.2",
+    "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5",
-    "webpack": "^5.82.0",
-    "webpack-cli": "^5.1.1"
+    "webpack": "^5.85.1",
+    "webpack-cli": "^5.1.3"
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

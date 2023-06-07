@@ -4,10 +4,8 @@ import * as fs from 'fs';
 import MessageHandler from '../webview/message-handler';
 import { ResMsg, LoginRecord, ReqMsg } from '../types/login';
 import LoginRecordManager from '../login-record';
-import Slider from './slider';
-import Device from './device';
 
-/** 登陆界面容器类 */
+/** 登录界面容器类 */
 export default class LoginViewProvider implements vscode.WebviewViewProvider {
   /** 是否以空表形式加载视图 */
   private isEmpty = false;
@@ -22,16 +20,39 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     private readonly extensionUri: vscode.Uri
   ) {
     this.client.on('system.login.device', ({ url }) => {
-      // 设备验证
-      new Device(url).on('device', () => {
-        this.client.login();
-      });
+      // 设备锁验证
+      vscode.window
+        .showInformationMessage(
+          `请点击 [此网址](${url}) 进行设备锁验证。`,
+          '已验证'
+        )
+        .then((value: string | undefined) => {
+          if (!value) {
+            vscode.window.showInformationMessage('已取消登录');
+          } else {
+            this.client.login();
+          }
+        });
     });
     this.client.on('system.login.slider', ({ url }) => {
       // 滑动验证码验证
-      new Slider(url).on('ticket', (ticket: string) => {
-        this.client.submitSlider(ticket);
-      });
+      vscode.window.showInformationMessage(
+        `请点击 [此网址](${url}) 完成滑动验证码。`
+      );
+      vscode.window
+        .showInputBox({
+          placeHolder: '请输入验证ticket',
+          prompt:
+            '[如何获取ticket](https://github.com/takayama-lily/node-onebot/issues/28)',
+          ignoreFocusOut: true
+        })
+        .then((ticket: string | undefined) => {
+          if (!ticket) {
+            vscode.window.showInformationMessage('取消登录');
+          } else {
+            this.client.submitSlider(ticket);
+          }
+        });
     });
   }
 
