@@ -2,6 +2,14 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.4.5] - 2023-06-07
+
+### Added
+- `登录设备`现在是可设置项，用户能在vscode的设置中进行修改
+
+### Removed
+- 移除了通过`puppeteer`进行自动化抓包的功能，用户目前只能通过手动抓包的方式获取ticket，等待后续寻找更好的解决方案
+
 ## [1.4.4] - 2023-05-15
 
 ### Added
