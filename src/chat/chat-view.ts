@@ -1,18 +1,9 @@
-import * as vscode from 'vscode';
-import {
-  Client,
-  GroupMessageEvent,
-  PrivateMessageEvent,
-  PrivateMessage,
-  GroupMessage,
-  Friend,
-  Group,
-  MessageRet
-} from 'icqq';
 import { readFileSync } from 'fs';
+import icqq from 'icqq';
+import vscode from 'vscode';
 import Global from '../global';
-import MessageHandler from '../webview/message-handler';
 import { ChatType, ReqMsg, ResMsg, parseMsgId } from '../types/chat';
+import MessageHandler from '../webview/message-handler';
 
 /** 聊天页面的管理类 */
 export default class ChatViewManager {
@@ -27,10 +18,10 @@ export default class ChatViewManager {
    * @param extensionUri 扩展根目录
    */
   constructor(
-    private readonly client: Client,
+    private readonly client: icqq.Client,
     private readonly extensionUri: vscode.Uri
   ) {
-    client.on('message.group', (event: GroupMessageEvent) => {
+    client.on('message.group', (event: icqq.GroupMessageEvent) => {
       if (!this.panelMap[ChatType.Group].get(event.group_id)?.active) {
         Global.contactViewProvider.refreshMessages(
           ChatType.Group,
@@ -39,7 +30,7 @@ export default class ChatViewManager {
         );
       }
     });
-    client.on('message.private', (event: PrivateMessageEvent) => {
+    client.on('message.private', (event: icqq.PrivateMessageEvent) => {
       const uin = event.from_id === client.uin ? event.to_id : event.from_id;
       if (!this.panelMap[ChatType.Friend].get(uin)?.active) {
         Global.contactViewProvider.refreshMessages(ChatType.Friend, uin, true);
@@ -104,7 +95,7 @@ export default class ChatViewManager {
       })
     ];
     chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
-    chatView.webview.html = this._getHtmlForWebview(chatView.webview);
+    chatView.webview.html = this._getHtmlForWebview();
     chatView.onDidDispose(() => {
       toDispose.forEach((dispose) => dispose());
       this.panelMap[type].delete(uin);
@@ -134,18 +125,18 @@ export default class ChatViewManager {
         } as ResMsg<'getSimpleInfo'>);
       } else if (msg.command === 'getChatHistory') {
         // 获取历史消息
-        let chatHistory: (PrivateMessage | GroupMessage)[];
+        let chatHistory: (icqq.PrivateMessage | icqq.GroupMessage)[];
         const message_id = (msg as ReqMsg<'getChatHistory'>).payload
           ?.message_id;
         if (type === ChatType.Friend) {
-          const friend: Friend = this.client.pickFriend(uin);
+          const friend: icqq.Friend = this.client.pickFriend(uin);
           chatHistory = await friend.getChatHistory(
             message_id
               ? parseMsgId(message_id, ChatType.Friend).timestamp
               : undefined
           );
         } else {
-          const group: Group = this.client.pickGroup(uin);
+          const group: icqq.Group = this.client.pickGroup(uin);
           chatHistory = await group.getChatHistory(
             message_id
               ? parseMsgId(message_id, ChatType.Group).seqid
@@ -167,13 +158,13 @@ export default class ChatViewManager {
         } as ResMsg<'getUserAvatar'>);
       } else if (msg.command === 'sendMsg') {
         const content = msg.payload.content;
-        let retMsg: PrivateMessage | GroupMessage;
+        let retMsg: icqq.PrivateMessage | icqq.GroupMessage;
         /**
          * @todo 无法获取发送后的消息数据
          */
         if (type === ChatType.Friend) {
-          const friend: Friend = this.client.pickFriend(uin);
-          const ret: MessageRet = await friend.sendMsg(content);
+          const friend: icqq.Friend = this.client.pickFriend(uin);
+          const ret: icqq.MessageRet = await friend.sendMsg(content);
           const interval = setInterval(async () => {
             /**
              * @todo 缺少`interval`的异常终止操作
@@ -189,8 +180,8 @@ export default class ChatViewManager {
             }
           }, 200);
         } else {
-          const group: Group = this.client.pickGroup(uin);
-          const ret: MessageRet = await group.sendMsg(content);
+          const group: icqq.Group = this.client.pickGroup(uin);
+          const ret: icqq.MessageRet = await group.sendMsg(content);
           const interval = setInterval(async () => {
             /**
              * @todo 缺少`interval`的异常终止操作
@@ -219,34 +210,16 @@ export default class ChatViewManager {
 
   /**
    * 获取`webview`的`html`
-   * @param webview 目标`webview`实例
    * @returns 生成的`html`
    */
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview');
+  private _getHtmlForWebview() {
     const htmlPath = vscode.Uri.joinPath(
-      webviewUri,
+      this.extensionUri,
+      'out',
       'chat',
       'index.html'
     ).fsPath;
-    const htmlUris: Map<string, vscode.Uri> = new Map();
-    htmlUris.set(
-      'scriptUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'chat', 'script.js'))
-    );
-    htmlUris.set(
-      'styleUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'chat', 'style.css'))
-    );
-    htmlUris.set(
-      'codiconUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'codicon.css'))
-    );
-    /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
-    const html: string = readFileSync(htmlPath, 'utf-8').replace(
-      /\${(\w+)}/g,
-      (match, key) => htmlUris.get(key)?.toString() ?? html
-    );
-    return html;
+    /** 从`html`文件地址中读取字符串 */
+    return readFileSync(htmlPath, 'utf-8');
   }
 }

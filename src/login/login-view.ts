@@ -1,9 +1,9 @@
-import * as vscode from 'vscode';
-import * as icqq from 'icqq';
-import * as fs from 'fs';
-import MessageHandler from '../webview/message-handler';
-import { ResMsg, LoginRecord, ReqMsg } from '../types/login';
+import { readFileSync } from 'fs';
+import { Client } from 'icqq';
+import vscode from 'vscode';
 import LoginRecordManager from '../login-record';
+import { LoginRecord, ReqMsg, ResMsg } from '../types/login';
+import MessageHandler from '../webview/message-handler';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements vscode.WebviewViewProvider {
@@ -16,7 +16,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
    * @param extensionUri 扩展根目录
    */
   constructor(
-    private readonly client: icqq.Client,
+    private readonly client: Client,
     private readonly extensionUri: vscode.Uri
   ) {
     this.client.on('system.login.device', ({ url }) => {
@@ -142,7 +142,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
    */
   private _getHtmlForWebview(webview: vscode.Webview) {
     /** 登陆界面的所有素材的根目录 */
-    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview');
+    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out');
     /** `html`文件的地址 */
     const htmlPath = vscode.Uri.joinPath(
       webviewUri,
@@ -168,12 +168,10 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
       webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'codicon.css'))
     );
     /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
-    const html: string = fs
-      .readFileSync(htmlPath, 'utf-8')
-      .replace(
-        /\${(\w+)}/g,
-        (match, key) => htmlUris.get(key)?.toString() ?? html
-      );
+    const html: string = readFileSync(htmlPath, 'utf-8').replace(
+      /\${(\w+)}/g,
+      (match, key) => htmlUris.get(key)?.toString() ?? html
+    );
     return html;
   }
 }
