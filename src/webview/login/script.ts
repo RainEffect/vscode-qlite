@@ -46,7 +46,7 @@ const qrcodeImg = document.getElementById('qrcode') as HTMLImageElement;
 const loginButton = document.getElementById('login') as Button;
 
 /** 全局记录登录方式 */
-var loginMethod: 'password' | 'qrcode' | 'token';
+let loginMethod: 'password' | 'qrcode' | 'token';
 
 // 切换登录选项
 loginRadios.forEach((loginRadio) =>
@@ -82,8 +82,8 @@ function checkLoginState() {
     loginMethod === 'password'
       ? uinText.value.length && passwordText.value.length
       : loginMethod === 'qrcode'
-        ? true
-        : uinText.value.length;
+      ? true
+      : uinText.value.length;
   loginButton.disabled = !state;
   if (state) {
     loginButton.textContent = '登录';

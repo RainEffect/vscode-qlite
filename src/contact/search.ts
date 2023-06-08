@@ -21,8 +21,8 @@ export default function search() {
     if (!value) {
       return;
     } else if (value === searchMenu[0]) {
-      for (let friend of Global.client.fl.values()) {
-        let fItem: SearchItem = {
+      for (const friend of Global.client.fl.values()) {
+        const fItem: SearchItem = {
           label: friend.remark ? friend.remark : friend.nickname,
           type: ChatType.Friend
         };
@@ -31,8 +31,8 @@ export default function search() {
         searchList.push(fItem);
       }
     } else {
-      for (let group of Global.client.gl.values()) {
-        let gItem: SearchItem = {
+      for (const group of Global.client.gl.values()) {
+        const gItem: SearchItem = {
           label: group.group_name,
           type: ChatType.Group
         };

@@ -110,7 +110,7 @@ export default class LoginRecordManager {
   static async getAll(): Promise<Map<number, string>> {
     const recordMap: Map<number, string> = new Map();
     const records: LoginRecords = this.readFile();
-    for (const [uin, record] of records.data.entries()) {
+    for (const [uin] of records.data.entries()) {
       const info = await Global.client.pickUser(uin).getSimpleInfo();
       recordMap.set(uin, info.nickname);
     }

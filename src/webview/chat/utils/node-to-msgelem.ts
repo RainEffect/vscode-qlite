@@ -22,14 +22,16 @@ export default function nodeToMsgElem(
           text: childNode.textContent
         } as TextElem);
         break;
-      case 'IMG':
+      case 'IMG': {
         const imgElem = childNode as HTMLImageElement;
         if (imgElem.className === 'face') {
           // 表情
           msgElems.push({ type: 'face', id: Number(imgElem.id) } as FaceElem);
         }
         break;
-      case 'VSCODE-TAG': // 图片
+      }
+      case 'VSCODE-TAG': {
+        // 图片
         const tagElem = childNode as Tag;
         const src = tagElem.getAttribute('src') as string;
         const file = src.startsWith('http')
@@ -42,13 +44,16 @@ export default function nodeToMsgElem(
           asface: tagElem.className === 'stamp'
         } as ImageElem);
         break;
-      case 'SPAN': // AT
+      }
+      case 'SPAN': {
+        // AT
         const qq = (childNode as HTMLSpanElement).getAttribute('qq');
         msgElems.push({
           type: 'at',
           qq: qq === 'all' ? qq : Number(qq)
         } as AtElem);
         break;
+      }
       default:
         console.warn('ChatView sendMessage: 不支持的消息元素');
         break;

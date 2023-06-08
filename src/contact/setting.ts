@@ -4,7 +4,7 @@ import Global from '../global';
 import LoginRecordManager from '../login-record';
 
 /** 当前状态 */
-let onlineStatus: number = 11;
+let onlineStatus = 11;
 /** 状态选项 */
 const statusMap: Map<number, string> = new Map([
   [OnlineStatus.Online, '在线'],
@@ -32,7 +32,7 @@ export default function setting() {
   ];
   vscode.window.showQuickPick(settings).then(async (settingItem) => {
     switch (settingItem) {
-      case settings[0]:
+      case settings[0]: {
         const accounts: vscode.QuickPickItem[] = [];
         const recordMap = await LoginRecordManager.getAll();
         recordMap.forEach((nickname: string, uin: number) => {
@@ -70,7 +70,8 @@ export default function setting() {
             }
           });
         break;
-      case settings[1]:
+      }
+      case settings[1]: {
         const statusArray = [...statusMap.values()];
         vscode.window
           .showQuickPick([...statusMap.values()], {
@@ -88,6 +89,7 @@ export default function setting() {
             }
           });
         break;
+      }
     }
   });
 }

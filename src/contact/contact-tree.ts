@@ -51,7 +51,7 @@ class ContactTreeItem<
 class MessageTreeItem extends ContactTreeItem<any> {
   readonly uin: number;
   readonly type: ChatType;
-  private cnt: number = 0;
+  private cnt = 0;
   /**
    * @param label 好友昵称/群聊名
    * @param leafInfo 好友/群聊包含的额外显示数据
@@ -67,7 +67,7 @@ class MessageTreeItem extends ContactTreeItem<any> {
    * 标记新消息
    * @param cnt 新消息数，默认`+1`
    */
-  markNew(cnt: number = 1) {
+  markNew(cnt = 1) {
     this.cnt += cnt;
     this.description = `+${this.cnt}`;
   }

@@ -3,9 +3,8 @@ import Global from './global';
 import setting from './contact/setting';
 import search from './contact/search';
 
-// 扩展启动
+/** 扩展启动 */
 export function activate(context: vscode.ExtensionContext) {
-  // qlite.isOnline = false
   vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
   new Global(context);
   // 注册扩展命令
@@ -36,5 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
   );
 }
 
-// 扩展关闭
+/** 扩展关闭 */
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate() {}

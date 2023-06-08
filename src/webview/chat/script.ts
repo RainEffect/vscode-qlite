@@ -114,7 +114,7 @@ function getChatHistory(
  * @param node 被插入的元素节点
  */
 function insertInput(node: Node) {
-  let selection = window.getSelection() as Selection;
+  const selection = window.getSelection() as Selection;
   if (document.activeElement !== inputArea) {
     // 光标不在输入框中
     const range = document.createRange();
@@ -136,13 +136,14 @@ function insertInput(node: Node) {
 // 接受来自扩展的消息
 msgHandler.onMessage((msg) => {
   switch (msg.command) {
-    case 'messageEvent':
+    case 'messageEvent': {
       const message = msg.payload as GroupMessageEvent | PrivateMessageEvent;
       if (getMessage(message.message_id)) {
         break;
       }
       msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
       break;
+    }
     case 'noticeEvent':
       console.log(
         'ChatView receive noticeEvent: ' +
