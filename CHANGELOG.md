@@ -155,7 +155,7 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ### Changed
 
 - 优化了整个页面的代码结构（终于完完整整地读完旧代码了）和注释，尽力作了模块化，大佬可视情况魔改
-- 发送键同步win端的QQ默认按键，Enter发送消息，Shift+Enter换行，后续可能会实现用户自定义
+- 发送键同步win端的QQ默认按键，`Enter`发送消息，`Shift+Enter`换行，后续可能会实现用户自定义
 
 ### Removed
 
@@ -375,7 +375,7 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 ### Changed
 
 - 修改页面缓存的数据类型，使其能够按key索引
-- 将向页面发送事件的子函数（PostPrivateEvent、PostGroupEvent）整合到绑定消息事件函数（bind）中
+- 将向页面发送事件的子函数（`PostPrivateEvent`、`PostGroupEvent`）整合到绑定消息事件函数（`bind`）中
 
 ## [0.2.2] - 2023-01-02
 
@@ -387,22 +387,22 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ### Fixed
 
-- 修复私聊窗口中对话误添加title的问题
+- 修复私聊窗口中对话误添加`title`的问题
 
 ## [0.2.0] - 2023-01-02
 
 ### Changed
 
-- 重新匹配types中webview中所有函数的接口，将统一从客户端类调用函数拆分为分别从私聊类和群聊类调用各自的函数
-- 重写聊天界面对网页端发送的信息的处理函数，由于函数调用对象更改，获取历史记录的参数将不再需要msg_id，因此删除对此函数的特别处理
+- 重新匹配`types`中`webview`中所有函数的接口，将统一从客户端类调用函数拆分为分别从私聊类和群聊类调用各自的函数
+- 重写聊天界面对网页端发送的信息的处理函数，由于函数调用对象更改，获取历史记录的参数将不再需要`msg_id`，因此删除对此函数的特别处理
 - 聊天窗口的预处理js文件中重写了api列表，重新分配对应的函数功能，其中在群聊中将不实例化私聊特有的函数，反之亦然，以免产生参数冲突
-- 聊天窗口的js文件中对于加载群成员列表的函数改为promise调用形式
-- 由于获取历史记录等功能不再需要msg_id，因此将其全部替换为seq，即消息序号
+- 聊天窗口的js文件中对于加载群成员列表的函数改为`promise`调用形式
+- 由于获取历史记录等功能不再需要`msg_id`，因此将其全部替换为`seq`，即消息序号
 - 将原函数api更新为新api列表中的函数
 
 ### Removed
 
-- 移除聊天窗口的js文件中不必要的变量声明（移除的变量都能直接从webview类中调用）
+- 移除聊天窗口的js文件中不必要的变量声明（移除的变量都能直接从`webview`类中调用）
 - 原代码中发送消息会返回发送状态，但oicq2.0中返回信息删减，无法作相应处理，因此暂时对该部分代码作注释处理
 
 ## [0.1.1] - 2022-12-31
@@ -427,11 +427,11 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ## Changed
 
-- 修改默认的README文件，公开代码仓库
+- 修改默认的`README`文件，公开代码仓库
 
 ## Removed
 
-- 移除vsc-extension-quickstart.md文件
+- 移除`vsc-extension-quickstart.md`文件
 
 ## Fixed
 
@@ -441,7 +441,7 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 
 ### Added
 
-- 添加原webview相关文件，初步修复新版本oicq的历史消息读取功能
+- 添加原`webview`相关文件，初步修复新版本oicq的历史消息读取功能
 
 ## [0.0.1] - 2022-12-25
 
