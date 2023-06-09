@@ -21,7 +21,7 @@ function formatTimestamp(time?: number) {
  * @param role 成员角色
  * @returns `vscode-tag`组件
  */
-function createFlagTag(role: 'admin' | 'owner') {
+export function createFlagTag(role: 'admin' | 'owner') {
   const elem = document.createElement('vscode-tag') as Tag;
   elem.className = 'flag';
   elem.textContent = role === 'owner' ? '群主' : '管理员';

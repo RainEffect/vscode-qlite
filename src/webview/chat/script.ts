@@ -1,25 +1,20 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
-import { UserInfo, ReqMsg, ResMsg, ChatType } from '../../types/chat';
-import MessageHandler from '../message-handler';
-import {
-  GroupMessage,
-  GroupMessageEvent,
-  MessageElem,
-  PrivateMessage,
-  PrivateMessageEvent
-} from 'icqq';
-import { facemap } from './utils/face';
-import createUserMsg from './utils/create-user-msg';
-import nodeToMsgElem from './utils/node-to-msgelem';
+import * as icqq from 'icqq';
 import { inHTMLData } from 'xss-filters';
+import { ChatType, ReqMsg, ResMsg, UserInfo } from '../../types/chat';
+import MessageHandler from '../message-handler';
+import createUserMsg, { createFlagTag } from './utils/create-user-msg';
+import { facemap } from './utils/face';
 import {
   FaceType,
+  createAtElem,
   createFaceElem,
   createImgElem,
   createStampElem
 } from './utils/msgelem-to-node';
+import nodeToMsgElem from './utils/node-to-msgelem';
 
-/** 注册`vscode-ui`的`webview`组件 */
+// 注册UI组件
 webviewUiToolkit
   .provideVSCodeDesignSystem()
   .register(webviewUiToolkit.allComponents);
@@ -82,7 +77,7 @@ function getMessage(message_id: string) {
  */
 function getChatHistory(
   message_id?: string
-): Promise<(PrivateMessage | GroupMessage)[]> {
+): Promise<(icqq.PrivateMessage | icqq.GroupMessage)[]> {
   requestHistoryState = true;
   return new Promise((resolve) => {
     msgHandler
@@ -137,7 +132,9 @@ function insertInput(node: Node) {
 msgHandler.onMessage((msg) => {
   switch (msg.command) {
     case 'messageEvent': {
-      const message = msg.payload as GroupMessageEvent | PrivateMessageEvent;
+      const message = msg.payload as
+        | icqq.GroupMessageEvent
+        | icqq.PrivateMessageEvent;
       if (getMessage(message.message_id)) {
         break;
       }
@@ -181,11 +178,29 @@ document.addEventListener('click', (ev) => {
   if (
     ev.target !== faceBox &&
     ev.target !== faceBtn &&
-    !faceBtn.contains(ev.target as Node) &&
+    !faceBox.contains(ev.target as Node) &&
     !faceBtn.contains(ev.target as Node)
   ) {
     faceBox.style.display = 'none';
     faceBtn.disabled = false;
+  }
+});
+
+// 打开at成员工具栏
+atBtn.addEventListener('click', () => {
+  atBox.style.display = 'flex';
+  atBtn.disabled = true;
+});
+// 点击其他地方关闭工具栏
+document.addEventListener('click', (ev) => {
+  if (
+    ev.target !== atBox &&
+    ev.target !== atBtn &&
+    !atBox.contains(ev.target as Node) &&
+    !atBtn.contains(ev.target as Node)
+  ) {
+    atBox.style.display = 'none';
+    atBtn.disabled = false;
   }
 });
 
@@ -270,7 +285,7 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
     return;
   }
   this.disabled = true;
-  const msgElems: MessageElem[] = nodeToMsgElem(inputNodes);
+  const msgElems: icqq.MessageElem[] = nodeToMsgElem(inputNodes);
   msgHandler
     .postMessage(
       {
@@ -327,9 +342,51 @@ msgBox.addEventListener('scroll', function (ev: Event) {
       // 私聊隐藏at工具
       atBtn.style.display = 'none';
     } else {
-      /**
-       * @todo 加载at列表，添加at工具点击事件
-       */
+      msgHandler
+        .postMessage(
+          { id: '', command: 'getMember' } as ReqMsg<'getMember'>,
+          2000
+        )
+        .then((msg) => {
+          const members = (msg as ResMsg<'getMember'>).payload.members;
+          if ((msg as ResMsg<'getMember'>).payload.atAll) {
+            // at所有人
+            const atAll = document.createElement('div');
+            const elem = new webviewUiToolkit.Button();
+            elem.appearance = 'secondary';
+            elem.append(atAll);
+            elem.onclick = () => insertInput(createAtElem('all'));
+            atAll.title = 'all';
+            atAll.textContent = '全体成员';
+            atBox.append(elem);
+          }
+          members
+            // 昵称排序
+            .sort((a, b) => {
+              // 获取名称
+              const aName = a.card ? a.card : a.nickname;
+              const bName = b.card ? b.card : b.nickname;
+              return aName.localeCompare(bName);
+            })
+            // 每位at成员选项
+            .forEach((member) => {
+              const name = member.card ? member.card : member.nickname;
+              const elem = new webviewUiToolkit.Button();
+              elem.appearance = 'secondary';
+              elem.title = member.user_id.toString();
+              elem.textContent = name;
+              elem.onclick = () =>
+                insertInput(createAtElem(member.user_id, name));
+              if (member.role !== 'member') {
+                // 添加头衔
+                elem.append(createFlagTag(member.role));
+              }
+              atBox.append(elem);
+            });
+        })
+        .catch((error: Error) => {
+          console.error('ChatView getMember: ' + error.message);
+        });
     }
   } catch (error: any) {
     console.error('ChatView getSimpleInfo: ' + error.message);

@@ -1,12 +1,4 @@
-import {
-  Sendable,
-  Quotable,
-  PrivateMessage,
-  GroupMessage,
-  GroupMessageEvent,
-  PrivateMessageEvent,
-  DiscussMessageEvent
-} from 'icqq';
+import icqq from 'icqq';
 import { WebMessage } from '../webview/message-handler';
 
 /** 聊天类型 */
@@ -51,14 +43,14 @@ export interface UserInfo {
  * @param id 需要解析的字符串
  * @returns 解析后的id数据
  */
-export function parseMsgId(id: string, type: ChatType.Friend): FriendId;
+export function parseMsgId(type: ChatType.Friend, id: string): FriendId;
 /**
  * 解析群聊`msgid`
  * @param id 需要解析的字符串
  * @returns 解析后的id数据
  */
-export function parseMsgId(id: string, type: ChatType.Group): GroupId;
-export function parseMsgId(id: string, type: ChatType) {
+export function parseMsgId(type: ChatType.Group, id: string): GroupId;
+export function parseMsgId(type: ChatType, id: string) {
   const parsed = Buffer.from(id, 'base64');
   return type === ChatType.Friend
     ? ({
@@ -88,9 +80,13 @@ export interface CommandMap {
     req: never;
     res: { stamps: string[] };
   };
+  getMember: {
+    req: never;
+    res: { atAll: boolean; members: icqq.MemberInfo[] };
+  };
   getChatHistory: {
     req: { message_id: string } | undefined;
-    res: { history: (PrivateMessage | GroupMessage)[] };
+    res: { history: (icqq.PrivateMessage | icqq.GroupMessage)[] };
   };
   getUserAvatar: {
     req: { uin: number };
@@ -98,13 +94,16 @@ export interface CommandMap {
   };
   sendMsg: {
     req: {
-      content: Sendable;
-      source?: Quotable;
+      content: icqq.Sendable;
+      source?: icqq.Quotable;
     };
-    res: { retMsg: PrivateMessage | GroupMessage };
+    res: { retMsg: icqq.PrivateMessage | icqq.GroupMessage };
   };
   messageEvent: {
-    req: GroupMessageEvent | PrivateMessageEvent | DiscussMessageEvent;
+    req:
+      | icqq.GroupMessageEvent
+      | icqq.PrivateMessageEvent
+      | icqq.DiscussMessageEvent;
     res: never;
   };
   noticeEvent: {

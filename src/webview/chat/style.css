@@ -150,8 +150,8 @@ body {
 
 /* 工具栏 */
 .stamp-box,
-.face-box {
-  display: flex;
+.face-box,
+.at-box {
   flex-wrap: wrap;
   max-height: 200px;
   overflow: hidden auto;
@@ -170,6 +170,16 @@ body {
   max-width: 32px;
   max-height: 32px;
   vertical-align: middle;
+}
+
+/* at成员 */
+.at-box {
+  flex-wrap: nowrap;
+  flex-direction: column;
+}
+.at-box > * {
+  width: 100%;
+  min-height: 25px;
 }
 
 /* 输入框 */

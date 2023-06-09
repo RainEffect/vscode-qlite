@@ -218,6 +218,15 @@ export default class ChatViewManager {
           command: msg.command,
           payload: { stamps }
         } as ResMsg<'getStamp'>);
+      } else if (msg.command === 'getMember') {
+        const group = this.client.pickGroup(uin);
+        // 获取群成员信息
+        const members = [...(await group.getMemberMap()).values()];
+        msgHandler.postMessage({
+          id: msg.id,
+          command: msg.command,
+          payload: { atAll: group.is_admin || group.is_owner, members }
+        } as ResMsg<'getMember'>);
       }
     });
   }
