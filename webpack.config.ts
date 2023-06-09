@@ -26,6 +26,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { join, resolve } from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import { Configuration } from 'webpack';
+import { Argv } from 'webpack-cli';
 
 /** 源代码目录的绝对路径 */
 const srcDir = resolve(__dirname, 'src');
@@ -118,4 +119,16 @@ webDirs.forEach((dirname) => {
   });
 });
 
-export default [extensionConfig, ...webviewConfigs];
+export default (env: any, argv: Argv) => {
+  console.log(argv);
+  if (!argv.mode) {
+    throw new Error(`The 'mode' option has not been set`);
+  }
+  const configs = [extensionConfig, ...webviewConfigs];
+  if (argv.mode !== 'production') {
+    configs.forEach((config) => {
+      config.optimization = undefined;
+    });
+  }
+  return configs;
+};
