@@ -21,7 +21,7 @@
 import CopyPlugin from 'copy-webpack-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { readdirSync } from 'fs';
-import HtmlPlugin from 'html-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { join, resolve } from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -101,7 +101,7 @@ webDirs.forEach((dirname) => {
     },
     experiments: { outputModule: true },
     plugins: [
-      new HtmlPlugin({
+      new HtmlWebpackPlugin({
         template: join(webDir, 'index.html'),
         filename: 'index.html',
         minify: true,
@@ -119,12 +119,13 @@ webDirs.forEach((dirname) => {
   });
 });
 
+// cli指令要求添加mode参数，依据参数设置对配置进行修改
 export default (env: any, argv: Argv) => {
-  console.log(argv);
   if (!argv.mode) {
     throw new Error(`The 'mode' option has not been set`);
   }
   const configs = [extensionConfig, ...webviewConfigs];
+  // 非生产环境下取消代码压缩操作
   if (argv.mode !== 'production') {
     configs.forEach((config) => {
       config.optimization = undefined;
