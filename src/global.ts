@@ -33,8 +33,9 @@ export default class Global {
     /** {@link Global.client} 的配置参数 */
     const defaultConf: icqq.Config = {
       log_level: 'error',
-      platform: vscode.workspace.getConfiguration().get('qlite.platform') as icqq.Platform,
-      ignore_self: false,
+      platform: vscode.workspace
+        .getConfiguration()
+        .get('qlite.platform') as icqq.Platform,
       data_dir: Global.rootDir
     };
     Global.client = icqq.createClient(defaultConf);
