@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import icqq from 'icqq';
-import vscode from 'vscode';
+import vscode, { Uri } from 'vscode';
 import Global from '../global';
 import { ChatType, ReqMsg, ResMsg, parseMsgId } from '../types/chat';
 import MessageHandler from '../webview/message-handler';
@@ -19,7 +19,7 @@ export default class ChatViewManager {
    */
   constructor(
     private readonly client: icqq.Client,
-    private readonly extensionUri: vscode.Uri
+    private readonly extensionUri: Uri
   ) {
     client.on('message.group', (event: icqq.GroupMessageEvent) => {
       if (!this.panelMap[ChatType.Group].get(event.group_id)?.active) {
@@ -94,8 +94,8 @@ export default class ChatViewManager {
         } as ReqMsg<'noticeEvent'>);
       })
     ];
-    chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
-    chatView.webview.html = this._getHtmlForWebview();
+    chatView.iconPath = Uri.joinPath(this.extensionUri, 'ico.ico');
+    chatView.webview.html = this._getHtmlForWebview(chatView.webview);
     chatView.onDidDispose(() => {
       toDispose.forEach((dispose) => dispose());
       this.panelMap[type].delete(uin);
@@ -132,14 +132,14 @@ export default class ChatViewManager {
           const friend: icqq.Friend = this.client.pickFriend(uin);
           chatHistory = await friend.getChatHistory(
             message_id
-              ? parseMsgId(message_id, ChatType.Friend).timestamp
+              ? parseMsgId(ChatType.Friend, message_id).timestamp
               : undefined
           );
         } else {
           const group: icqq.Group = this.client.pickGroup(uin);
           chatHistory = await group.getChatHistory(
             message_id
-              ? parseMsgId(message_id, ChatType.Group).seqid
+              ? parseMsgId(ChatType.Group, message_id).seqid
               : undefined
           );
         }
@@ -210,16 +210,30 @@ export default class ChatViewManager {
 
   /**
    * 获取`webview`的`html`
+   * @param webview 目标`webview`实例
    * @returns 生成的`html`
    */
-  private _getHtmlForWebview() {
-    const htmlPath = vscode.Uri.joinPath(
-      this.extensionUri,
-      'out',
-      'chat',
-      'index.html'
-    ).fsPath;
-    /** 从`html`文件地址中读取字符串 */
-    return readFileSync(htmlPath, 'utf-8');
+  private _getHtmlForWebview(webview: vscode.Webview) {
+    const webviewUri = Uri.joinPath(this.extensionUri, 'out');
+    const htmlPath = Uri.joinPath(webviewUri, 'chat', 'index.html').fsPath;
+    const htmlUris: Map<string, Uri> = new Map();
+    htmlUris.set(
+      'scriptUri',
+      webview.asWebviewUri(Uri.joinPath(webviewUri, 'chat', 'script.js'))
+    );
+    htmlUris.set(
+      'styleUri',
+      webview.asWebviewUri(Uri.joinPath(webviewUri, 'chat', 'style.css'))
+    );
+    htmlUris.set(
+      'codiconUri',
+      webview.asWebviewUri(Uri.joinPath(webviewUri, 'codicon.css'))
+    );
+    /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
+    const html: string = readFileSync(htmlPath, 'utf-8').replace(
+      /\${(\w+)}/g,
+      (match, key) => htmlUris.get(key)?.toString() ?? html
+    );
+    return html;
   }
 }
