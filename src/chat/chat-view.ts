@@ -157,47 +157,61 @@ export default class ChatViewManager {
           payload: { src }
         } as ResMsg<'getUserAvatar'>);
       } else if (msg.command === 'sendMsg') {
+        // 发送消息
         const content = msg.payload.content;
         let retMsg: icqq.PrivateMessage | icqq.GroupMessage;
-        /**
-         * @todo 无法获取发送后的消息数据
-         */
         if (type === ChatType.Friend) {
           const friend: icqq.Friend = this.client.pickFriend(uin);
-          const ret: icqq.MessageRet = await friend.sendMsg(content);
-          const interval = setInterval(async () => {
-            /**
-             * @todo 缺少`interval`的异常终止操作
-             */
-            retMsg = (await friend.getChatHistory(ret.time, 1))[0];
-            if (retMsg.message_id === ret.message_id) {
+          friend.sendMsg(content).then((ret) => {
+            /** 超时检测 */
+            const timeout = setTimeout(() => {
               clearInterval(interval);
-              msgHandler.postMessage({
-                id: msg.id,
-                command: msg.command,
-                payload: { retMsg }
-              } as ResMsg<'sendMsg'>);
-            }
-          }, 200);
+              vscode.window.showWarningMessage(
+                '消息无法显示，请重新打开此页面或检查网络'
+              );
+            }, 4000);
+            /** 间隔获取消息 */
+            const interval = setInterval(async () => {
+              retMsg = (await friend.getChatHistory(ret.time, 1))[0];
+              // 返回的消息中的时间可能有1s的延迟误差
+              if (retMsg.time === ret.time || retMsg.time === ret.time + 1) {
+                clearInterval(interval);
+                clearTimeout(timeout);
+                msgHandler.postMessage({
+                  id: msg.id,
+                  command: msg.command,
+                  payload: { retMsg }
+                } as ResMsg<'sendMsg'>);
+              }
+            }, 200);
+          });
         } else {
           const group: icqq.Group = this.client.pickGroup(uin);
-          const ret: icqq.MessageRet = await group.sendMsg(content);
-          const interval = setInterval(async () => {
-            /**
-             * @todo 缺少`interval`的异常终止操作
-             */
-            retMsg = (await group.getChatHistory(ret.seq, 1))[0];
-            if (retMsg.message_id === ret.message_id) {
+          group.sendMsg(content).then((ret) => {
+            /** 超时检测 */
+            const timeout = setTimeout(() => {
               clearInterval(interval);
-              msgHandler.postMessage({
-                id: msg.id,
-                command: msg.command,
-                payload: { retMsg }
-              } as ResMsg<'sendMsg'>);
-            }
-          }, 200);
+              vscode.window.showWarningMessage(
+                '消息无法显示，请重新打开此页面或检查网络'
+              );
+            }, 2000);
+            /** 间隔获取消息 */
+            const interval = setInterval(async () => {
+              retMsg = (await group.getChatHistory(ret.seq, 1))[0];
+              if (retMsg.message_id === ret.message_id) {
+                clearInterval(interval);
+                clearTimeout(timeout);
+                msgHandler.postMessage({
+                  id: msg.id,
+                  command: msg.command,
+                  payload: { retMsg }
+                } as ResMsg<'sendMsg'>);
+              }
+            }, 200);
+          });
         }
       } else if (msg.command === 'getStamp') {
+        // 获取漫游表情
         const stamps = await this.client.getRoamingStamp();
         msgHandler.postMessage({
           id: msg.id,
