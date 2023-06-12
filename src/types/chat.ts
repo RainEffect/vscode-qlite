@@ -12,9 +12,9 @@ export enum ChatType {
 /** 调用 {@link parseMsgId} 解析私聊`msgid`的字段接口 */
 interface FriendId {
   uid: number;
-  seqid: number;
-  random: number;
-  timestamp: number;
+  seq: number;
+  rand: number;
+  time: number;
   flag: number;
 }
 
@@ -22,9 +22,9 @@ interface FriendId {
 interface GroupId {
   gid: number;
   uid: number;
-  seqid: number;
-  random: number;
-  timestamp: number;
+  seq: number;
+  rand: number;
+  time: number;
   pktnum: number;
 }
 
@@ -55,17 +55,17 @@ export function parseMsgId(type: ChatType, id: string) {
   return type === ChatType.Friend
     ? ({
         uid: parsed.readUInt32BE(0),
-        seqid: parsed.readUint32BE(4),
-        random: parsed.readUInt32BE(8),
-        timestamp: parsed.readUInt32BE(12),
+        seq: parsed.readUint32BE(4),
+        rand: parsed.readUInt32BE(8),
+        time: parsed.readUInt32BE(12),
         flag: parsed.readUInt8(16)
       } as FriendId)
     : ({
         gid: parsed.readUInt32BE(0),
         uid: parsed.readUInt32BE(4),
-        seqid: parsed.readUInt32BE(8),
-        random: parsed.readUInt32BE(12),
-        timestamp: parsed.readUInt32BE(16),
+        seq: parsed.readUInt32BE(8),
+        rand: parsed.readUInt32BE(12),
+        time: parsed.readUInt32BE(16),
         pktnum: parsed.readUInt8(20)
       } as GroupId);
 }
@@ -98,6 +98,14 @@ export interface CommandMap {
       source?: icqq.Quotable;
     };
     res: { retMsg: icqq.PrivateMessage | icqq.GroupMessage };
+  };
+  sendFile: {
+    req: { filePath: string };
+    res: { retMsg: icqq.PrivateMessage | icqq.GroupMessage };
+  };
+  getFileUrl: {
+    req: { fid: string };
+    res: { url: string };
   };
   messageEvent: {
     req:

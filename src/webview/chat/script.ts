@@ -35,6 +35,8 @@ const stampBox = chatBox.querySelector('.stamp-box') as HTMLDivElement;
 const faceBox = chatBox.querySelector('.face-box') as HTMLDivElement;
 /** at列表 */
 const atBox = chatBox.querySelector('.at-box') as HTMLDivElement;
+/** 文件工具栏 */
+const fileBox = chatBox.querySelector('#file-box') as HTMLInputElement;
 /** 工具栏 */
 const toolBox = chatBox.querySelector('.tool-box') as HTMLDivElement;
 /** 漫游表情工具 */
@@ -43,6 +45,8 @@ const stampBtn = toolBox.querySelector('.stamp-btn') as webviewUiToolkit.Button;
 const faceBtn = toolBox.querySelector('.face-btn') as webviewUiToolkit.Button;
 /** at工具 */
 const atBtn = toolBox.querySelector('.at-btn') as webviewUiToolkit.Button;
+/** 文件工具 */
+const fileBtn = toolBox.querySelector('.file-btn') as webviewUiToolkit.Button;
 /** 输入容器 */
 const inputBox = chatBox.querySelector('.input-box') as HTMLDivElement;
 /** 输入框 */
@@ -204,6 +208,35 @@ document.addEventListener('click', (ev) => {
   }
 });
 
+// 打开文件工具栏
+fileBtn.addEventListener('click', () => {
+  // 由input接管文件选取功能
+  fileBox.click();
+});
+fileBox.addEventListener('change', (ev) => {
+  ev.preventDefault();
+  const files = (ev.target as HTMLInputElement).files;
+  if (!files) {
+    return;
+  }
+  msgHandler
+    .postMessage(
+      {
+        id: '',
+        command: 'sendFile',
+        payload: { filePath: (files[0] as File & { path: string }).path }
+      } as ReqMsg<'sendFile'>,
+      5000
+    )
+    .then((msg) => {
+      const retMsg = (msg as ResMsg<'sendFile'>).payload.retMsg;
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(retMsg));
+    })
+    .catch((error: Error) =>
+      console.error('ChatView sendFile: ' + error.message)
+    );
+});
+
 // 输入框按下按键时
 inputArea.addEventListener('keydown', (ev: KeyboardEvent) => {
   if (ev.key === 'Enter' && !ev.shiftKey) {
@@ -298,6 +331,7 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
     .then((msg) => {
       const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
       msgBox.insertAdjacentElement('beforeend', createUserMsg(retMsg));
+      msgBox.scrollTo(0, msgBox.scrollHeight);
     })
     .catch((error: Error) =>
       console.error('ChatView sendMessage: ' + error.message)
@@ -305,7 +339,6 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
     .finally(() => {
       this.disabled = false;
       inputArea.textContent = '';
-      msgBox.scrollTo(0, msgBox.scrollHeight);
     });
 });
 

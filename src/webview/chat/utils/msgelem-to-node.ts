@@ -1,5 +1,7 @@
 import { Tag } from '@vscode/webview-ui-toolkit';
 import { MessageElem } from 'icqq';
+import { ReqMsg } from '../../../types/chat';
+import { msgHandler } from '../script';
 
 /** face表情类型 */
 export enum FaceType {
@@ -51,7 +53,7 @@ function addTagClickEvent(elem: Tag, src: string) {
  * @returns `vscode-tag`组件
  */
 export function createImgElem(src: string, asface?: boolean) {
-  const elem = document.createElement('vscode-tag') as Tag;
+  const elem = new Tag();
   elem.textContent = asface ? '表情' : '图片';
   elem.className = 'image';
   elem.setAttribute('src', src);
@@ -65,7 +67,7 @@ export function createImgElem(src: string, asface?: boolean) {
  * @returns `vscode-tag`组件
  */
 export function createStampElem(src: string) {
-  const elem = document.createElement('vscode-tag') as Tag;
+  const elem = new Tag();
   elem.textContent = '表情';
   elem.className = 'stamp';
   elem.setAttribute('src', src);
@@ -81,7 +83,7 @@ export function createStampElem(src: string) {
  * @returns `image`组件
  */
 export function createFaceElem(id: number, type: FaceType, desc?: string) {
-  const elem = document.createElement('img');
+  const elem = new Image();
   elem.src =
     `https://qq-face.vercel.app/` +
     `${type ? 'gif' : 'static'}/s${id}.${type ? 'gif' : 'png'}`;
@@ -101,6 +103,35 @@ export function createAtElem(qq: number | 'all', target?: string) {
   elem.className = 'at';
   elem.textContent = qq === 'all' ? '@全体成员' : target ?? String(qq);
   elem.setAttribute('qq', String(qq));
+  return elem;
+}
+
+/**
+ * 创建文件组件
+ * @param name 文件名
+ * @param fid 文件id
+ * @param size 文件大小
+ * @param duration 存在时间
+ * @returns `vscode-tag`组件
+ */
+export function createFileElem(
+  name: string,
+  fid: string,
+  size: number,
+  duration: number
+) {
+  const elem = new Tag();
+  elem.className = 'file';
+  elem.textContent = `${name} (${size}B \\ ${duration}s后过期)`;
+  elem.title = '点击下载';
+  elem.setAttribute('fid', fid);
+  elem.addEventListener('click', () =>
+    msgHandler.postMessage({
+      id: '',
+      command: 'getFileUrl',
+      payload: { fid }
+    } as ReqMsg<'getFileUrl'>)
+  );
   return elem;
 }
 
@@ -125,6 +156,14 @@ export default function msgElemToNode(msgElemList: MessageElem[]): ChildNode[] {
         message.push(createFaceElem(msgElem.id, FaceType.static, msgElem.text));
         break;
       case 'file':
+        message.push(
+          createFileElem(
+            msgElem.name,
+            msgElem.fid,
+            msgElem.size,
+            msgElem.duration
+          )
+        );
         break;
       case 'flash':
         break;
