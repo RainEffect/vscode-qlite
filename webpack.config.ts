@@ -129,6 +129,7 @@ export default (env: any, argv: Argv) => {
   if (argv.mode !== 'production') {
     configs.forEach((config) => {
       config.optimization = undefined;
+      config.devtool = 'cheap-module-source-map';
     });
   }
   return configs;
