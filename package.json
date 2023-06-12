@@ -1,6 +1,6 @@
 {
   "name": "vscode-qlite",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "publisher": "Vi-brance",
   "engines": {
     "vscode": "^1.77.0"
@@ -94,6 +94,7 @@
         "title": "QLite",
         "properties": {
           "qlite.platform": {
+            "description": "登录时使用的设备类型",
             "type": "number",
             "enum": [
               1,
@@ -119,8 +120,7 @@
               "iPad",
               "old_Android"
             ],
-            "default": 1,
-            "description": "登录时使用的设备类型"
+            "default": 1
           }
         }
       }

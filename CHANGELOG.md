@@ -2,6 +2,15 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.0-Pre-release] - 2023-06-12
+
+### Removed
+- 移除旧版聊天主题的资源文件，全部改用网络资源，不占用本地空间
+
+### Changed
+- 聊天页面应用新版主题，旧版页面功能基本移植完毕
+- 新版聊天页面的脚本全部采用`typescript`编写，与项目的其他源文件同步编译并应用，简化开发难度
+
 ## [1.4.5] - 2023-06-07
 
 ### Added
