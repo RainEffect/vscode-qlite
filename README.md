@@ -26,7 +26,7 @@
 - 登录界面包含3种登录方式
   - 账号密码登录：最通用的登录方式，输入账号和密码即可  
     ![password-login](preview/password-login.png)
-  - 二维码登录：用手机QQ扫描页面显示的二维码即可登录，但成功率不高，不建议使用  
+  - 二维码登录（目前不可用，具体原因参考CHANGELOG或项目issue）：用手机QQ扫描页面显示的二维码即可登录，但成功率不高，不建议使用  
     ![qrcode-login](preview/qrcode-login.png)
   - `token`登录：在你登录过一次QQ时就会在本地保存一份`token`信息，有了这份信息，你只需要输入账号即可登录，若没有登录记录请不要使用这个登录方式  
     ![token-login](preview/token-login.png)
@@ -45,7 +45,15 @@
 - 聊天页面  
   ![chat-view](preview/chat-view.png)
 
-## 配置
+## 设置
+
+本扩展可以在vscode的设置（`Ctrl+,`唤起）中修改以下内容：
+
+- 登录协议
+  - 可选项：`Android`（默认值），`aPad`，`Watch`，`iMac`，`iPad`，`old_Android`
+  - 备注：非必要不建议修改此设置，若登录时出现`Error Code: 45`的错误信息请将此设置修改为`old_Android`并再次尝试
+
+## 配置文件
 
 本扩展生成的所有文件都存放在 `$HOME/.qlite` 目录下，目录结构如下：
 
@@ -86,7 +94,7 @@
 
 此项目采用`npm`进行包管理，初次编译时请使用以下指令：
 ```shell
-> npm i
+npm i
 ```
 
 开发平台推荐`VSCode`~~（废话）~~，以下是该项目的基本说明：
@@ -100,5 +108,4 @@
 ## 致谢
 
 - [vscode-qq](https://github.com/takayama-lily/vscode-qq) : 此扩展的前身，由于原作者 [takayama-lily](https://github.com/takayama-lily) 似乎不再维护，所以才有了这个项目，在此特别感谢！
-- [LiteWebChat_Frame](https://github.com/MorFansLab/LiteWebChat_Frame) : 继承自 [vscode-qq](https://github.com/takayama-lily/vscode-qq) 使用的UI库（目前正尝试替换为 [webview-ui-toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) 的UI组件以配合vscode主题）
 - [icqq](https://github.com/icqqjs/icqq) : 此扩展实现的所有QQ功能都来自这个API库
