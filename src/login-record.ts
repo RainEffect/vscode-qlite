@@ -1,7 +1,7 @@
-import path from 'path';
 import * as fs from 'fs';
+import path from 'path';
 import Global from './global';
-import { LoginRecord } from './types/login';
+import { LoginRecord } from './message/login';
 
 /** 登录记录文件接口 */
 interface LoginRecords {

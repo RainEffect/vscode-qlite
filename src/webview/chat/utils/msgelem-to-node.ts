@@ -1,6 +1,5 @@
 import { Tag } from '@vscode/webview-ui-toolkit';
 import { MessageElem } from 'icqq';
-import { ReqMsg } from '../../../types/chat';
 import { msgHandler } from '../script';
 
 /** face表情类型 */
@@ -125,13 +124,7 @@ export function createFileElem(
   elem.textContent = `${name} (${size}B \\ ${duration}s后过期)`;
   elem.title = '点击下载';
   elem.setAttribute('fid', fid);
-  elem.addEventListener('click', () =>
-    msgHandler.postMessage({
-      id: '',
-      command: 'getFileUrl',
-      payload: { fid }
-    } as ReqMsg<'getFileUrl'>)
-  );
+  elem.addEventListener('click', () => msgHandler.request('getFileUrl', fid));
   return elem;
 }
 

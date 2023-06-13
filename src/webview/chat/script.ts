@@ -1,8 +1,8 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import * as icqq from 'icqq';
 import { inHTMLData } from 'xss-filters';
-import { ChatType, ReqMsg, ResMsg, UserInfo } from '../../types/chat';
-import MessageHandler from '../message-handler';
+import ChatCommand, { ChatType, UserInfo } from '../../message/chat';
+import MessageHandler from '../../message/message-handler';
 import createUserMsg, { createFlagTag } from './utils/create-user-msg';
 import { facemap } from './utils/face';
 import {
@@ -22,7 +22,7 @@ webviewUiToolkit
 /** 与扩展主体通信的变量 */
 const vscode = acquireVsCodeApi();
 /** 消息处理器 */
-export const msgHandler = new MessageHandler(vscode);
+export const msgHandler = new MessageHandler<ChatCommand>(true, vscode);
 
 // 获取页面组件
 /** 上半部分的消息容器 */
@@ -85,20 +85,11 @@ function getChatHistory(
   requestHistoryState = true;
   return new Promise((resolve) => {
     msgHandler
-      .postMessage(
-        {
-          id: '',
-          command: 'getChatHistory',
-          payload: message_id ? { message_id } : undefined
-        } as ReqMsg<'getChatHistory'>,
-        2000
-      )
+      .request('getChatHistory', message_id, 2000)
       .then((msg) => {
-        const history = (msg as ResMsg<'getChatHistory'>).payload.history;
+        const history = msg.payload;
         // 按发言时间逆序排列
-        history.sort(
-          (a: { time: number }, b: { time: number }) => b.time - a.time
-        );
+        history.sort((a, b) => b.time - a.time);
         resolve(history);
       })
       .catch((error: Error) => {
@@ -133,25 +124,15 @@ function insertInput(node: Node) {
 }
 
 // 接受来自扩展的消息
-msgHandler.onMessage((msg) => {
-  switch (msg.command) {
-    case 'messageEvent': {
-      const message = msg.payload as
-        | icqq.GroupMessageEvent
-        | icqq.PrivateMessageEvent;
-      if (getMessage(message.message_id)) {
-        break;
-      }
-      msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
-      break;
-    }
-    case 'noticeEvent':
-      console.log(
-        'ChatView receive noticeEvent: ' +
-          (msg as ReqMsg<'noticeEvent'>).payload
-      );
-      break;
+msgHandler.get('messageEvent', 'req').then((msg) => {
+  const message = msg.payload;
+  if (getMessage(message.message_id)) {
+    return;
   }
+  msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
+});
+msgHandler.get('noticeEvent', 'req').then((msg) => {
+  console.log('ChatView receive noticeEvent: ' + msg.payload);
 });
 
 // 打开漫游表情工具栏
@@ -220,18 +201,10 @@ fileBox.addEventListener('change', (ev) => {
     return;
   }
   msgHandler
-    .postMessage(
-      {
-        id: '',
-        command: 'sendFile',
-        payload: { filePath: (files[0] as File & { path: string }).path }
-      } as ReqMsg<'sendFile'>,
-      5000
+    .request('sendFile', (files[0] as File & { path: string }).path, 5000)
+    .then((msg) =>
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg.payload))
     )
-    .then((msg) => {
-      const retMsg = (msg as ResMsg<'sendFile'>).payload.retMsg;
-      msgBox.insertAdjacentElement('beforeend', createUserMsg(retMsg));
-    })
     .catch((error: Error) =>
       console.error('ChatView sendFile: ' + error.message)
     );
@@ -320,17 +293,9 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
   this.disabled = true;
   const msgElems: icqq.MessageElem[] = nodeToMsgElem(inputNodes);
   msgHandler
-    .postMessage(
-      {
-        id: '',
-        command: 'sendMsg',
-        payload: { content: msgElems }
-      } as ReqMsg<'sendMsg'>,
-      5000
-    )
+    .request('sendMsg', { content: msgElems }, 5000)
     .then((msg) => {
-      const retMsg = (msg as ResMsg<'sendMsg'>).payload.retMsg;
-      msgBox.insertAdjacentElement('beforeend', createUserMsg(retMsg));
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg.payload));
       msgBox.scrollTo(0, msgBox.scrollHeight);
     })
     .catch((error: Error) =>
@@ -366,23 +331,22 @@ msgBox.addEventListener('scroll', function (ev: Event) {
 (async () => {
   try {
     // 优先获取基本信息
-    const msg = (await msgHandler.postMessage(
-      { id: '', command: 'getSimpleInfo' } as ReqMsg<'getSimpleInfo'>,
+    const msg = await msgHandler.request(
+      'getSimpleInfo',
+
+      undefined,
       2000
-    )) as ResMsg<'getSimpleInfo'>;
+    );
     user = msg.payload;
     if (user.type === ChatType.Friend) {
       // 私聊隐藏at工具
       atBtn.style.display = 'none';
     } else {
       msgHandler
-        .postMessage(
-          { id: '', command: 'getMember' } as ReqMsg<'getMember'>,
-          2000
-        )
+        .request('getMember', undefined, 2000)
         .then((msg) => {
-          const members = (msg as ResMsg<'getMember'>).payload.members;
-          if ((msg as ResMsg<'getMember'>).payload.atAll) {
+          const members = msg.payload.members;
+          if (msg.payload.atAll) {
             // at所有人
             const atAll = document.createElement('div');
             const elem = new webviewUiToolkit.Button();
@@ -438,10 +402,9 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   atBox.style.display = 'none';
   // 加载漫游表情
   msgHandler
-    .postMessage({ id: '', command: 'getStamp' } as ReqMsg<'getStamp'>, 2000)
+    .request('getStamp', undefined, 2000)
     .then((msg) => {
-      const stamps = (msg as ResMsg<'getStamp'>).payload.stamps;
-      stamps.forEach((stamp) => {
+      msg.payload.forEach((stamp) => {
         const img = document.createElement('img');
         img.src = stamp;
         const elem = new webviewUiToolkit.Button();

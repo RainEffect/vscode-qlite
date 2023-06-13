@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Global from '../global';
-import { ChatType } from '../types/chat';
+import { ChatType } from '../message/chat';
 
 /** 搜索条目 */
 interface SearchItem extends vscode.QuickPickItem {

@@ -1,7 +1,13 @@
-import { GroupMessage, GroupRole, MessageElem, PrivateMessage } from 'icqq';
-import msgElemToNode from './msgelem-to-node';
-import { user } from '../script';
 import { Tag } from '@vscode/webview-ui-toolkit';
+import {
+  DiscussMessage,
+  GroupMessage,
+  GroupRole,
+  MessageElem,
+  PrivateMessage
+} from 'icqq';
+import { user } from '../script';
+import msgElemToNode from './msgelem-to-node';
 
 /**
  * 将时间戳格式化
@@ -112,7 +118,9 @@ function createAvatarElem(name: string, uin: number, color?: string) {
  * @param message 群聊or私聊消息
  * @returns 消息实例
  */
-export default function createUserMsg(message: PrivateMessage | GroupMessage) {
+export default function createUserMsg(
+  message: PrivateMessage | GroupMessage | DiscussMessage
+) {
   const container = document.createElement('div');
   container.className = 'container';
   const header =

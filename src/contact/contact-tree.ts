@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
 import * as icqq from 'icqq';
-import { ChatType } from '../types/chat';
+import * as vscode from 'vscode';
+import { ChatType } from '../message/chat';
 
 /** 叶节点信息 */
 interface LeafInfo {

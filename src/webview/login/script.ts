@@ -8,22 +8,20 @@ import {
   Checkbox,
   Button
 } from '@vscode/webview-ui-toolkit';
-import {
-  ReqMsg,
-  ResMsg,
+import LoginCommand, {
   LoginRecord,
-  PasswordLoginRecord,
-  QrcodeLoginRecord,
-  TokenLoginRecord
-} from '../../types/login';
-import MessageHandler from '../message-handler';
+  PasswordRecord,
+  QrcodeRecord,
+  TokenRecord
+} from '../../message/login';
+import MessageHandler from '../../message/message-handler';
 
 /** 注册`vscode-ui`的`webview`组件 */
 provideVSCodeDesignSystem().register(allComponents);
 /** 与扩展主体通信的变量 */
 const vscode = acquireVsCodeApi();
 /** 消息处理器 */
-const msgHandler = new MessageHandler(vscode);
+const msgHandler = new MessageHandler<LoginCommand>(true, vscode);
 
 // 获取页面组件
 /** 登录选项组 */
@@ -61,9 +59,9 @@ loginRadios.forEach((loginRadio) =>
     qrcodeImg.hidden = loginRadio.value !== 'qrcode';
     if (loginRadio.value === 'qrcode') {
       msgHandler
-        .postMessage({ id: '', command: 'qrcode' } as ReqMsg<'qrcode'>, 1000)
+        .request('getQrcode', undefined, 1000)
         .then((msg) => {
-          qrcodeImg.src = (msg as ResMsg<'qrcode'>).payload.src;
+          qrcodeImg.src = msg.payload;
           qrcodeImg.hidden = false;
         })
         .catch((err: Error) => {
@@ -118,18 +116,18 @@ function getLoginInfo(): LoginRecord {
       password: passwordText.value,
       remember: rememberOption.selected,
       autoLogin: autoLoginCheckbox.checked
-    } as PasswordLoginRecord;
+    } as PasswordRecord;
   } else if (loginMethod === 'qrcode') {
     return {
       method: 'qrcode',
       autoLogin: autoLoginCheckbox.checked
-    } as QrcodeLoginRecord;
+    } as QrcodeRecord;
   } else {
     return {
       method: 'token',
       uin: Number(uinText.value),
       autoLogin: autoLoginCheckbox.checked
-    } as TokenLoginRecord;
+    } as TokenRecord;
   }
 }
 
@@ -142,16 +140,12 @@ rememberOption.addEventListener(
 // 提交登录信息
 loginButton.addEventListener('click', () => {
   msgHandler
-    .postMessage(
-      { id: '', command: 'login', payload: getLoginInfo() } as ReqMsg<'login'>,
-      10000
-    )
+    .request('submitRecord', getLoginInfo(), 30000)
     .then((msg) => {
-      const ret = (msg as ResMsg<'login'>).payload.ret;
-      if (ret === true) {
+      if (msg.payload) {
         loginButton.textContent = '登录成功！';
       } else {
-        console.error('LoginView login: ' + ret);
+        console.error('LoginView login: ' + msg.payload);
         checkLoginState();
       }
     })
@@ -180,12 +174,9 @@ window.addEventListener('keydown', (event) => {
 (() =>
   // 获取登录账号历史信息
   msgHandler
-    .postMessage({ id: '', command: 'init' } as ReqMsg<'init'>, 2000)
+    .request('getRecord', undefined, 2000)
     .then((msg) => {
-      const record = (msg as ResMsg<'init'>).payload;
-      // radio-group的bug: https://github.com/microsoft/vscode-webview-ui-toolkit/issues/476
-      // 初始化时首次点击总是会选中最后一个radio，所以默认设置需要重复2次
-      loginRadios[0].click();
+      const record = msg.payload;
       if (!record) {
         // 默认密码登录
         loginRadios[0].click();
