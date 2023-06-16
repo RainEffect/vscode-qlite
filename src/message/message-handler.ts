@@ -44,7 +44,7 @@ interface PendingRequest<C extends LoginCommand | ChatCommand> {
   timeout: NodeJS.Timeout;
 }
 
-/** 消息处理器类 */
+/** 消息处理器类，需显式定义处理器使用的指令表`CMD` */
 export default class MessageHandler<
   CMD extends LoginCommand | ChatCommand
 > extends EventEmitter {

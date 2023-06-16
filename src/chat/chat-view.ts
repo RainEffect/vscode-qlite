@@ -2,8 +2,9 @@ import { readFileSync } from 'fs';
 import * as icqq from 'icqq';
 import * as vscode from 'vscode';
 import Global from '../global';
-import ChatCommand, { ChatType, parseMsgId } from '../message/chat';
+import ChatCommand from '../message/chat';
 import MessageHandler from '../message/message-handler';
+import { ChatType, parseMsgId } from '../message/parse-msg-id';
 
 /** 聊天页面的管理类 */
 export default class ChatViewManager {

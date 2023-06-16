@@ -1,18 +1,18 @@
-import * as vscode from 'vscode';
-import * as icqq from 'icqq';
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
-import LoginViewProvider from './login/login-view';
-import ContactTreeDataProvider from './contact/contact-tree';
+import { existsSync, mkdirSync } from 'fs';
+import { Client, Config, Platform } from 'icqq';
+import { homedir } from 'os';
+import path from 'path';
+import { ExtensionContext, commands, window, workspace } from 'vscode';
 import ChatViewManager from './chat/chat-view';
+import ContactTreeDataProvider from './contact/contact-tree';
+import LoginViewProvider from './login/login-view';
 
-/** 管理全局静态变量，启动时创建所有变量 */
+/** 管理全局静态变量，扩展启动时初始化所有静态成员变量 */
 export default class Global {
   /** 扩展工具集 */
-  static context: vscode.ExtensionContext;
+  static context: ExtensionContext;
   /** 客户端实例 */
-  static client: icqq.Client;
+  static client: Client;
   /** 存放本扩展所有创建的文件的根目录 */
   static rootDir: string;
   /** 登录视图容器 */
@@ -22,49 +22,40 @@ export default class Global {
   /** 聊天页面容器 */
   static chatViewManager: ChatViewManager;
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(context: ExtensionContext) {
     Global.context = context;
-    Global.rootDir = path.join(os.homedir(), '.qlite');
+
+    // rootdir = `${HOME}/.qlite`
+    Global.rootDir = path.join(homedir(), '.qlite');
     // 创建根目录文件夹
-    if (!fs.existsSync(Global.rootDir)) {
-      fs.mkdirSync(Global.rootDir);
+    if (!existsSync(Global.rootDir)) {
+      mkdirSync(Global.rootDir);
     }
 
-    /** {@link Global.client} 的配置参数 */
-    const defaultConf: icqq.Config = {
+    /** {@link Global.client client} 的配置参数 */
+    const defaultConf: Config = {
       log_level: 'error',
-      platform: vscode.workspace
-        .getConfiguration()
-        .get('qlite.platform') as icqq.Platform,
+      platform: workspace.getConfiguration().get('qlite.platform') as Platform,
+      ignore_self: false,
       data_dir: Global.rootDir
     };
-    Global.client = icqq.createClient(defaultConf);
+    Global.client = new Client(defaultConf);
     // 登录失败
     Global.client.on('system.login.error', ({ code, message }) => {
-      vscode.window.showErrorMessage(`${message}\nError Code: ${code}`);
+      window.showErrorMessage(`${message}\nError Code: ${code}`);
     });
     // 离线
     Global.client.on('system.offline', ({ message }) => {
-      vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
-      vscode.window.showWarningMessage(`${message}\nclient offline`);
+      commands.executeCommand('setContext', 'qlite.isOnline', false);
+      window.showWarningMessage(`${message}\nclient offline`);
     });
     // 初始化视图容器
     Global.loginViewProvider = new LoginViewProvider(
       Global.client,
       context.extensionUri
     );
-    vscode.window.registerWebviewViewProvider(
-      'loginView',
-      Global.loginViewProvider
-    );
+    window.registerWebviewViewProvider('loginView', Global.loginViewProvider);
     Global.contactViewProvider = new ContactTreeDataProvider(Global.client);
-    vscode.window.registerTreeDataProvider(
-      'contactView',
-      Global.contactViewProvider
-    );
-    Global.chatViewManager = new ChatViewManager(
-      Global.client,
-      Global.context.extensionUri
-    );
+    window.registerTreeDataProvider('contactView', Global.contactViewProvider);
   }
 }

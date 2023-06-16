@@ -1,34 +1,23 @@
-import * as vscode from 'vscode';
-import Global from './global';
-import setting from './contact/setting';
+import { ExtensionContext, commands } from 'vscode';
 import search from './contact/search';
+import setting from './contact/setting';
+import Global from './global';
 
 /** 扩展启动 */
-export function activate(context: vscode.ExtensionContext) {
-  vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
+export function activate(context: ExtensionContext) {
+  // qlite.isOnline = false
+  commands.executeCommand('setContext', 'qlite.isOnline', false);
   new Global(context);
   // 注册扩展命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.setting', setting)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'qlite.chat',
-      Global.chatViewManager.newChat,
-      Global.chatViewManager
-    )
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.search', search)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
+    commands.registerCommand('qlite.setting', setting),
+    commands.registerCommand('qlite.chat', Global.chatViewManager.newChat),
+    commands.registerCommand('qlite.search', search),
+    commands.registerCommand(
       'qlite.removeMsg',
       Global.contactViewProvider.removeMsg.bind(Global.contactViewProvider)
-    )
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
+    ),
+    commands.registerCommand(
       'qlite.profile',
       Global.contactViewProvider.showProfile
     )
