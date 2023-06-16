@@ -11,8 +11,11 @@ export function activate(context: ExtensionContext) {
   // 注册扩展命令
   context.subscriptions.push(
     commands.registerCommand('qlite.setting', setting),
-    commands.registerCommand('qlite.chat', Global.chatViewManager.newChat),
     commands.registerCommand('qlite.search', search),
+    commands.registerCommand(
+      'qlite.chat',
+      Global.chatViewManager.newChat.bind(Global.chatViewManager)
+    ),
     commands.registerCommand(
       'qlite.removeMsg',
       Global.contactViewProvider.removeMsg.bind(Global.contactViewProvider)
