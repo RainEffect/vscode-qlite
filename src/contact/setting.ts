@@ -1,10 +1,8 @@
-import * as vscode from 'vscode';
 import { OnlineStatus } from 'icqq';
+import { QuickPickItem, QuickPickItemKind, commands, window } from 'vscode';
 import Global from '../global';
 import LoginRecordManager from '../login-record';
 
-/** 当前状态 */
-let onlineStatus = 11;
 /** 状态选项 */
 const statusMap: Map<number, string> = new Map([
   [OnlineStatus.Online, '在线'],
@@ -16,25 +14,25 @@ const statusMap: Map<number, string> = new Map([
 ]);
 
 /**
- * 设置，响应setting指令
+ * 设置，响应`setting`指令
  */
 export default function setting() {
   /** 设置选项 */
-  const settings: vscode.QuickPickItem[] = [
+  const settings: QuickPickItem[] = [
     {
       label: '$(account) 账号管理',
       description: Global.client.nickname
     },
     {
       label: '$(bell) 我的状态',
-      description: statusMap.get(onlineStatus)
+      description: statusMap.get(Global.client.status)
     }
   ];
-  vscode.window.showQuickPick(settings).then(async (settingItem) => {
+  window.showQuickPick(settings).then(async (settingItem) => {
     switch (settingItem) {
       case settings[0]: {
-        const accounts: vscode.QuickPickItem[] = [];
-        const recordMap = await LoginRecordManager.getAll();
+        const accounts: QuickPickItem[] = [];
+        const recordMap = await LoginRecordManager.getLoginRecord();
         recordMap.forEach((nickname: string, uin: number) => {
           accounts.push({
             label: '$(account) ' + nickname,
@@ -42,10 +40,10 @@ export default function setting() {
           });
         });
         accounts.push(
-          { label: '', kind: vscode.QuickPickItemKind.Separator },
+          { label: '', kind: QuickPickItemKind.Separator },
           { label: '$(log-out) 退出' }
         );
-        vscode.window
+        window
           .showQuickPick(accounts, {
             placeHolder: '当前帐号：' + Global.client.nickname
           })
@@ -57,11 +55,7 @@ export default function setting() {
             if (accountItem === accounts[accounts.length - 1]) {
               // 退出
               Global.loginViewProvider.setEmptyView(true);
-              vscode.commands.executeCommand(
-                'setContext',
-                'qlite.isOnline',
-                false
-              );
+              commands.executeCommand('setContext', 'qlite.isOnline', false);
             } else {
               // 切换账号
               const uin = Number(accountItem.description);
@@ -73,7 +67,7 @@ export default function setting() {
       }
       case settings[1]: {
         const statusArray = [...statusMap.values()];
-        vscode.window
+        window
           .showQuickPick([...statusMap.values()], {
             placeHolder: '当前状态：' + statusMap.get(Global.client.status)
           })
@@ -81,12 +75,9 @@ export default function setting() {
             if (statusItem === undefined) {
               return;
             }
-            onlineStatus = [...statusMap.keys()][
-              statusArray.indexOf(statusItem)
-            ];
-            if (Global.client.isOnline()) {
-              Global.client.setOnlineStatus(onlineStatus);
-            }
+            Global.client.setOnlineStatus(
+              [...statusMap.keys()][statusArray.indexOf(statusItem)]
+            );
           });
         break;
       }

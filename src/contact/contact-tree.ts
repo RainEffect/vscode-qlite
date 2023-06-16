@@ -1,6 +1,6 @@
-import * as icqq from 'icqq';
+import { Client, FriendInfo, GroupInfo } from 'icqq';
 import * as vscode from 'vscode';
-import { ChatType } from '../message/chat';
+import { ChatType } from '../message/parse-msg-id';
 
 /** 叶节点信息 */
 interface LeafInfo {
@@ -86,7 +86,7 @@ export default class ContactTreeDataProvider
   implements vscode.TreeDataProvider<ContactTreeItem<any>>
 {
   /** 客户端账号 */
-  private readonly _client: icqq.Client;
+  private readonly _client: Client;
   /** 消息列表 */
   private readonly _messages: ContactTreeItem<MessageTreeItem> =
     new ContactTreeItem('消息');
@@ -107,7 +107,7 @@ export default class ContactTreeDataProvider
   /**
    * @param client 一个*在线的*客户端
    */
-  constructor(client: icqq.Client) {
+  constructor(client: Client) {
     this._client = client;
     // 注册通知事件处理
     client.on('notice.friend.decrease', (event) => {
@@ -178,8 +178,8 @@ export default class ContactTreeDataProvider
             undefined,
             [...this._client.fl.values()]
               // 移除非该分组下的好友
-              .filter((info: icqq.FriendInfo) => info.class_id === classId)
-              .map((info: icqq.FriendInfo) => {
+              .filter((info: FriendInfo) => info.class_id === classId)
+              .map((info: FriendInfo) => {
                 /** 好友根节点 */
                 const friend: ContactTreeItem<any> = new ContactTreeItem(
                   info.remark.length ? info.remark : info.nickname,
@@ -209,7 +209,7 @@ export default class ContactTreeDataProvider
             className,
             undefined,
             [...this._client.gl.values()]
-              .filter((info: icqq.GroupInfo) =>
+              .filter((info: GroupInfo) =>
                 classId === 0
                   ? // 群主
                     info.owner_id === this._client.uin
@@ -219,7 +219,7 @@ export default class ContactTreeDataProvider
                   : // 群员
                     info.owner_id !== this._client.uin && !info.admin_flag
               )
-              .map((info: icqq.GroupInfo) => {
+              .map((info: GroupInfo) => {
                 /** 群聊根节点 */
                 const group: ContactTreeItem<any> = new ContactTreeItem(
                   info.group_name,
@@ -299,7 +299,7 @@ export default class ContactTreeDataProvider
   showProfile(item: ContactTreeItem<any>) {
     if (item.command?.arguments && item.command.arguments[1]) {
       const info = this._client.pickFriend(Number(item.tooltip))
-        .info as icqq.FriendInfo;
+        .info as FriendInfo;
       const profile = [
         '昵称：' + info.nickname,
         '性别：' +
@@ -313,7 +313,7 @@ export default class ContactTreeDataProvider
       });
     } else {
       const info = this._client.pickGroup(Number(item.tooltip))
-        .info as icqq.GroupInfo;
+        .info as GroupInfo;
       const profile = [
         '群名：' + info.group_name,
         'QQ：' + info.group_id,

@@ -1,8 +1,9 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import * as icqq from 'icqq';
 import { inHTMLData } from 'xss-filters';
-import ChatCommand, { ChatType, UserInfo } from '../../message/chat';
+import ChatCommand, { UserInfo } from '../../message/chat';
 import MessageHandler from '../../message/message-handler';
+import { ChatType } from '../../message/parse-msg-id';
 import createUserMsg, { createFlagTag } from './utils/create-user-msg';
 import { facemap } from './utils/face';
 import {

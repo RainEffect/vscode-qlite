@@ -1,15 +1,15 @@
-import * as vscode from 'vscode';
+import { QuickPickItem, commands, window } from 'vscode';
 import Global from '../global';
-import { ChatType } from '../message/chat';
+import { ChatType } from '../message/parse-msg-id';
 
 /** 搜索条目 */
-interface SearchItem extends vscode.QuickPickItem {
+interface SearchItem extends QuickPickItem {
   type: ChatType;
 }
 
 /**
  * 搜索栏
- * @todo 将好友和群聊以separater分隔
+ * @todo 将好友和群聊以`separater`分隔
  */
 export default function search() {
   if (!Global.client.isOnline()) {
@@ -17,7 +17,7 @@ export default function search() {
   }
   const searchList: SearchItem[] = [];
   const searchMenu = ['$(person) 搜索好友', '$(organization) 搜索群聊'];
-  vscode.window.showQuickPick(searchMenu).then((value) => {
+  window.showQuickPick(searchMenu).then((value) => {
     if (!value) {
       return;
     } else if (value === searchMenu[0]) {
@@ -41,14 +41,14 @@ export default function search() {
         searchList.push(gItem);
       }
     }
-    vscode.window
+    window
       .showQuickPick(searchList, {
         matchOnDescription: true,
         placeHolder: value.split(' ')[1]
       })
       .then((value) => {
         if (value) {
-          vscode.commands.executeCommand(
+          commands.executeCommand(
             'qlite.chat',
             Number(value.description),
             value.type
