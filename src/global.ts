@@ -64,6 +64,10 @@ export default class Global {
     window.registerWebviewViewProvider('loginView', Global.loginViewProvider);
     Global.contactViewProvider = new ContactTreeDataProvider(Global.client);
     window.registerTreeDataProvider('contactView', Global.contactViewProvider);
+    Global.chatViewManager = new ChatViewManager(
+      Global.client,
+      Global.context.extensionUri
+    );
   }
 }
 
@@ -81,11 +85,15 @@ export function getHtmlForWebview(webview: Webview, webDir: string) {
   /** 所有要替换的`Uri`键值对，包含`js`、`css`等文件的`Uri` */
   const htmlUris: Map<string, Uri> = new Map();
   // 每个页面都需要这3个资源文件
-  ['script', 'style', 'codicon'].forEach((value) =>
+  ['script.js', 'style.css'].forEach((value) =>
     htmlUris.set(
-      value + 'Uri',
-      webview.asWebviewUri(Uri.joinPath(webviewUri, webDir, value + '.js'))
+      value.split('.')[0] + 'Uri',
+      webview.asWebviewUri(Uri.joinPath(webviewUri, webDir, value))
     )
+  );
+  htmlUris.set(
+    'codiconUri',
+    webview.asWebviewUri(Uri.joinPath(webviewUri, 'codicon.css'))
   );
   const html: string = readFileSync(htmlPath, 'utf-8').replace(
     /\${(\w+)}/g,
