@@ -1,19 +1,13 @@
 import {
   provideVSCodeDesignSystem,
   allComponents,
-  Radio,
   TextField,
-  Option,
-  Tag,
   Checkbox,
-  Button
+  Button,
+  Badge,
+  Dropdown
 } from '@vscode/webview-ui-toolkit';
-import LoginCommand, {
-  LoginRecord,
-  PasswordRecord,
-  QrcodeRecord,
-  TokenRecord
-} from '../../message/login';
+import LoginCommand, { Record } from '../../message/login';
 import MessageHandler from '../../message/message-handler';
 
 /** 注册`vscode-ui`的`webview`组件 */
@@ -24,64 +18,27 @@ const vscode = acquireVsCodeApi();
 const msgHandler = new MessageHandler<LoginCommand>(true, vscode);
 
 // 获取页面组件
-/** 登录选项组 */
-const loginRadios = document.querySelectorAll(
-  'vscode-radio-group vscode-radio'
-) as NodeListOf<Radio>;
+/** 扩展描述 */
+const descBadge = document.getElementById('desc') as Badge;
+/** 登录状态选单 */
+const statusDropdown = document.getElementById('online-status') as Dropdown;
 /** 账号输入框 */
 const uinText = document.getElementById('uin') as TextField;
 /** 密码输入框 */
 const passwordText = document.getElementById('password') as TextField;
 /** 记住密码选项 */
-const rememberOption = document.getElementById('remember') as Option;
-/** token登录提示信息 */
-const tokenTag = document.getElementById('token-warn') as Tag;
+const savePassCheckbox = document.getElementById('save-pass') as Checkbox;
 /** 自动登录选项 */
-const autoLoginCheckbox = document.getElementById('autoLogin') as Checkbox;
-/** 二维码图片 */
-const qrcodeImg = document.getElementById('qrcode') as HTMLImageElement;
+const autoLoginCheckbox = document.getElementById('auto-login') as Checkbox;
 /** 登录按钮 */
 const loginButton = document.getElementById('login') as Button;
 
-/** 全局记录登录方式 */
-let loginMethod: 'password' | 'qrcode' | 'token';
-
-// 切换登录选项
-loginRadios.forEach((loginRadio) =>
-  loginRadio.addEventListener('click', () => {
-    if (loginRadio.value === loginMethod) {
-      return;
-    }
-    loginMethod = loginRadio.value as 'password' | 'qrcode' | 'token';
-    uinText.hidden = loginRadio.value === 'qrcode';
-    passwordText.hidden = loginRadio.value !== 'password';
-    tokenTag.hidden = loginRadio.value !== 'token';
-    qrcodeImg.hidden = loginRadio.value !== 'qrcode';
-    if (loginRadio.value === 'qrcode') {
-      msgHandler
-        .request('getQrcode', undefined, 1000)
-        .then((msg) => {
-          qrcodeImg.src = msg.payload;
-          qrcodeImg.hidden = false;
-        })
-        .catch((err: Error) => {
-          console.error('LoginView qrcode: ' + err.message);
-        });
-    }
-    checkLoginState();
-  })
-);
-
 /**
- * 判断登录按钮是否可用，不同登录方式的判断条件不同
+ * 刷新登录按钮状态
  */
-function checkLoginState() {
-  const state =
-    loginMethod === 'password'
-      ? uinText.value.length && passwordText.value.length
-      : loginMethod === 'qrcode'
-      ? true
-      : uinText.value.length;
+function refreshButtonState() {
+  /** 当账号有值时允许登录 */
+  const state = uinText.value.length;
   loginButton.disabled = !state;
   if (state) {
     loginButton.textContent = '登录';
@@ -89,80 +46,48 @@ function checkLoginState() {
 }
 
 /**
- * 切换可读状态，登录中时禁止修改表单信息
+ * 切换登录状态，登录时禁用组件设置为只读
+ * @param state 登录状态，默认为当前状态的下一状态
  */
-function toggleReadonlyState() {
-  const state = !loginButton.disabled;
-  loginButton.disabled = state;
-  autoLoginCheckbox.readOnly = state;
-  if (loginMethod === 'password') {
-    uinText.readOnly = state;
-    passwordText.readOnly = state;
-    rememberOption.ariaReadOnly = state ? 'true' : 'false';
-  } else if (loginMethod === 'token') {
-    uinText.readOnly = state;
-  }
+function changeLoginState(state = !loginButton.disabled) {
+  loginButton.disabled =
+    uinText.readOnly =
+    passwordText.readOnly =
+    autoLoginCheckbox.readOnly =
+    savePassCheckbox.readOnly =
+    statusDropdown.disabled =
+      state;
 }
 
-/**
- * 获取页面的登录信息
- * @returns 登录信息
- */
-function getLoginInfo(): LoginRecord {
-  if (loginMethod === 'password') {
-    return {
-      method: 'password',
-      uin: Number(uinText.value),
-      password: passwordText.value,
-      remember: rememberOption.selected,
-      autoLogin: autoLoginCheckbox.checked
-    } as PasswordRecord;
-  } else if (loginMethod === 'qrcode') {
-    return {
-      method: 'qrcode',
-      autoLogin: autoLoginCheckbox.checked
-    } as QrcodeRecord;
+// 等待登录回应消息
+msgHandler.get('loginRet', 'req').then((msg) => {
+  if (msg.payload) {
+    loginButton.textContent = '登录成功！';
   } else {
-    return {
-      method: 'token',
-      uin: Number(uinText.value),
-      autoLogin: autoLoginCheckbox.checked
-    } as TokenRecord;
+    changeLoginState();
+    refreshButtonState();
   }
-}
-
-// 记录记住密码的选中状态
-rememberOption.addEventListener(
-  'click',
-  () => (rememberOption.selected = !rememberOption.selected)
-);
+  msgHandler.response(msg.id, msg.command, true);
+});
 
 // 提交登录信息
 loginButton.addEventListener('click', () => {
-  msgHandler
-    .request('submitRecord', getLoginInfo(), 30000)
-    .then((msg) => {
-      if (msg.payload) {
-        loginButton.textContent = '登录成功！';
-      } else {
-        console.error('LoginView login: ' + msg.payload);
-        checkLoginState();
-      }
-    })
-    .catch((error: Error) => {
-      console.error('LoginView login: ' + error.message);
-    })
-    .finally(() => {
-      toggleReadonlyState();
-      checkLoginState();
-    });
+  /** 登录信息 */
+  const record: Record = {
+    uin: Number(uinText.value),
+    password: savePassCheckbox.checked ? passwordText.value : '',
+    savePass: savePassCheckbox.checked,
+    autoLogin: autoLoginCheckbox.checked,
+    onlineStatus: Number(statusDropdown.selectedOptions[0].value)
+  };
+  msgHandler.request('submitRecord', record);
   loginButton.textContent = '登录中';
-  toggleReadonlyState();
+  changeLoginState();
 });
 
 // 动态判断登录按钮的状态
-uinText.addEventListener('input', checkLoginState);
-passwordText.addEventListener('input', checkLoginState);
+uinText.addEventListener('input', refreshButtonState);
+passwordText.addEventListener('input', refreshButtonState);
 
 // 响应回车键
 window.addEventListener('keydown', (event) => {
@@ -171,38 +96,34 @@ window.addEventListener('keydown', (event) => {
   }
 });
 
-(() =>
-  // 获取登录账号历史信息
+(() => {
+  // 获取扩展版本信息
   msgHandler
-    .request('getRecord', undefined, 2000)
-    .then((msg) => {
-      const record = msg.payload;
-      if (!record) {
-        // 默认密码登录
-        loginRadios[0].click();
+    .request('getDesc', undefined, 2000)
+    .then((msg) => (descBadge.textContent = msg.payload));
+  // 获取登录账号历史信息
+  msgHandler.request('getRecord', undefined, 2000).then((msg) => {
+    const record = msg.payload;
+    if (!record) {
+      refreshButtonState();
+      return;
+    }
+    uinText.value = record.uin.toString();
+    if (record.savePass) {
+      passwordText.value = record.password;
+    }
+    savePassCheckbox.checked = record.savePass;
+    autoLoginCheckbox.checked = record.autoLogin;
+    statusDropdown.options.forEach((option) => {
+      if (option.value === record.onlineStatus.toString()) {
+        option.selected = true;
         return;
       }
-      // 判断各个登录方式
-      if (record.method === 'password') {
-        uinText.value = record.uin.toString();
-        if (record.remember) {
-          loginRadios[0].click();
-          rememberOption.selected = true;
-          passwordText.value = record.password as string;
-        }
-      } else if (record.method === 'qrcode') {
-        loginRadios[1].click();
-      } else if (record.method === 'token') {
-        loginRadios[2].click();
-        uinText.value = record.uin.toString();
-      }
-      autoLoginCheckbox.checked = record.autoLogin;
-      checkLoginState();
-      if (autoLoginCheckbox.checked) {
-        // 自动登录
-        loginButton.click();
-      }
-    })
-    .catch((error: Error) => {
-      console.error('LoginView init: ' + error.message);
-    }))();
+    });
+    refreshButtonState();
+    if (autoLoginCheckbox.checked) {
+      // 自动登录
+      loginButton.click();
+    }
+  });
+})();

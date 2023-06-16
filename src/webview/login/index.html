@@ -8,30 +8,28 @@
     <link rel="stylesheet" href="${codiconUri}" />
   </head>
   <body>
-    <vscode-radio-group orientation="vertical">
-      <label slot="label">请选择登录方式</label>
-      <vscode-radio value="password">账号密码登录</vscode-radio>
-      <vscode-radio value="qrcode" disabled>二维码登录</vscode-radio>
-      <vscode-radio value="token">token登录</vscode-radio>
-    </vscode-radio-group>
-    <vscode-divider></vscode-divider>
-    <vscode-text-field id="uin" placeholder="请输入账号">
+    <vscode-badge id="desc">vscode-qlite</vscode-badge>
+    <vscode-text-field id="uin" placeholder="账号">
       <span slot="start" class="codicon codicon-account"></span>
     </vscode-text-field>
-    <vscode-text-field id="password" type="password" placeholder="请输入密码">
+    <vscode-text-field id="password" type="password" placeholder="密码">
       <span slot="start" class="codicon codicon-lock"></span>
-      <vscode-option
-        slot="end"
-        id="remember"
-        title="记住密码"
-        class="codicon codicon-shield"
-      ></vscode-option>
     </vscode-text-field>
-    <vscode-tag id="token-warn">
-      如果你的账号没有登录记录，请更换登录方式
-    </vscode-tag>
-    <img id="qrcode" src="" />
-    <vscode-checkbox id="autoLogin">自动登录</vscode-checkbox>
+    <div id="status">
+      <p>在线状态：</p>
+      <vscode-dropdown id="online-status">
+        <vscode-option value="11">我在线上</vscode-option>
+        <vscode-option value="60">Q我吧</vscode-option>
+        <vscode-option value="31">离开</vscode-option>
+        <vscode-option value="31">忙碌</vscode-option>
+        <vscode-option value="70">请勿打扰</vscode-option>
+        <vscode-option value="41">隐身</vscode-option>
+      </vscode-dropdown>
+    </div>
+    <div>
+      <vscode-checkbox id="auto-login">自动登录</vscode-checkbox>
+      <vscode-checkbox id="save-pass">记住密码</vscode-checkbox>
+    </div>
     <vscode-button id="login" type="button">登录</vscode-button>
     <script type="module" src="${scriptUri}"></script>
   </body>

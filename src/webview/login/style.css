@@ -1,5 +1,3 @@
-/* 登录界面的样式表 */
-
 body {
   display: flex;
   flex-direction: column;
@@ -11,7 +9,20 @@ body > * {
   width: 100%;
 }
 
-vscode-tag#token-warn {
-  font-weight: bold;
-  font-size: small;
+div {
+  display: flex;
+  justify-content: space-between;
+}
+
+#desc {
+  font-size: initial;
+  width: auto;
+}
+
+#status {
+  align-items: center;
+}
+
+#status > * {
+  margin: 0;
 }

@@ -9,7 +9,9 @@ import {
 import LoginRecordManager from '../login-record';
 import LoginCommand from '../message/login';
 import MessageHandler from '../message/message-handler';
-import { getHtmlForWebview } from '../global';
+import Global, { getHtmlForWebview } from '../global';
+import { readFileSync } from 'fs';
+import path from 'path';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements WebviewViewProvider {
@@ -72,6 +74,15 @@ export default class LoginViewProvider implements WebviewViewProvider {
     };
     webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
+    msgHandler.get('getDesc', 'req').then((msg) => {
+      const packageInfo = JSON.parse(
+        readFileSync(
+          path.join(Global.context.extensionPath, 'package.json')
+        ).toString()
+      );
+      const desc = packageInfo.name + ' v' + packageInfo.version;
+      msgHandler.response(msg.id, msg.command, desc);
+    });
     // 获取登录记录
     msgHandler.get('getRecord', 'req').then((msg) => {
       const record = this.isEmpty ? undefined : LoginRecordManager.getRecent();
@@ -80,33 +91,19 @@ export default class LoginViewProvider implements WebviewViewProvider {
     });
     // 登录操作
     msgHandler.get('submitRecord', 'req').then((msg) => {
-      if (msg.payload.method === 'password') {
-        this.client.login(msg.payload.uin, msg.payload.password);
-      } else if (msg.payload.method === 'qrcode') {
-        this.client.login();
-      } else {
-        this.client.login(msg.payload.uin);
-      }
+      this.client.login(msg.payload.uin, msg.payload.password);
       const onlineDispose = this.client.on('system.online', () => {
+        this.client.setOnlineStatus(msg.payload.onlineStatus);
         // 更新账号记录
         LoginRecordManager.setRecent(this.client.uin, msg.payload);
-        msgHandler.response(msg.id, msg.command, true);
-        commands.executeCommand('setContext', 'qlite.isOnline', true);
-        console.log('LoginView: client online');
-        onlineDispose();
+        msgHandler.request('loginRet', true, 1000).then((msg) => {
+          if (!msg.payload) {
+            return;
+          }
+          commands.executeCommand('setContext', 'qlite.isOnline', true);
+          onlineDispose();
+        });
       });
-    });
-    // 获取登录二维码
-    msgHandler.get('getQrcode', 'req').then((msg) => {
-      const qrcodeDispose = this.client.on(
-        'system.login.qrcode',
-        ({ image }) => {
-          const src = 'data:image/png; base64, ' + image.toString('base64');
-          msgHandler.response(msg.id, msg.command, src);
-          qrcodeDispose();
-        }
-      );
-      this.client.fetchQrcode();
     });
     // 关闭页面
     webviewView.onDidDispose(() => {
