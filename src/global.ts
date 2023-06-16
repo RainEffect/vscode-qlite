@@ -1,8 +1,15 @@
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { Client, Config, Platform } from 'icqq';
 import { homedir } from 'os';
 import path from 'path';
-import { ExtensionContext, commands, window, workspace } from 'vscode';
+import {
+  ExtensionContext,
+  Uri,
+  Webview,
+  commands,
+  window,
+  workspace
+} from 'vscode';
 import ChatViewManager from './chat/chat-view';
 import ContactTreeDataProvider from './contact/contact-tree';
 import LoginViewProvider from './login/login-view';
@@ -58,4 +65,31 @@ export default class Global {
     Global.contactViewProvider = new ContactTreeDataProvider(Global.client);
     window.registerTreeDataProvider('contactView', Global.contactViewProvider);
   }
+}
+
+/**
+ * 获取`webview`的`html`并链接所需资源文件
+ * @param webview 目标页面`webview`实例
+ * @param webDir 页面资源文件所在文件目录名，编译后在`out`的直接目录下
+ * @returns 处理后的`html`
+ */
+export function getHtmlForWebview(webview: Webview, webDir: string) {
+  /** 登陆界面的所有素材的根目录 */
+  const webviewUri = Uri.joinPath(Global.context.extensionUri, 'out');
+  /** `html`文件的地址 */
+  const htmlPath = Uri.joinPath(webviewUri, webDir, 'index.html').fsPath;
+  /** 所有要替换的`Uri`键值对，包含`js`、`css`等文件的`Uri` */
+  const htmlUris: Map<string, Uri> = new Map();
+  // 每个页面都需要这3个资源文件
+  ['script', 'style', 'codicon'].forEach((value) =>
+    htmlUris.set(
+      value + 'Uri',
+      webview.asWebviewUri(Uri.joinPath(webviewUri, webDir, value + '.js'))
+    )
+  );
+  const html: string = readFileSync(htmlPath, 'utf-8').replace(
+    /\${(\w+)}/g,
+    (match, key) => htmlUris.get(key)?.toString() ?? html
+  );
+  return html;
 }

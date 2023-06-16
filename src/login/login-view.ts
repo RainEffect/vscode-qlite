@@ -1,8 +1,6 @@
-import { readFileSync } from 'fs';
 import { Client } from 'icqq';
 import {
   Uri,
-  Webview,
   WebviewView,
   WebviewViewProvider,
   commands,
@@ -11,6 +9,7 @@ import {
 import LoginRecordManager from '../login-record';
 import LoginCommand from '../message/login';
 import MessageHandler from '../message/message-handler';
+import { getHtmlForWebview } from '../global';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements WebviewViewProvider {
@@ -71,7 +70,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
     // 获取登录记录
     msgHandler.get('getRecord', 'req').then((msg) => {
@@ -126,37 +125,5 @@ export default class LoginViewProvider implements WebviewViewProvider {
       console.warn("it's not working when login view is active");
     }
     this.isEmpty = isEmpty;
-  }
-
-  /**
-   * 获取`webview`的`html`
-   * @param webview 目标`webview`实例
-   * @returns 生成的`html`
-   */
-  private _getHtmlForWebview(webview: Webview) {
-    /** 登陆界面的所有素材的根目录 */
-    const webviewUri = Uri.joinPath(this.extensionUri, 'out');
-    /** `html`文件的地址 */
-    const htmlPath = Uri.joinPath(webviewUri, 'login', 'index.html').fsPath;
-    /** 所有要替换的`Uri`键值对，包含`js`、`css`等文件`Uri` */
-    const htmlUris: Map<string, Uri> = new Map();
-    htmlUris.set(
-      'scriptUri',
-      webview.asWebviewUri(Uri.joinPath(webviewUri, 'login', 'script.js'))
-    );
-    htmlUris.set(
-      'styleUri',
-      webview.asWebviewUri(Uri.joinPath(webviewUri, 'login', 'style.css'))
-    );
-    htmlUris.set(
-      'codiconUri',
-      webview.asWebviewUri(Uri.joinPath(webviewUri, 'codicon.css'))
-    );
-    /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
-    const html: string = readFileSync(htmlPath, 'utf-8').replace(
-      /\${(\w+)}/g,
-      (match, key) => htmlUris.get(key)?.toString() ?? html
-    );
-    return html;
   }
 }

@@ -1,7 +1,6 @@
-import { readFileSync } from 'fs';
 import * as icqq from 'icqq';
 import * as vscode from 'vscode';
-import Global from '../global';
+import Global, { getHtmlForWebview } from '../global';
 import ChatCommand from '../message/chat';
 import MessageHandler from '../message/message-handler';
 import { ChatType, parseMsgId } from '../message/parse-msg-id';
@@ -84,7 +83,7 @@ export default class ChatViewManager {
       })
     ];
     chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
-    chatView.webview.html = this._getHtmlForWebview(chatView.webview);
+    chatView.webview.html = getHtmlForWebview(chatView.webview, 'chat');
     chatView.onDidDispose(() => {
       toDispose.forEach((dispose) => dispose());
       this.panelMap[type].delete(uin);
@@ -250,38 +249,5 @@ export default class ChatViewManager {
         .getFileUrl(msg.payload)
         .then((url) => vscode.env.openExternal(vscode.Uri.parse(url)));
     });
-  }
-
-  /**
-   * 获取`webview`的`html`
-   * @param webview 目标`webview`实例
-   * @returns 生成的`html`
-   */
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out');
-    const htmlPath = vscode.Uri.joinPath(
-      webviewUri,
-      'chat',
-      'index.html'
-    ).fsPath;
-    const htmlUris: Map<string, vscode.Uri> = new Map();
-    htmlUris.set(
-      'scriptUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'chat', 'script.js'))
-    );
-    htmlUris.set(
-      'styleUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'chat', 'style.css'))
-    );
-    htmlUris.set(
-      'codiconUri',
-      webview.asWebviewUri(vscode.Uri.joinPath(webviewUri, 'codicon.css'))
-    );
-    /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
-    const html: string = readFileSync(htmlPath, 'utf-8').replace(
-      /\${(\w+)}/g,
-      (match, key) => htmlUris.get(key)?.toString() ?? html
-    );
-    return html;
   }
 }
