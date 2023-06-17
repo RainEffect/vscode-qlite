@@ -5,6 +5,7 @@ import { ChatType } from '../message/parse-msg-id';
 /** 搜索栏 */
 export default function search() {
   const users: QuickPickItem[] = [];
+  // 加载好友
   for (const friend of Global.client.fl.values()) {
     const fItem: QuickPickItem = {
       label: '$(person) ' + (friend.remark ? friend.remark : friend.nickname),
@@ -13,11 +14,13 @@ export default function search() {
     };
     users.push(fItem);
   }
+  // 分割线
   const seperator: QuickPickItem = {
     label: '',
     kind: QuickPickItemKind.Separator
   };
   users.push(seperator);
+  // 加载群聊
   for (const group of Global.client.gl.values()) {
     const gItem: QuickPickItem = {
       label: '$(organization) ' + group.group_name,
