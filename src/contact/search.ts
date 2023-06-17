@@ -4,41 +4,41 @@ import { ChatType } from '../message/parse-msg-id';
 
 /** 搜索栏 */
 export default function search() {
-  const searchList: QuickPickItem[] = [];
+  const users: QuickPickItem[] = [];
   for (const friend of Global.client.fl.values()) {
     const fItem: QuickPickItem = {
       label: '$(person) ' + (friend.remark ? friend.remark : friend.nickname),
       alwaysShow: false,
       description: friend.user_id.toString()
     };
-    searchList.push(fItem);
+    users.push(fItem);
   }
   const seperator: QuickPickItem = {
     label: '',
     kind: QuickPickItemKind.Separator
   };
-  searchList.push(seperator);
+  users.push(seperator);
   for (const group of Global.client.gl.values()) {
     const gItem: QuickPickItem = {
       label: '$(organization) ' + group.group_name,
       alwaysShow: false,
       description: group.group_id.toString()
     };
-    searchList.push(gItem);
+    users.push(gItem);
   }
   window
-    .showQuickPick(searchList, {
+    .showQuickPick(users, {
       placeHolder: '搜索好友/群聊',
       matchOnDescription: true
     })
-    .then((item) => {
-      if (!item) {
+    .then((userItem) => {
+      if (!userItem) {
         return;
       }
       commands.executeCommand(
         'qlite.chat',
-        Number(item.description),
-        item.label.split(' ')[0].includes('person')
+        Number(userItem.description),
+        userItem.label.split(' ')[0].includes('person')
           ? ChatType.Friend
           : ChatType.Group
       );
