@@ -134,9 +134,10 @@ msgHandler.get('messageEvent', 'req').then((msg) => {
   msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
 });
 msgHandler.get('noticeEvent', 'req').then((msg) => {
-  console.log('ChatView receive noticeEvent: ' + msg.payload);
   const notice = msg.payload;
-  msgBox.insertAdjacentElement('beforeend', createNoticeMsg(notice));
+  createNoticeMsg(notice).then((elem) =>
+    msgBox.insertAdjacentElement('beforeend', elem)
+  );
 });
 
 // 打开漫游表情工具栏
