@@ -4,6 +4,7 @@ import { inHTMLData } from 'xss-filters';
 import ChatCommand, { UserInfo } from '../../message/chat';
 import MessageHandler from '../../message/message-handler';
 import { ChatType } from '../../message/parse-msg-id';
+import createNoticeMsg from './utils/create-notice-msg';
 import createUserMsg, { createFlagTag } from './utils/create-user-msg';
 import { facemap } from './utils/face';
 import {
@@ -134,6 +135,8 @@ msgHandler.get('messageEvent', 'req').then((msg) => {
 });
 msgHandler.get('noticeEvent', 'req').then((msg) => {
   console.log('ChatView receive noticeEvent: ' + msg.payload);
+  const notice = msg.payload;
+  msgBox.insertAdjacentElement('beforeend', createNoticeMsg(notice));
 });
 
 // 打开漫游表情工具栏
