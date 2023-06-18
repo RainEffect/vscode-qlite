@@ -129,6 +129,18 @@ export function createFileElem(
 }
 
 /**
+ * 创建戳一戳组件
+ * @param text 动作名，默认`戳一戳`
+ * @returns `vscode-tag`组件
+ */
+export function createPokeElem(text?: string) {
+  const elem = document.createElement('vscode-tag') as Tag;
+  elem.className = 'poke';
+  elem.textContent = text ?? '戳一戳';
+  return elem;
+}
+
+/**
  * 解析消息链为`html`对象
  * @todo 添加对其他消息类型的解析
  * @param msgElemList 消息链
@@ -174,6 +186,7 @@ export default function msgElemToNode(msgElemList: MessageElem[]): ChildNode[] {
       case 'node':
         break;
       case 'poke':
+        message.push(createPokeElem(msgElem.text));
         break;
       case 'quote':
         break;
