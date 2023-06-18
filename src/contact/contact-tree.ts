@@ -9,7 +9,7 @@ interface LeafInfo {
   /** 是否为私聊 */
   type: ChatType;
   /** 头像地址 */
-  avatarUrl: string;
+  avatar: string;
 }
 
 /** 聊天列表树节点 */
@@ -40,7 +40,7 @@ class ContactTreeItem<
         arguments: [leafInfo.uin, leafInfo.type]
       };
       this.contextValue = 'leaf';
-      this.iconPath = vscode.Uri.parse(leafInfo.avatarUrl);
+      this.iconPath = vscode.Uri.parse(leafInfo.avatar);
       this.tooltip = leafInfo.uin.toString();
       this.children = [];
     }
@@ -186,7 +186,7 @@ export default class ContactTreeDataProvider
                   {
                     uin: info.user_id,
                     type: ChatType.Friend,
-                    avatarUrl: this._client
+                    avatar: this._client
                       .pickFriend(info.user_id)
                       .getAvatarUrl(40)
                   }
@@ -226,7 +226,7 @@ export default class ContactTreeDataProvider
                   {
                     uin: info.group_id,
                     type: ChatType.Group,
-                    avatarUrl: this._client
+                    avatar: this._client
                       .pickGroup(info.group_id)
                       .getAvatarUrl(40)
                   }
@@ -246,34 +246,38 @@ export default class ContactTreeDataProvider
    * @param flag 有新消息为`true`，已读新消息为`false`
    */
   refreshMessages(type: ChatType, uin: number, flag: boolean) {
-    const target: number = this._messages.children.findIndex(
+    const targetIndex: number = this._messages.children.findIndex(
       (msg) => msg.type === type && msg.uin === uin
     );
-    if (target === -1) {
+    if (targetIndex === -1) {
       // 消息列表中没有该消息
       const label: string | undefined = type
         ? this._client.pickFriend(uin).remark?.length
           ? this._client.pickFriend(uin).remark
           : this._client.pickFriend(uin).nickname
         : this._client.pickGroup(uin).name;
-      const avatarUrl: string = type
+      const avatar: string = type
         ? this._client.pickFriend(uin).getAvatarUrl(40)
         : this._client.pickGroup(uin).getAvatarUrl(40);
-      this._messages.children.unshift(
-        new MessageTreeItem(label as string, { uin, type, avatarUrl })
-      );
+      const newMsg = new MessageTreeItem(label as string, {
+        uin,
+        type,
+        avatar
+      });
+      newMsg.markNew();
+      this._messages.children.unshift(newMsg);
     } else {
       // 在现有消息上修改
       if (flag) {
         // 标记未读
-        this._messages.children[target].markNew();
+        this._messages.children[targetIndex].markNew();
         // 更新列表顺序
         this._messages.children.unshift(
-          this._messages.children.splice(target, 1)[0]
+          this._messages.children.splice(targetIndex, 1)[0]
         );
       } else {
         // 标记已读
-        this._messages.children[target].markRead();
+        this._messages.children[targetIndex].markRead();
       }
     }
     // 刷新列表
