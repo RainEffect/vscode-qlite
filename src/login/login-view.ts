@@ -92,6 +92,13 @@ export default class LoginViewProvider implements WebviewViewProvider {
     // 登录操作
     msgHandler.get('submitRecord', 'req').then((msg) => {
       this.client.login(msg.payload.uin, msg.payload.password);
+      // 10s无响应则返回登录失败的信息
+      const timeout = setTimeout(() => {
+        window.showErrorMessage('登录失败，请查看日志输出');
+        msgHandler.request('loginRet', false);
+        errorDispose();
+      }, 10000);
+      // 登录成功
       const onlineDispose = this.client.on('system.online', () => {
         this.client.setOnlineStatus(msg.payload.onlineStatus);
         // 更新账号记录
@@ -101,8 +108,17 @@ export default class LoginViewProvider implements WebviewViewProvider {
             return;
           }
           commands.executeCommand('setContext', 'qlite.isOnline', true);
+          clearTimeout(timeout);
           onlineDispose();
+          errorDispose();
         });
+      });
+      // 登录失败
+      const errorDispose = this.client.on('system.login.error', (error) => {
+        window.showErrorMessage(error.message);
+        msgHandler.request('loginRet', false);
+        clearTimeout(timeout);
+        errorDispose();
       });
     });
     // 关闭页面

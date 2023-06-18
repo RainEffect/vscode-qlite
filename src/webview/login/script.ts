@@ -63,11 +63,11 @@ function changeLoginState(state = !loginButton.disabled) {
 msgHandler.get('loginRet', 'req').then((msg) => {
   if (msg.payload) {
     loginButton.textContent = '登录成功！';
+    msgHandler.response(msg.id, msg.command, true);
   } else {
     changeLoginState();
     refreshButtonState();
   }
-  msgHandler.response(msg.id, msg.command, true);
 });
 
 // 提交登录信息
@@ -75,7 +75,7 @@ loginButton.addEventListener('click', () => {
   /** 登录信息 */
   const record: Record = {
     uin: Number(uinText.value),
-    password: savePassCheckbox.checked ? passwordText.value : '',
+    password: passwordText.value,
     savePass: savePassCheckbox.checked,
     autoLogin: autoLoginCheckbox.checked,
     onlineStatus: Number(statusDropdown.selectedOptions[0].value)

@@ -81,6 +81,9 @@ export default class LoginRecordManager {
         throw Error('invalid uin');
       }
     } else {
+      if (!info.savePass) {
+        info.password = '';
+      }
       // 写入账号记录
       records.info.set(uin, info);
     }
