@@ -134,6 +134,12 @@ body {
   vertical-align: text-bottom;
 }
 
+/* 通知 */
+.tip {
+  width: fit-content;
+  align-self: center;
+}
+
 /* 输入框 */
 .chat > * {
   margin: 1px;
