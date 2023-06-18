@@ -1,10 +1,10 @@
 import { Tag } from '@vscode/webview-ui-toolkit';
 import {
-  DiscussMessage,
-  GroupMessage,
   GroupRole,
   MessageElem,
-  PrivateMessage
+  PrivateMessage,
+  GroupMessage,
+  DiscussMessage
 } from 'icqq';
 import { user } from '../script';
 import msgElemToNode from './msgelem-to-node';
