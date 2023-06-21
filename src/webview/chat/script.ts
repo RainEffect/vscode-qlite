@@ -425,7 +425,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   // 加载face表情
   for (const id in facemap) {
     const face = document.createElement('img');
-    face.src = `https://qq-face.vercel.app/static/s${id}.png`;
+    face.src = `https://koishi.js.org/QFace/static/s${id}.png`;
     face.title = face.alt = facemap[id];
     const elem = new webviewUiToolkit.Button();
     elem.appearance = 'icon';
