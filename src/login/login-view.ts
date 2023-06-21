@@ -9,9 +9,7 @@ import {
 import LoginRecordManager from '../login-record';
 import LoginCommand from '../message/login';
 import MessageHandler from '../message/message-handler';
-import Global, { getHtmlForWebview } from '../global';
-import { readFileSync } from 'fs';
-import path from 'path';
+import { getHtmlForWebview } from '../global';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements WebviewViewProvider {
@@ -74,15 +72,6 @@ export default class LoginViewProvider implements WebviewViewProvider {
     };
     webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
-    msgHandler.get('getDesc', 'req').then((msg) => {
-      const packageInfo = JSON.parse(
-        readFileSync(
-          path.join(Global.context.extensionPath, 'package.json')
-        ).toString()
-      );
-      const desc = packageInfo.name + ' v' + packageInfo.version;
-      msgHandler.response(msg.id, msg.command, desc);
-    });
     // 获取登录记录
     msgHandler.get('getRecord', 'req').then((msg) => {
       const record = this.isEmpty ? undefined : LoginRecordManager.getRecent();

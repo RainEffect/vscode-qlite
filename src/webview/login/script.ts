@@ -4,7 +4,6 @@ import {
   TextField,
   Checkbox,
   Button,
-  Badge,
   Dropdown
 } from '@vscode/webview-ui-toolkit';
 import LoginCommand, { Record } from '../../message/login';
@@ -18,8 +17,6 @@ const vscode = acquireVsCodeApi();
 const msgHandler = new MessageHandler<LoginCommand>(true, vscode);
 
 // 获取页面组件
-/** 扩展描述 */
-const descBadge = document.getElementById('desc') as Badge;
 /** 登录状态选单 */
 const statusDropdown = document.getElementById('online-status') as Dropdown;
 /** 账号输入框 */
@@ -97,10 +94,6 @@ window.addEventListener('keydown', (event) => {
 });
 
 (() => {
-  // 获取扩展版本信息
-  msgHandler
-    .request('getDesc', undefined, 2000)
-    .then((msg) => (descBadge.textContent = msg.payload));
   // 获取登录账号历史信息
   msgHandler.request('getRecord', undefined, 2000).then((msg) => {
     const record = msg.payload;

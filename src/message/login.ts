@@ -17,12 +17,6 @@ export interface Record {
 
 /** 登录页面指令表 */
 export default interface LoginCommand extends Command {
-  /** 获取扩展版本信息 */
-  getDesc: {
-    req: undefined;
-    /** 扩展版本信息 */
-    res: string;
-  };
   /** 获取上次的登录记录 */
   getRecord: {
     req: undefined;
