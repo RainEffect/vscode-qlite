@@ -2,7 +2,7 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
-## [1.5.0] - 2023-06-21
+## [1.5.1] - 2023-06-21
 
 ### Added
 - 登录页面添加`登录状态`选项
@@ -21,7 +21,7 @@ All notable changes to the "vscode-qlite" extension will be documented in this f
 - 修复自动登录失败后无法再次登录的bug
 - 修复每次登录都会重新创建`device`信息的bug（fixed from icqq）
 
-## [1.5.0-Pre-release] - 2023-06-12
+## [1.5.0] - 2023-06-12
 
 ### Removed
 - 移除旧版聊天主题的资源文件，全部改用网络资源，不占用本地空间

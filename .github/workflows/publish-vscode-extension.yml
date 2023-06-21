@@ -9,6 +9,17 @@ jobs:
   publish-and-release:
     runs-on: ubuntu-latest
     steps:
+      - name: Get Version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
+
+      - name: Get Changelog
+        id: get_changelog
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_level: warn
+          version: ${{ steps.get_version.outputs.version }}
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -26,17 +37,6 @@ jobs:
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
-
-      - name: Get Version
-        id: get_version
-        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
-
-      - name: Get Changelog
-        id: get_changelog
-        uses: mindsers/changelog-reader-action@v2
-        with:
-          validation_level: warn
-          version: ${{ steps.get_version.outputs.version }}
 
       - name: Create Release
         id: create_release
