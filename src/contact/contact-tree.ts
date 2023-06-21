@@ -264,7 +264,9 @@ export default class ContactTreeDataProvider
         type,
         avatar
       });
-      newMsg.markNew();
+      if (flag) {
+        newMsg.markNew();
+      }
       this._messages.children.unshift(newMsg);
     } else {
       // 在现有消息上修改
