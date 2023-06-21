@@ -1,0 +1,61 @@
+name: Publish and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to Visual Studio Marketplace
+        id: publish
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+
+      - name: Get Version
+        id: get_version
+        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
+
+      - name: Get Changelog
+        id: get_changelog
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_level: warn
+          version: ${{ steps.get_version.outputs.version }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_changelog.outputs.version }}
+          release_name: ${{ steps.get_changelog.outputs.version }}
+          body: ${{ steps.get_changelog.outputs.changes }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.publish.outputs.vsixPath }}
+          asset_name: ${{ steps.publish.outputs.vsixPath }}
+          asset_content_type: application/octet-stream
