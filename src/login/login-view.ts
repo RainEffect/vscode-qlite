@@ -1,34 +1,40 @@
-import * as vscode from 'vscode';
-import * as icqq from 'icqq';
-import * as fs from 'fs';
-import MessageHandler from '../webview/message-handler';
-import { ResMsg, LoginRecord, ReqMsg } from '../types/login';
+import { Client } from 'icqq';
+import {
+  Uri,
+  WebviewView,
+  WebviewViewProvider,
+  commands,
+  window
+} from 'vscode';
 import LoginRecordManager from '../login-record';
+import LoginCommand from '../message/login';
+import MessageHandler from '../message/message-handler';
+import { getHtmlForWebview } from '../global';
 
 /** 登录界面容器类 */
-export default class LoginViewProvider implements vscode.WebviewViewProvider {
+export default class LoginViewProvider implements WebviewViewProvider {
   /** 是否以空表形式加载视图 */
   private isEmpty = false;
   /** 显示的视图 */
-  private _view?: vscode.WebviewView;
+  private _view?: WebviewView;
   /**
    * @param client 客户端
    * @param extensionUri 扩展根目录
    */
   constructor(
-    private readonly client: icqq.Client,
-    private readonly extensionUri: vscode.Uri
+    private readonly client: Client,
+    private readonly extensionUri: Uri
   ) {
     this.client.on('system.login.device', ({ url }) => {
       // 设备锁验证
-      vscode.window
+      window
         .showInformationMessage(
           `请点击 [此网址](${url}) 进行设备锁验证。`,
           '已验证'
         )
         .then((value: string | undefined) => {
           if (!value) {
-            vscode.window.showInformationMessage('已取消登录');
+            window.showInformationMessage('已取消登录');
           } else {
             this.client.login();
           }
@@ -36,10 +42,8 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     });
     this.client.on('system.login.slider', ({ url }) => {
       // 滑动验证码验证
-      vscode.window.showInformationMessage(
-        `请点击 [此网址](${url}) 完成滑动验证码。`
-      );
-      vscode.window
+      window.showInformationMessage(`请点击 [此网址](${url}) 完成滑动验证码。`);
+      window
         .showInputBox({
           placeHolder: '请输入验证ticket',
           prompt:
@@ -48,7 +52,7 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
         })
         .then((ticket: string | undefined) => {
           if (!ticket) {
-            vscode.window.showInformationMessage('取消登录');
+            window.showInformationMessage('取消登录');
           } else {
             this.client.submitSlider(ticket);
           }
@@ -56,67 +60,57 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  resolveWebviewView(webviewView: vscode.WebviewView) {
+  resolveWebviewView(webviewView: WebviewView) {
     this._view = webviewView;
-    const msgHandler = new MessageHandler(webviewView.webview);
+    const msgHandler = new MessageHandler<LoginCommand>(
+      false,
+      webviewView.webview
+    );
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
-    webviewView.webview.html = this._getHtmlForWebview();
-
-    msgHandler.onMessage((msg) => {
-      if (msg.command === 'init') {
-        const res: ResMsg<'init'> = {
-          id: msg.id,
-          command: 'init',
-          payload: this.isEmpty ? undefined : LoginRecordManager.getRecent()
-        };
-        msgHandler.postMessage(res);
-        this.isEmpty = false;
-      } else if (msg.command === 'login') {
-        const info: LoginRecord = (msg as ReqMsg<'login'>).payload;
-        if (info.method === 'password') {
-          this.client.login(info.uin, info.password);
-        } else if (info.method === 'qrcode') {
-          this.client.login();
-        } else {
-          this.client.login(info.uin);
-        }
-        const onlineDispose = this.client.on('system.online', () => {
-          // 更新账号记录
-          LoginRecordManager.setRecent(
-            this.client.uin,
-            (msg as ReqMsg<'login'>).payload
-          );
-          msgHandler.postMessage({
-            id: msg.id,
-            command: 'login',
-            payload: { ret: true }
-          } as ResMsg<'login'>);
-          vscode.commands.executeCommand('setContext', 'qlite.isOnline', true);
-          console.log('LoginView: client online');
-          onlineDispose();
-        });
-      } else if (msg.command === 'qrcode') {
-        const qrcodeDispose = this.client.on(
-          'system.login.qrcode',
-          ({ image }) => {
-            msgHandler.postMessage({
-              id: msg.id,
-              command: 'qrcode',
-              payload: {
-                src: 'data:image/png; base64, ' + image.toString('base64')
-              }
-            } as ResMsg<'qrcode'>);
-            qrcodeDispose();
-          }
-        );
-        this.client.fetchQrcode();
-      } else {
-        console.error('LoginView: unresolved message');
-      }
+    webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
+    /** 处理来自页面的消息 */
+    // 获取登录记录
+    msgHandler.get('getRecord', 'req').then((msg) => {
+      const record = this.isEmpty ? undefined : LoginRecordManager.getRecent();
+      msgHandler.response(msg.id, msg.command, record);
+      this.isEmpty = false;
     });
+    // 登录操作
+    msgHandler.get('submitRecord', 'req').then((msg) => {
+      this.client.login(msg.payload.uin, msg.payload.password);
+      // 10s无响应则返回登录失败的信息
+      const timeout = setTimeout(() => {
+        window.showErrorMessage('登录失败，请查看日志输出');
+        msgHandler.request('loginRet', false);
+        errorDispose();
+      }, 10000);
+      // 登录成功
+      const onlineDispose = this.client.on('system.online', () => {
+        this.client.setOnlineStatus(msg.payload.onlineStatus);
+        // 更新账号记录
+        LoginRecordManager.setRecent(this.client.uin, msg.payload);
+        msgHandler.request('loginRet', true, 1000).then((msg) => {
+          if (!msg.payload) {
+            return;
+          }
+          commands.executeCommand('setContext', 'qlite.isOnline', true);
+          clearTimeout(timeout);
+          onlineDispose();
+          errorDispose();
+        });
+      });
+      // 登录失败
+      const errorDispose = this.client.on('system.login.error', (error) => {
+        window.showErrorMessage(error.message);
+        msgHandler.request('loginRet', false);
+        clearTimeout(timeout);
+        errorDispose();
+      });
+    });
+    // 关闭页面
     webviewView.onDidDispose(() => {
       this._view = undefined;
     });
@@ -133,53 +127,5 @@ export default class LoginViewProvider implements vscode.WebviewViewProvider {
       console.warn("it's not working when login view is active");
     }
     this.isEmpty = isEmpty;
-  }
-
-  /**
-   * 构造`webviewUri`格式的文件目录
-   * @param base 起始目录
-   * @param pathSegments 子目录
-   * @returns 可用于`webview`的`Uri`路径
-   */
-  private _asWebviewUri(
-    base: vscode.Uri,
-    ...pathSegments: string[]
-  ): vscode.Uri {
-    return this._view?.webview.asWebviewUri(
-      vscode.Uri.joinPath(base, ...pathSegments)
-    ) as vscode.Uri;
-  }
-
-  /**
-   * 获取`webview`的`html`
-   */
-  private _getHtmlForWebview() {
-    /** 登陆界面的所有素材的根目录 */
-    const webviewUri = vscode.Uri.joinPath(this.extensionUri, 'out', 'webview');
-    /** `html`文件的地址 */
-    const htmlPath = vscode.Uri.joinPath(
-      webviewUri,
-      'login',
-      'index.html'
-    ).fsPath;
-    /** 所有要替换的`Uri`键值对，包含`js`、`css`等文件`Uri` */
-    const htmlUris: Map<string, vscode.Uri> = new Map();
-    htmlUris.set(
-      'scriptUri',
-      this._asWebviewUri(webviewUri, 'login', 'script.js')
-    );
-    htmlUris.set(
-      'styleUri',
-      this._asWebviewUri(webviewUri, 'login', 'style.css')
-    );
-    htmlUris.set('codiconUri', this._asWebviewUri(webviewUri, 'codicon.css'));
-    /** 从`html`文件地址中读取字符串并替换`${}`格式的字符串为特定文件的`WebviewUri` */
-    const html: string = fs
-      .readFileSync(htmlPath, 'utf-8')
-      .replace(
-        /\${(\w+)}/g,
-        (match, key) => htmlUris.get(key)?.toString() ?? html
-      );
-    return html;
   }
 }

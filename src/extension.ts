@@ -1,36 +1,32 @@
-import * as vscode from 'vscode';
-import Global from './global';
+import { ExtensionContext, commands } from 'vscode';
+import search from './contact/search';
 import setting from './contact/setting';
-import * as chat from './chat';
+import Global from './global';
 
-// 扩展启动
-export function activate(context: vscode.ExtensionContext) {
+/** 扩展启动 */
+export function activate(context: ExtensionContext) {
   // qlite.isOnline = false
-  vscode.commands.executeCommand('setContext', 'qlite.isOnline', false);
+  commands.executeCommand('setContext', 'qlite.isOnline', false);
   new Global(context);
   // 注册扩展命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.setting', setting)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.chat', chat.openChatView)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand('qlite.search', chat.search)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
+    commands.registerCommand('qlite.setting', setting),
+    commands.registerCommand('qlite.search', search),
+    commands.registerCommand(
+      'qlite.chat',
+      Global.chatViewManager.newChat.bind(Global.chatViewManager)
+    ),
+    commands.registerCommand(
       'qlite.removeMsg',
       Global.contactViewProvider.removeMsg.bind(Global.contactViewProvider)
-    )
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
+    ),
+    commands.registerCommand(
       'qlite.profile',
       Global.contactViewProvider.showProfile
     )
   );
 }
 
-// 扩展关闭
+/** 扩展关闭 */
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate() {}

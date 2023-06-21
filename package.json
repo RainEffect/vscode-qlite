@@ -1,6 +1,6 @@
 {
   "name": "vscode-qlite",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "publisher": "Vi-brance",
   "engines": {
     "vscode": "^1.77.0"
@@ -94,6 +94,7 @@
         "title": "QLite",
         "properties": {
           "qlite.platform": {
+            "description": "登录时使用的设备类型",
             "type": "number",
             "enum": [
               1,
@@ -119,8 +120,7 @@
               "iPad",
               "old_Android"
             ],
-            "default": 1,
-            "description": "登录时使用的设备类型"
+            "default": 1
           }
         }
       }
@@ -132,22 +132,26 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.2",
-    "icqq": "^0.3.15"
+    "icqq": "^0.4.2",
+    "xss-filters": "^1.2.7"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
-    "@types/mocha": "^10.0.1",
     "@types/node": "^20.2.5",
     "@types/vscode": "^1.77.0",
     "@types/vscode-webview": "^1.57.1",
+    "@types/xss-filters": "^0.0.27",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "@vscode/codicons": "^0.0.33",
-    "@vscode/test-electron": "^2.2.0",
     "copy-webpack-plugin": "^11.0.0",
-    "eslint": "^8.39.0",
+    "css-loader": "^6.7.3",
+    "css-minimizer-webpack-plugin": "^5.0.0",
+    "eslint": "^8.40.0",
     "glob": "^8.0.3",
-    "mocha": "^10.1.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.7.5",
+    "terser-webpack-plugin": "^5.3.7",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5",
@@ -157,8 +161,8 @@
   "scripts": {
     "vscode:prepublish": "npm run package",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "compile": "webpack",
-    "watch": "webpack --watch",
+    "build": "webpack --mode none",
+    "watch": "webpack --mode development --watch",
     "lint": "eslint src --ext ts"
   },
   "icon": "ico.ico"

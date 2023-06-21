@@ -1,15 +1,15 @@
+import { Client, FriendInfo, GroupInfo } from 'icqq';
 import * as vscode from 'vscode';
-import * as icqq from 'icqq';
-import { bind } from '../chat';
+import { ChatType } from '../message/parse-msg-id';
 
 /** 叶节点信息 */
 interface LeafInfo {
   /** 账号 */
   uin: number;
   /** 是否为私聊 */
-  isPrivate: boolean;
+  type: ChatType;
   /** 头像地址 */
-  avatarUrl: string;
+  avatar: string;
 }
 
 /** 聊天列表树节点 */
@@ -27,16 +27,20 @@ class ContactTreeItem<
     super(label);
     this.children = children;
     if (!leafInfo) {
-      this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      if (label === '联系人' || label === '消息') {
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+      } else {
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      }
     } else {
       this.collapsibleState = vscode.TreeItemCollapsibleState.None;
       this.command = {
         title: '打开聊天',
         command: 'qlite.chat',
-        arguments: [leafInfo.uin, leafInfo.isPrivate]
+        arguments: [leafInfo.uin, leafInfo.type]
       };
       this.contextValue = 'leaf';
-      this.iconPath = vscode.Uri.parse(leafInfo.avatarUrl);
+      this.iconPath = vscode.Uri.parse(leafInfo.avatar);
       this.tooltip = leafInfo.uin.toString();
       this.children = [];
     }
@@ -46,8 +50,8 @@ class ContactTreeItem<
 /** 消息列表子节点 */
 class MessageTreeItem extends ContactTreeItem<any> {
   readonly uin: number;
-  readonly isPrivate: boolean;
-  private cnt: number = 0;
+  readonly type: ChatType;
+  private cnt = 0;
   /**
    * @param label 好友昵称/群聊名
    * @param leafInfo 好友/群聊包含的额外显示数据
@@ -55,7 +59,7 @@ class MessageTreeItem extends ContactTreeItem<any> {
   constructor(label: string, leafInfo: LeafInfo) {
     super(label, leafInfo);
     this.uin = leafInfo.uin;
-    this.isPrivate = leafInfo.isPrivate;
+    this.type = leafInfo.type;
     this.contextValue = 'message';
   }
 
@@ -63,7 +67,7 @@ class MessageTreeItem extends ContactTreeItem<any> {
    * 标记新消息
    * @param cnt 新消息数，默认`+1`
    */
-  markNew(cnt: number = 1) {
+  markNew(cnt = 1) {
     this.cnt += cnt;
     this.description = `+${this.cnt}`;
   }
@@ -82,7 +86,7 @@ export default class ContactTreeDataProvider
   implements vscode.TreeDataProvider<ContactTreeItem<any>>
 {
   /** 客户端账号 */
-  private readonly _client: icqq.Client;
+  private readonly _client: Client;
   /** 消息列表 */
   private readonly _messages: ContactTreeItem<MessageTreeItem> =
     new ContactTreeItem('消息');
@@ -103,7 +107,7 @@ export default class ContactTreeDataProvider
   /**
    * @param client 一个*在线的*客户端
    */
-  constructor(client: icqq.Client) {
+  constructor(client: Client) {
     this._client = client;
     // 注册通知事件处理
     client.on('notice.friend.decrease', (event) => {
@@ -138,19 +142,13 @@ export default class ContactTreeDataProvider
         this.refreshContacts(false);
       }
     });
-    client.on('message.group', (event: icqq.GroupMessageEvent) => {
-      this.refreshMessages(false, event.group_id, true);
-    });
-    client.on('message.private', (event: icqq.PrivateMessageEvent) => {
-      this.refreshMessages(true, event.from_id, true);
-    });
     // 热重启
     client.on('system.online', () => {
       this.refreshContacts(false);
       this.refreshContacts(true);
       this._messages.children = [];
     });
-    bind(); // 绑定命令
+    // bind(); // 绑定命令
   }
 
   getTreeItem(element: ContactTreeItem<any>): ContactTreeItem<any> {
@@ -180,15 +178,15 @@ export default class ContactTreeDataProvider
             undefined,
             [...this._client.fl.values()]
               // 移除非该分组下的好友
-              .filter((info: icqq.FriendInfo) => info.class_id === classId)
-              .map((info: icqq.FriendInfo) => {
+              .filter((info: FriendInfo) => info.class_id === classId)
+              .map((info: FriendInfo) => {
                 /** 好友根节点 */
                 const friend: ContactTreeItem<any> = new ContactTreeItem(
                   info.remark.length ? info.remark : info.nickname,
                   {
                     uin: info.user_id,
-                    isPrivate: true,
-                    avatarUrl: this._client
+                    type: ChatType.Friend,
+                    avatar: this._client
                       .pickFriend(info.user_id)
                       .getAvatarUrl(40)
                   }
@@ -211,7 +209,7 @@ export default class ContactTreeDataProvider
             className,
             undefined,
             [...this._client.gl.values()]
-              .filter((info: icqq.GroupInfo) =>
+              .filter((info: GroupInfo) =>
                 classId === 0
                   ? // 群主
                     info.owner_id === this._client.uin
@@ -221,14 +219,14 @@ export default class ContactTreeDataProvider
                   : // 群员
                     info.owner_id !== this._client.uin && !info.admin_flag
               )
-              .map((info: icqq.GroupInfo) => {
+              .map((info: GroupInfo) => {
                 /** 群聊根节点 */
                 const group: ContactTreeItem<any> = new ContactTreeItem(
                   info.group_name,
                   {
                     uin: info.group_id,
-                    isPrivate: false,
-                    avatarUrl: this._client
+                    type: ChatType.Group,
+                    avatar: this._client
                       .pickGroup(info.group_id)
                       .getAvatarUrl(40)
                   }
@@ -243,39 +241,45 @@ export default class ContactTreeDataProvider
 
   /**
    * 更新新消息列表
-   * @param isPrivate 私聊为`true`，群聊为`false`
+   * @param type 聊天类型：私聊or群聊
    * @param uin 私聊为对方账号，群聊为群号
    * @param flag 有新消息为`true`，已读新消息为`false`
    */
-  refreshMessages(isPrivate: boolean, uin: number, flag: boolean) {
-    const target: number = this._messages.children.findIndex(
-      (msg) => msg.isPrivate === isPrivate && msg.uin === uin
+  refreshMessages(type: ChatType, uin: number, flag: boolean) {
+    const targetIndex: number = this._messages.children.findIndex(
+      (msg) => msg.type === type && msg.uin === uin
     );
-    if (target === -1) {
+    if (targetIndex === -1) {
       // 消息列表中没有该消息
-      const label: string | undefined = isPrivate
+      const label: string | undefined = type
         ? this._client.pickFriend(uin).remark?.length
           ? this._client.pickFriend(uin).remark
           : this._client.pickFriend(uin).nickname
         : this._client.pickGroup(uin).name;
-      const avatarUrl: string = isPrivate
+      const avatar: string = type
         ? this._client.pickFriend(uin).getAvatarUrl(40)
         : this._client.pickGroup(uin).getAvatarUrl(40);
-      this._messages.children.unshift(
-        new MessageTreeItem(label as string, { uin, isPrivate, avatarUrl })
-      );
+      const newMsg = new MessageTreeItem(label as string, {
+        uin,
+        type,
+        avatar
+      });
+      if (flag) {
+        newMsg.markNew();
+      }
+      this._messages.children.unshift(newMsg);
     } else {
       // 在现有消息上修改
       if (flag) {
         // 标记未读
-        this._messages.children[target].markNew();
+        this._messages.children[targetIndex].markNew();
         // 更新列表顺序
         this._messages.children.unshift(
-          this._messages.children.splice(target, 1)[0]
+          this._messages.children.splice(targetIndex, 1)[0]
         );
       } else {
         // 标记已读
-        this._messages.children[target].markRead();
+        this._messages.children[targetIndex].markRead();
       }
     }
     // 刷新列表
@@ -301,7 +305,7 @@ export default class ContactTreeDataProvider
   showProfile(item: ContactTreeItem<any>) {
     if (item.command?.arguments && item.command.arguments[1]) {
       const info = this._client.pickFriend(Number(item.tooltip))
-        .info as icqq.FriendInfo;
+        .info as FriendInfo;
       const profile = [
         '昵称：' + info.nickname,
         '性别：' +
@@ -315,7 +319,7 @@ export default class ContactTreeDataProvider
       });
     } else {
       const info = this._client.pickGroup(Number(item.tooltip))
-        .info as icqq.GroupInfo;
+        .info as GroupInfo;
       const profile = [
         '群名：' + info.group_name,
         'QQ：' + info.group_id,

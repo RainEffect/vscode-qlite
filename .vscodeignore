@@ -1,12 +1,12 @@
+.github/**
 .vscode/**
-node_modules/**
-src/**
 .gitignore
+.eslintrc.json
 .prettierignore
 .prettierrc
-.yarnrc
+node_modules/**
+src/**
+tsconfig.json
 webpack.config.ts
-**/tsconfig.json
-**/.eslintrc.json
 **/*.map
 **/*.ts

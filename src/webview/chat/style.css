@@ -1,0 +1,199 @@
+:root {
+  /* 头衔颜色 */
+  --badge-fill-owner: #f2bf25;
+  --badge-fill-admin: #72d6a0;
+  /* 头像参数 */
+  --avatar-size: 40px;
+  --avatar-margin: 8px;
+  --avatar-border-width: 2px;
+}
+
+/* 全局 */
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 聊天框 */
+.message {
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+  overflow: hidden auto;
+  height: 100%;
+}
+/* 所有聊天内容的外边距 */
+.message > * {
+  margin: 1px;
+}
+
+/* 消息 */
+.msg {
+  display: flex;
+}
+.left {
+  flex-direction: row;
+}
+.right {
+  flex-direction: row-reverse;
+}
+
+/* 头像 */
+.msg > .avatar {
+  height: var(--avatar-size);
+  width: var(--avatar-size);
+  border-radius: 50%;
+  margin: var(--avatar-margin);
+  border: var(--avatar-border-width) solid;
+}
+
+/* 消息主体 */
+.msg > .container {
+  display: flex;
+  flex-direction: column;
+  /* 通过头像宽度计算消息主体的宽度 */
+  max-width: calc(
+    100% - 4 *
+      (
+        var(--avatar-size) / 2 + var(--avatar-margin) +
+          var(--avatar-border-width)
+      )
+  );
+}
+.left > .container {
+  align-items: flex-start;
+}
+.right > .container {
+  align-items: flex-end;
+}
+
+/* 消息头 */
+.msg .header {
+  display: flex;
+}
+.left .header {
+  text-align: left;
+  flex-direction: row;
+}
+.right .header {
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+/* 消息头所有内容 */
+.header > vscode-tag {
+  margin: 2px;
+  vertical-align: middle;
+}
+
+/* 消息内容 */
+.content {
+  word-wrap: break-word;
+  word-break: break-all;
+  text-align: left;
+  position: relative;
+  padding: 4px 6px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  border-radius: calc(2 * var(--button-icon-corner-radius));
+  border: 1px solid var(--vscode-input-border);
+  background-color: var(--vscode-input-background);
+}
+
+.content vscode-tag {
+  white-space: normal;
+}
+.content vscode-tag:hover {
+  cursor: pointer;
+}
+/* 放大的图片 */
+.content img.enlarge {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90vw;
+  max-height: 90vw;
+  box-shadow: 10px 10px 20px 5px var(--vscode-widget-shadow);
+}
+
+.content .at {
+  white-space: normal;
+}
+
+.content .face {
+  width: var(--vscode-editor-font-size);
+  vertical-align: text-bottom;
+}
+
+/* 通知 */
+.tip {
+  width: fit-content;
+  align-self: center;
+}
+
+/* 输入框 */
+.chat > * {
+  margin: 1px;
+  display: flex;
+}
+
+/* 工具导航栏 */
+.tool-box {
+  border-top: 1px solid;
+}
+.tool-box > vscode-button {
+  margin: 2px;
+}
+
+/* 工具栏 */
+.stamp-box,
+.face-box,
+.at-box {
+  flex-wrap: wrap;
+  max-height: 200px;
+  overflow: hidden auto;
+}
+
+/* 漫游表情 */
+.stamp-box > * {
+  object-fit: contain;
+  max-width: 64px;
+  max-height: 64px;
+  vertical-align: middle;
+}
+
+/* QQ表情 */
+.face-box > * {
+  max-width: 32px;
+  max-height: 32px;
+  vertical-align: middle;
+}
+
+/* at成员 */
+.at-box {
+  flex-wrap: nowrap;
+  flex-direction: column;
+}
+.at-box > * {
+  width: 100%;
+  min-height: 25px;
+}
+
+/* 输入框 */
+.input {
+  flex: 1;
+}
+
+/* 发送按钮 */
+.send {
+  padding: 4px;
+}
