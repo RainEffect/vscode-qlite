@@ -2,6 +2,25 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.0] - 2023-06-21
+
+### Added
+- 登录页面添加`登录状态`选项
+- 支持修改`个人资料`的某些项
+- 聊天页面支持显示`通知`、`戳一戳`消息
+
+### Changed
+- 调整`msgHandler`类的接口调用方式，降低开发难度
+- 搜索好友与群聊合并，可同时搜索
+- 更换一个更稳定的获取`qq表情`图片的网址
+
+### Removed
+- 登录页面移除`登录方式`选项
+
+### Fixed
+- 修复自动登录失败后无法再次登录的bug
+- 修复每次登录都会重新创建`device`信息的bug（fixed from icqq）
+
 ## [1.5.0-Pre-release] - 2023-06-12
 
 ### Removed
