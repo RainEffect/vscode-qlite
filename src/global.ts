@@ -44,7 +44,8 @@ export default class Global {
       log_level: 'error',
       platform: workspace.getConfiguration().get('qlite.platform') as Platform,
       ignore_self: false,
-      data_dir: Global.rootDir
+      data_dir: Global.rootDir,
+      sign_api_addr: 'http://qq.wxfsq.com/sign'
     };
     Global.client = new Client(defaultConf);
     // 登录失败
