@@ -1,6 +1,6 @@
 {
   "name": "vscode-qlite",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "publisher": "Vi-brance",
   "engines": {
     "vscode": "^1.77.0"

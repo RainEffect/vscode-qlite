@@ -2,6 +2,15 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.2] - 2023-07-21
+
+### Changed
+- 更新icqq，添加`sign api`
+- 登录失败能快捷打开开发者工具查看日志输出（没啥大用）
+
+### Fixed
+- 修复扩展市场中扩展说明乱码的bug
+
 ## [1.5.1] - 2023-06-21
 
 ### Added
