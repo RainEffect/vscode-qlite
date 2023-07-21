@@ -83,7 +83,20 @@ export default class LoginViewProvider implements WebviewViewProvider {
       this.client.login(msg.payload.uin, msg.payload.password);
       // 10s无响应则返回登录失败的信息
       const timeout = setTimeout(() => {
-        window.showErrorMessage('登录失败，请查看日志输出');
+        window
+          .showErrorMessage(
+            '登录失败，是否要在开发人员工具中查看日志输出？',
+            '是',
+            '否'
+          )
+          .then((value) => {
+            if (!value || value === '否') {
+              return;
+            }
+            commands.executeCommand(
+              'workbench.action.webview.openDeveloperTools'
+            );
+          });
         msgHandler.request('loginRet', false);
         errorDispose();
       }, 10000);
