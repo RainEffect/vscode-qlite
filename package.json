@@ -7,7 +7,7 @@
   },
   "license": "GPL-3.0",
   "displayName": "VSCode-QLite",
-  "description": "在VSCode中使用QQ，让你摸鱼工作两不误",
+  "description": "Chat in QQ while coding",
   "categories": [
     "Other"
   ],
@@ -110,7 +110,7 @@
               "功能有限，不建议使用",
               "",
               "",
-              "默认设备登录失败请选择此项"
+              "此协议无法设置在线状态"
             ],
             "enumItemLabels": [
               "Android",
@@ -118,7 +118,7 @@
               "Watch",
               "iMac",
               "iPad",
-              "old_Android"
+              "Tim"
             ],
             "default": 1
           }
@@ -132,7 +132,7 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.2.2",
-    "icqq": "^0.4.2",
+    "icqq": "^0.4.11",
     "xss-filters": "^1.2.7"
   },
   "devDependencies": {
