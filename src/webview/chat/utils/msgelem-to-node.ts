@@ -28,7 +28,8 @@ function addTagClickEvent(elem: Tag, src: string) {
       return;
     }
     showImage = true;
-    elem.insertAdjacentElement('afterend', image);
+    // 图片插入到body一级子元素中
+    document.body.children[0].insertAdjacentElement('afterend', image);
     document.addEventListener('click', function removeImg(ev: MouseEvent) {
       if (
         ev.target !== elem &&
