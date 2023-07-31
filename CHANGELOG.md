@@ -2,6 +2,16 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.3] - 2023-07-31
+
+### Changed
+- 修改消息头（显示头衔、名称、时间的部分）的样式，支持跟随vscode主题的切换
+
+### Fixed
+- 修复群聊接收两次本人发言的bug
+- 修复预览图片图层被新消息覆盖的bug
+- 修复预览图片过高时显示不全的bug
+
 ## [1.5.2] - 2023-07-21
 
 ### Changed
