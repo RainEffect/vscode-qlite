@@ -1,4 +1,3 @@
-import { Tag } from '@vscode/webview-ui-toolkit';
 import {
   GroupRole,
   MessageElem,
@@ -25,24 +24,23 @@ function formatTimestamp(time?: number) {
 /**
  * 创建管理or群主头衔组件
  * @param role 成员角色
- * @returns `vscode-tag`组件
+ * @returns `span`组件
  */
-export function createFlagTag(role: 'admin' | 'owner') {
-  const elem = document.createElement('vscode-tag') as Tag;
+export function createFlagSpan(role: 'admin' | 'owner') {
+  const elem = document.createElement('span');
   elem.className = 'flag';
   elem.textContent = role === 'owner' ? '群主' : '管理员';
-  elem.fill = role;
+  elem.style.backgroundColor = role === 'owner' ? '#f2bf25' : '#72d6a0';
   return elem;
 }
 
 /**
  * 创建名字组件
  * @param name 发送名
- * @returns `vscode-tag`组件
+ * @returns `span`组件
  */
-function createNameTag(name: string) {
-  const elem = document.createElement('vscode-tag') as Tag;
-  elem.fill = 'transparent';
+function createNameSpan(name: string) {
+  const elem = document.createElement('span');
   elem.className = 'name';
   elem.textContent = name;
   return elem;
@@ -51,11 +49,10 @@ function createNameTag(name: string) {
 /**
  * 创建时间组件
  * @param time 发送时间戳
- * @returns `vscode-tag`组件
+ * @returns `span`组件
  */
-function createTimeTag(time: number) {
-  const elem = document.createElement('vscode-tag') as Tag;
-  elem.fill = 'transparent';
+function createTimeSpan(time: number) {
+  const elem = document.createElement('span');
   elem.className = 'time';
   elem.textContent = formatTimestamp(time);
   return elem;
@@ -63,8 +60,8 @@ function createTimeTag(time: number) {
 
 /**
  * 群聊调用，创建消息头组件
- * @param time 发送时间，用于 {@link createTimeTag}
- * @param name 发送名，用于 {@link createNameTag}
+ * @param time 发送时间，用于 {@link createTimeSpan}
+ * @param name 发送名，用于 {@link createNameSpan}
  * @param role 管理头衔，用于 {@link createFlagTag}
  * @returns `div`组件
  */
@@ -73,13 +70,13 @@ function createHeaderElem(time: number, name?: string, role?: GroupRole) {
   elem.className = 'header';
   if (role && role !== 'member') {
     // 添加管理员or群主头衔
-    const flagElem = createFlagTag(role);
+    const flagElem = createFlagSpan(role);
     elem.append(flagElem);
   }
   if (name) {
-    elem.append(createNameTag(name));
+    elem.append(createNameSpan(name));
   }
-  elem.append(createTimeTag(time));
+  elem.append(createTimeSpan(time));
   return elem;
 }
 

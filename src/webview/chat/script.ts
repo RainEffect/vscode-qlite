@@ -5,7 +5,7 @@ import ChatCommand, { UserInfo } from '../../message/chat';
 import MessageHandler from '../../message/message-handler';
 import { ChatType } from '../../message/parse-msg-id';
 import createNoticeMsg from './utils/create-notice-msg';
-import createUserMsg, { createFlagTag } from './utils/create-user-msg';
+import createUserMsg, { createFlagSpan } from './utils/create-user-msg';
 import { facemap } from './utils/face';
 import {
   FaceType,
@@ -381,7 +381,7 @@ msgBox.addEventListener('scroll', function (ev: Event) {
                 insertInput(createAtElem(member.user_id, name));
               if (member.role !== 'member') {
                 // 添加头衔
-                elem.append(createFlagTag(member.role));
+                elem.append(createFlagSpan(member.role));
               }
               atBox.append(elem);
             });

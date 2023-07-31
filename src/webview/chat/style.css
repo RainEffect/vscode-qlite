@@ -1,7 +1,4 @@
 :root {
-  /* 头衔颜色 */
-  --badge-fill-owner: #f2bf25;
-  --badge-fill-admin: #72d6a0;
   /* 头像参数 */
   --avatar-size: 40px;
   --avatar-margin: 8px;
@@ -74,6 +71,9 @@ body {
 .right > .container {
   align-items: flex-end;
 }
+.container > * {
+  margin: auto 2px;
+}
 
 /* 消息头 */
 .msg .header {
@@ -89,9 +89,14 @@ body {
 }
 
 /* 消息头所有内容 */
-.header > vscode-tag {
-  margin: 2px;
-  vertical-align: middle;
+.header > * {
+  padding: 2px;
+}
+
+/* 头衔加粗 */
+.flag {
+  border-radius: 2px;
+  font-weight: bold;
 }
 
 /* 消息内容 */
