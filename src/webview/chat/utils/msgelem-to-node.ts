@@ -107,6 +107,7 @@ export function createAtElem(qq: number | 'all', target?: string) {
 
 /**
  * 创建文件组件
+ * @todo 自定义文件组件
  * @param name 文件名
  * @param fid 文件id
  * @param size 文件大小
