@@ -120,13 +120,13 @@ body {
   cursor: pointer;
 }
 /* 放大的图片 */
-.content img.enlarge {
+img.enlarge {
   position: fixed;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   max-width: 90vw;
-  max-height: 90vw;
+  max-height: 90vh;
   box-shadow: 10px 10px 20px 5px var(--vscode-widget-shadow);
 }
 
