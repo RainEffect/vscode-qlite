@@ -43,7 +43,6 @@ export default class Global {
     const defaultConf: Config = {
       log_level: 'error',
       platform: workspace.getConfiguration().get('qlite.platform') as Platform,
-      ignore_self: false,
       data_dir: Global.rootDir,
       sign_api_addr: 'http://qq.wxfsq.com/sign'
     };
