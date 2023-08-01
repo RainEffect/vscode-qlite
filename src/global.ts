@@ -14,6 +14,15 @@ import ChatViewManager from './chat/chat-view';
 import ContactTreeDataProvider from './contact/contact-tree';
 import LoginViewProvider from './login/login-view';
 
+function getConfiguration(command: 'platform'): number;
+function getConfiguration<T extends 'platform'>(command: T) {
+  const conf = workspace.getConfiguration('qlite');
+  if (command === 'platform') {
+    return Platform[(conf.get(command) ?? 'Android') as keyof typeof Platform];
+  }
+  return undefined;
+}
+
 /** 管理全局静态变量，扩展启动时初始化所有静态成员变量 */
 export default class Global {
   /** 扩展工具集 */
@@ -42,7 +51,7 @@ export default class Global {
     /** {@link Global.client client} 的配置参数 */
     const defaultConf: Config = {
       log_level: 'error',
-      platform: workspace.getConfiguration().get('qlite.platform') as Platform,
+      platform: getConfiguration('platform'),
       data_dir: Global.rootDir,
       sign_api_addr: 'http://qq.wxfsq.com/sign'
     };
