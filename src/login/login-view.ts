@@ -7,7 +7,7 @@ import {
   window
 } from 'vscode';
 import LoginRecordManager from '../login-record';
-import LoginReqType, { LoginInfo } from '../message/login';
+import * as login from '../message/login';
 import { getHtmlForWebview } from '../global';
 import { Messenger } from 'vscode-messenger';
 
@@ -71,7 +71,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
     webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
     // 获取登录记录
-    messenger.onRequest(LoginReqType.getLoginInfo, () => {
+    messenger.onRequest(login.getLoginInfo, () => {
       if (this.isEmpty) {
         this.isEmpty = false;
         return;
@@ -80,56 +80,50 @@ export default class LoginViewProvider implements WebviewViewProvider {
       }
     });
     // 登录操作
-    messenger.onNotification(
-      LoginReqType.submitLoginInfo,
-      (loginInfo: LoginInfo) => {
-        this.client.login(loginInfo.uin, loginInfo.password);
-        // 10s无响应则返回登录失败的信息
-        const timeout = setTimeout(() => {
-          window
-            .showErrorMessage(
-              '登录失败，是否要在开发人员工具中查看日志输出？',
-              '是',
-              '否'
-            )
-            .then((value) => {
-              if (!value || value === '否') {
-                return;
-              }
-              commands.executeCommand(
-                'workbench.action.webview.openDeveloperTools'
-              );
-            });
-          messenger.sendNotification(
-            { method: 'loginRet' },
-            { type: 'webview', webviewId: 'loginView' },
-            false
-          );
-          errorDispose();
-        }, 10e3);
-        // 登录成功
-        const onlineDispose = this.client.on('system.online', () => {
-          this.client.setOnlineStatus(loginInfo.onlineStatus);
-          // 更新账号记录
-          LoginRecordManager.setRecent(this.client.uin, loginInfo);
-          commands.executeCommand('setContext', 'qlite.isOnline', true);
-          clearTimeout(timeout);
-          onlineDispose();
-          errorDispose();
-        });
-        // 登录失败
-        const errorDispose = this.client.on('system.login.error', (error) => {
-          window.showErrorMessage(error.message);
-          messenger.sendNotification(
-            { method: 'loginRet' },
-            { type: 'webview', webviewId: 'loginView' },
-            false
-          );
-          clearTimeout(timeout);
-          errorDispose();
-        });
-      }
-    );
+    messenger.onNotification(login.submitLoginInfo, (loginInfo: login.LoginInfo) => {
+      this.client.login(loginInfo.uin, loginInfo.password);
+      // 10s无响应则返回登录失败的信息
+      const timeout = setTimeout(() => {
+        window
+          .showErrorMessage(
+            '登录失败，是否要在开发人员工具中查看日志输出？',
+            '是',
+            '否'
+          )
+          .then((value) => {
+            if (!value || value === '否') {
+              return;
+            }
+            commands.executeCommand(
+              'workbench.action.webview.openDeveloperTools'
+            );
+          });
+        messenger.sendNotification(
+          { method: 'loginRet' },
+          { type: 'webview', webviewId: 'loginView' },
+          false
+        );
+        errorDispose();
+      }, 10e3);
+      // 登录成功
+      const onlineDispose = this.client.on('system.online', () => {
+        this.client.setOnlineStatus(loginInfo.onlineStatus);
+        // 更新账号记录
+        LoginRecordManager.setRecent(this.client.uin, loginInfo);
+        commands.executeCommand('setContext', 'qlite.isOnline', true);
+        clearTimeout(timeout);
+        onlineDispose();
+        errorDispose();
+      });
+      // 登录失败
+      const errorDispose = this.client.on('system.login.error', (error) => {
+        window.showErrorMessage(error.message);
+        messenger.sendNotification(login.loginRet, login.webReceiver, false);
+        clearTimeout(timeout);
+        onlineDispose();
+        errorDispose();
+      });
+    });
     // 关闭页面
     webviewView.onDidDispose(() => {
       this._view = undefined;

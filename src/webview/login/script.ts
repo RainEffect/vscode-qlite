@@ -6,7 +6,7 @@ import {
   Button,
   Dropdown
 } from '@vscode/webview-ui-toolkit';
-import LoginReqType, { LoginInfo } from '../../message/login';
+import * as login from '../../message/login';
 import { Messenger } from 'vscode-messenger-webview';
 
 /** 注册`vscode-ui`的`webview`组件 */
@@ -58,7 +58,7 @@ function changeLoginState(state = !loginButton.disabled) {
 }
 
 // 登录结果
-messenger.onNotification(LoginReqType.loginRet, (ret: boolean) => {
+messenger.onNotification(login.loginRet, (ret: boolean) => {
   if (!ret) {
     // 登录失败
     changeLoginState();
@@ -69,18 +69,14 @@ messenger.onNotification(LoginReqType.loginRet, (ret: boolean) => {
 // 提交登录信息
 loginButton.addEventListener('click', () => {
   /** 登录信息 */
-  const record: LoginInfo = {
+  const record: login.LoginInfo = {
     uin: Number(uinText.value),
     password: passwordText.value,
     savePass: savePassCheckbox.checked,
     autoLogin: autoLoginCheckbox.checked,
     onlineStatus: Number(statusDropdown.selectedOptions[0].value)
   };
-  messenger.sendRequest(
-    LoginReqType.submitLoginInfo,
-    { type: 'extension' },
-    record
-  );
+  messenger.sendRequest(login.submitLoginInfo, { type: 'extension' }, record);
   changeLoginState();
   loginButton.textContent = '登录中';
 });
@@ -99,7 +95,7 @@ window.addEventListener('keydown', (event) => {
   refreshButtonState();
   // 获取登录账号历史信息
   messenger
-    .sendRequest(LoginReqType.getLoginInfo, { type: 'extension' })
+    .sendRequest(login.getLoginInfo, { type: 'extension' })
     .then((loginInfo) => {
       if (!loginInfo) {
         return;
