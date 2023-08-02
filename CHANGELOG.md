@@ -2,6 +2,14 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.4] - 2023-08-02
+
+### Changed
+- 找到了一个较为成熟的`extension <--> webview`通信协议，替换自己编写的`message-handler`协议，解决通信产生的小问题
+
+### Fixed
+- 修复登录界面无法二次登录的bug
+
 ## [1.5.3] - 2023-07-31
 
 ### Changed
