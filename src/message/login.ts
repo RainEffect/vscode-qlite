@@ -25,7 +25,7 @@ export const webReceiver: MessageParticipant = {
   webviewId: 'loginView'
 };
 
-/** 登录页面的请求类型表 */
+/** 登录页面的请求类型 */
 /** 获取登录信息 */
 export const getLoginInfo: RequestType<void, LoginInfo | undefined> = {
   method: 'getLoginInfo'
