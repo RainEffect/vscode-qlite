@@ -80,7 +80,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
       }
     });
     // 登录操作
-    messenger.onNotification(login.submitLoginInfo, (loginInfo: login.LoginInfo) => {
+    messenger.onNotification(login.submitLoginInfo, (loginInfo) => {
       this.client.login(loginInfo.uin, loginInfo.password);
       // 10s无响应则返回登录失败的信息
       const timeout = setTimeout(() => {
@@ -98,11 +98,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
               'workbench.action.webview.openDeveloperTools'
             );
           });
-        messenger.sendNotification(
-          { method: 'loginRet' },
-          { type: 'webview', webviewId: 'loginView' },
-          false
-        );
+        messenger.sendNotification(login.loginRet, login.webReceiver, false);
         errorDispose();
       }, 10e3);
       // 登录成功
