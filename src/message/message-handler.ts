@@ -2,7 +2,6 @@ import EventEmitter from 'events';
 import { Webview } from 'vscode';
 import { WebviewApi } from 'vscode-webview';
 import ChatCommand from './chat';
-import LoginCommand from './login';
 
 /** 所有指令表的基础属性结构 */
 export interface Command {
@@ -19,7 +18,7 @@ export interface Command {
 type CommandType = 'req' | 'res';
 
 /** 网页消息 */
-interface WebMessage<C extends LoginCommand | ChatCommand> {
+interface WebMessage<C extends ChatCommand> {
   /** 消息标识 */
   id: number;
   /** 消息指令 */
@@ -31,13 +30,13 @@ interface WebMessage<C extends LoginCommand | ChatCommand> {
 }
 
 type CallBack<
-  CMD extends LoginCommand | ChatCommand,
+  CMD extends ChatCommand,
   C extends keyof CMD,
   T extends CommandType
 > = (msg: WebMessage<CMD> & { command: C; type: T }) => void;
 
 /** 待处理请求字典 */
-interface PendingRequest<C extends LoginCommand | ChatCommand> {
+interface PendingRequest<C extends ChatCommand> {
   /** 请求的处理函数 */
   resolve: (/** 响应的消息 */ msg: WebMessage<C>) => void;
   /** 请求的计时器 */
@@ -46,7 +45,7 @@ interface PendingRequest<C extends LoginCommand | ChatCommand> {
 
 /** 消息处理器类，需显式定义处理器使用的指令表`CMD` */
 export default class MessageHandler<
-  CMD extends LoginCommand | ChatCommand
+  CMD extends ChatCommand
 > extends EventEmitter {
   /** 未处理的请求 */
   private pendingRequests: Map<number, PendingRequest<CMD>> = new Map();
