@@ -13,6 +13,7 @@ import {
 import ChatViewManager from './chat/chat-view';
 import ContactTreeDataProvider from './contact/contact-tree';
 import LoginViewProvider from './login/login-view';
+import { Messenger } from 'vscode-messenger';
 
 function getConfiguration(command: 'platform'): number;
 function getConfiguration<T extends 'platform'>(command: T) {
@@ -37,6 +38,8 @@ export default class Global {
   static contactViewProvider: ContactTreeDataProvider;
   /** 聊天页面容器 */
   static chatViewManager: ChatViewManager;
+  /** 消息处理器 */
+  static messenger: Messenger;
 
   constructor(context: ExtensionContext) {
     Global.context = context;
@@ -56,27 +59,19 @@ export default class Global {
       sign_api_addr: 'http://qq.wxfsq.com/sign'
     };
     Global.client = new Client(defaultConf);
-    // 登录失败
-    Global.client.on('system.login.error', ({ code, message }) => {
-      window.showErrorMessage(`${message}\nError Code: ${code}`);
-    });
     // 离线
     Global.client.on('system.offline', ({ message }) => {
       commands.executeCommand('setContext', 'qlite.isOnline', false);
       window.showWarningMessage(`${message}\nclient offline`);
     });
     // 初始化视图容器
-    Global.loginViewProvider = new LoginViewProvider(
-      Global.client,
-      context.extensionUri
-    );
+    Global.loginViewProvider = new LoginViewProvider(context.extensionUri);
     window.registerWebviewViewProvider('loginView', Global.loginViewProvider);
     Global.contactViewProvider = new ContactTreeDataProvider(Global.client);
     window.registerTreeDataProvider('contactView', Global.contactViewProvider);
-    Global.chatViewManager = new ChatViewManager(
-      Global.client,
-      Global.context.extensionUri
-    );
+    Global.chatViewManager = new ChatViewManager(Global.context.extensionUri);
+    // 初始化处理器
+    Global.messenger = new Messenger();
   }
 }
 

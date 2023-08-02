@@ -31,6 +31,9 @@ const autoLoginCheckbox = document.getElementById('auto-login') as Checkbox;
 /** 登录按钮 */
 const loginButton = document.getElementById('login') as Button;
 
+/** 登录超时计时器 */
+let loginTimeout: NodeJS.Timeout | undefined;
+
 /**
  * 刷新登录按钮状态
  */
@@ -55,6 +58,14 @@ function changeLoginState(state = !loginButton.disabled) {
     savePassCheckbox.readOnly =
     statusDropdown.disabled =
       state;
+  if (state) {
+    // 10s未登录成功则发送超时通知
+    loginTimeout = setTimeout(() => {
+      messenger.sendNotification(login.loginTimeout, { type: 'extension' });
+    }, 10e3);
+  } else {
+    clearTimeout(loginTimeout);
+  }
 }
 
 // 登录结果

@@ -1,4 +1,3 @@
-import { Client } from 'icqq';
 import {
   Uri,
   WebviewView,
@@ -8,8 +7,7 @@ import {
 } from 'vscode';
 import LoginRecordManager from '../login-record';
 import * as login from '../message/login';
-import { getHtmlForWebview } from '../global';
-import { Messenger } from 'vscode-messenger';
+import Global, { getHtmlForWebview } from '../global';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements WebviewViewProvider {
@@ -18,14 +16,10 @@ export default class LoginViewProvider implements WebviewViewProvider {
   /** 显示的视图 */
   private _view?: WebviewView;
   /**
-   * @param client 客户端
    * @param extensionUri 扩展根目录
    */
-  constructor(
-    private readonly client: Client,
-    private readonly extensionUri: Uri
-  ) {
-    this.client.on('system.login.device', ({ url }) => {
+  constructor(private readonly extensionUri: Uri) {
+    Global.client.on('system.login.device', ({ url }) => {
       // 设备锁验证
       window
         .showInformationMessage(
@@ -36,11 +30,11 @@ export default class LoginViewProvider implements WebviewViewProvider {
           if (!value) {
             window.showInformationMessage('已取消登录');
           } else {
-            this.client.login();
+            Global.client.login();
           }
         });
     });
-    this.client.on('system.login.slider', ({ url }) => {
+    Global.client.on('system.login.slider', ({ url }) => {
       // 滑动验证码验证
       window.showInformationMessage(`请点击 [此网址](${url}) 完成滑动验证码。`);
       window
@@ -54,7 +48,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
           if (!ticket) {
             window.showInformationMessage('取消登录');
           } else {
-            this.client.submitSlider(ticket);
+            Global.client.submitSlider(ticket);
           }
         });
     });
@@ -62,16 +56,32 @@ export default class LoginViewProvider implements WebviewViewProvider {
 
   resolveWebviewView(webviewView: WebviewView) {
     this._view = webviewView;
-    const messenger = new Messenger();
-    messenger.registerWebviewView(webviewView);
+    const msgParticipant = Global.messenger.registerWebviewView(webviewView);
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
     webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
+    // 登录超时
+    Global.messenger.onNotification(login.loginTimeout, () => {
+      window
+        .showWarningMessage(
+          '登录出错，是否要在开发人员工具中查看登录日志？',
+          '是',
+          '否'
+        )
+        .then((value) => {
+          if (!value || value === '否') {
+            return;
+          }
+          commands.executeCommand(
+            'workbench.action.webview.openDeveloperTools'
+          );
+        });
+    });
     // 获取登录记录
-    messenger.onRequest(login.getLoginInfo, () => {
+    Global.messenger.onRequest(login.getLoginInfo, () => {
       if (this.isEmpty) {
         this.isEmpty = false;
         return;
@@ -80,42 +90,25 @@ export default class LoginViewProvider implements WebviewViewProvider {
       }
     });
     // 登录操作
-    messenger.onNotification(login.submitLoginInfo, (loginInfo) => {
-      this.client.login(loginInfo.uin, loginInfo.password);
-      // 10s无响应则返回登录失败的信息
-      const timeout = setTimeout(() => {
-        window
-          .showErrorMessage(
-            '登录失败，是否要在开发人员工具中查看日志输出？',
-            '是',
-            '否'
-          )
-          .then((value) => {
-            if (!value || value === '否') {
-              return;
-            }
-            commands.executeCommand(
-              'workbench.action.webview.openDeveloperTools'
-            );
-          });
-        messenger.sendNotification(login.loginRet, login.webReceiver, false);
-        errorDispose();
-      }, 10e3);
+    Global.messenger.onNotification(login.submitLoginInfo, (loginInfo) => {
+      Global.client.login(loginInfo.uin, loginInfo.password);
       // 登录成功
-      const onlineDispose = this.client.on('system.online', () => {
-        this.client.setOnlineStatus(loginInfo.onlineStatus);
+      const onlineDispose = Global.client.on('system.online', () => {
+        Global.client.setOnlineStatus(loginInfo.onlineStatus);
         // 更新账号记录
-        LoginRecordManager.setRecent(this.client.uin, loginInfo);
+        LoginRecordManager.setRecent(Global.client.uin, loginInfo);
         commands.executeCommand('setContext', 'qlite.isOnline', true);
-        clearTimeout(timeout);
         onlineDispose();
         errorDispose();
       });
       // 登录失败
-      const errorDispose = this.client.on('system.login.error', (error) => {
+      const errorDispose = Global.client.on('system.login.error', (error) => {
         window.showErrorMessage(error.message);
-        messenger.sendNotification(login.loginRet, login.webReceiver, false);
-        clearTimeout(timeout);
+        Global.messenger.sendNotification(
+          login.loginRet,
+          msgParticipant,
+          false
+        );
         onlineDispose();
         errorDispose();
       });

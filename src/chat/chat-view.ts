@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import Global, { getHtmlForWebview } from '../global';
 import * as chat from '../message/chat';
 import { ChatType, parseMsgId } from '../message/parse-msg-id';
-import { Messenger } from 'vscode-messenger';
 
 /** 聊天页面的管理类 */
 export default class ChatViewManager {
@@ -14,14 +13,10 @@ export default class ChatViewManager {
   ];
 
   /**
-   * @param client 客户端
    * @param extensionUri 扩展根目录
    */
-  constructor(
-    private readonly client: icqq.Client,
-    private readonly extensionUri: vscode.Uri
-  ) {
-    client.on('message.group', (event: icqq.GroupMessageEvent) => {
+  constructor(private readonly extensionUri: vscode.Uri) {
+    Global.client.on('message.group', (event: icqq.GroupMessageEvent) => {
       if (!this.panelMap[ChatType.Group].get(event.group_id)?.active) {
         Global.contactViewProvider.refreshMessages(
           ChatType.Group,
@@ -30,8 +25,9 @@ export default class ChatViewManager {
         );
       }
     });
-    client.on('message.private', (event: icqq.PrivateMessageEvent) => {
-      const uin = event.from_id === client.uin ? event.to_id : event.from_id;
+    Global.client.on('message.private', (event: icqq.PrivateMessageEvent) => {
+      const uin =
+        event.from_id === Global.client.uin ? event.to_id : event.from_id;
       if (!this.panelMap[ChatType.Friend].get(uin)?.active) {
         Global.contactViewProvider.refreshMessages(ChatType.Friend, uin, true);
       }
@@ -51,35 +47,46 @@ export default class ChatViewManager {
     }
     const label =
       (type === ChatType.Friend
-        ? this.client.pickFriend(uin).remark ??
-          this.client.pickFriend(uin).nickname
-        : this.client.pickGroup(uin).name) ?? 'empty name';
+        ? Global.client.pickFriend(uin).remark ??
+          Global.client.pickFriend(uin).nickname
+        : Global.client.pickGroup(uin).name) ?? 'empty name';
     const chatView: vscode.WebviewPanel = vscode.window.createWebviewPanel(
       'chat',
       label,
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true }
     );
-    const messenger = new Messenger();
-    const webReceiver = messenger.registerWebviewPanel(chatView);
+    const msgParticipant = Global.messenger.registerWebviewPanel(chatView);
     this.panelMap[type].set(uin, chatView);
     /** 所有需要发送到页面的事件处理器列表，页面关闭时销毁 */
     const toDispose = [
       type === ChatType.Friend
-        ? this.client.on('message.private', (event) => {
+        ? Global.client.on('message.private', (event) => {
             if (event.friend.uid !== uin) {
               return;
             }
-            messenger.sendNotification(chat.messageEvent, webReceiver, event);
+            Global.messenger.sendNotification(
+              chat.messageEvent,
+              msgParticipant,
+              event
+            );
           })
-        : this.client.on('message.group', (event) => {
+        : Global.client.on('message.group', (event) => {
             if (event.group_id !== uin) {
               return;
             }
-            messenger.sendNotification(chat.messageEvent, webReceiver, event);
+            Global.messenger.sendNotification(
+              chat.messageEvent,
+              msgParticipant,
+              event
+            );
           }),
-      this.client.on('notice', (event) => {
-        messenger.sendNotification(chat.noticeEvent, webReceiver, event);
+      Global.client.on('notice', (event) => {
+        Global.messenger.sendNotification(
+          chat.noticeEvent,
+          msgParticipant,
+          event
+        );
       })
     ];
     chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
@@ -96,51 +103,51 @@ export default class ChatViewManager {
       }
     );
     // 获取自己的基本信息
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.getSimpleInfo,
       () => {
         return {
-          uin: this.client.uin,
+          uin: Global.client.uin,
           name:
             type === ChatType.Friend
-              ? this.client.nickname
-              : this.client.pickGroup(uin).pickMember(this.client.uin).card ??
-                this.client.nickname,
+              ? Global.client.nickname
+              : Global.client.pickGroup(uin).pickMember(Global.client.uin)
+                  .card ?? Global.client.nickname,
           type
         };
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 获取历史消息
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.getChatHistory,
       async (msgid) => {
         let chatHistory: (icqq.PrivateMessage | icqq.GroupMessage)[];
         if (type === ChatType.Friend) {
-          const friend: icqq.Friend = this.client.pickFriend(uin);
+          const friend: icqq.Friend = Global.client.pickFriend(uin);
           chatHistory = await friend.getChatHistory(
             msgid ? parseMsgId(ChatType.Friend, msgid).time : undefined
           );
         } else {
-          const group: icqq.Group = this.client.pickGroup(uin);
+          const group: icqq.Group = Global.client.pickGroup(uin);
           chatHistory = await group.getChatHistory(
             msgid ? parseMsgId(ChatType.Group, msgid).seq : undefined
           );
         }
         return chatHistory;
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 获取用户头像
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.getUserAvatar,
       (uin) => {
-        return this.client.pickUser(uin).getAvatarUrl(40);
+        return Global.client.pickUser(uin).getAvatarUrl(40);
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 发送消息
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.sendMsg,
       async ({ content }) => {
         const ret = await this._sendMsg(type, uin, content);
@@ -149,31 +156,31 @@ export default class ChatViewManager {
         }
         return ret;
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 获取漫游表情
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.getStamp,
       async () => {
-        return await this.client.getRoamingStamp();
+        return await Global.client.getRoamingStamp();
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 获取群成员信息
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.getMember,
       async () => {
-        const group = this.client.pickGroup(uin);
+        const group = Global.client.pickGroup(uin);
         return {
           atAll: group.is_admin || group.is_owner,
           members: [...(await group.getMemberMap()).values()]
         };
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
     // 发送文件
     // @todo 获取发送文件的消息的逻辑待完善，目前采用与发送普通消息一样的暴力监听新消息的方式
-    messenger.onRequest(
+    Global.messenger.onRequest(
       chat.sendFile,
       async (filePath) => {
         const ret = this._sendFile(type, uin, filePath);
@@ -183,22 +190,22 @@ export default class ChatViewManager {
         return ret;
       },
       {
-        sender: webReceiver
+        sender: msgParticipant
       }
     );
     // 获取文件下载链接
-    messenger.onNotification(
+    Global.messenger.onNotification(
       chat.getFileUrl,
       (url) => {
         const target =
           type === ChatType.Friend
-            ? this.client.pickFriend(uin)
-            : this.client.pickGroup(uin);
+            ? Global.client.pickFriend(uin)
+            : Global.client.pickGroup(uin);
         target
           .getFileUrl(url)
           .then((url) => vscode.env.openExternal(vscode.Uri.parse(url)));
       },
-      { sender: webReceiver }
+      { sender: msgParticipant }
     );
   }
 
@@ -214,7 +221,7 @@ export default class ChatViewManager {
       /** 尝试次数 */
       attemps = 5;
     if (type === ChatType.Friend) {
-      const friend = this.client.pickFriend(uin);
+      const friend = Global.client.pickFriend(uin);
       const ret = await friend.sendMsg(content);
       do {
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -226,14 +233,16 @@ export default class ChatViewManager {
         attemps--;
       } while (!sentMsg && attemps);
     } else {
-      const group = this.client.pickGroup(uin);
+      const group = Global.client.pickGroup(uin);
       const ret = await group.sendMsg(content);
       do {
         await new Promise((resolve) => setTimeout(resolve, 200));
         const history = await group.getChatHistory();
         sentMsg = history.find(
           /** id会有1s的误差 */
-          (msg) => msg.message_id === ret.message_id || msg.message_id === ret.message_id + 1
+          (msg) =>
+            msg.message_id === ret.message_id ||
+            msg.message_id === ret.message_id + 1
         );
         attemps--;
       } while (!sentMsg && attemps);
@@ -257,7 +266,7 @@ export default class ChatViewManager {
       /** 尝试次数 */
       attemps = 5;
     if (type === ChatType.Friend) {
-      const friend = this.client.pickFriend(uin);
+      const friend = Global.client.pickFriend(uin);
       const fid = await friend.sendFile(filePath);
       do {
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -271,7 +280,7 @@ export default class ChatViewManager {
         attemps--;
       } while (!sentMsg && attemps);
     } else {
-      const group = this.client.pickGroup(uin);
+      const group = Global.client.pickGroup(uin);
       const fileState = await group.fs.upload(filePath);
       do {
         await new Promise((resolve) => setTimeout(resolve, 200));
