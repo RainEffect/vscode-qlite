@@ -57,9 +57,10 @@ function changeLoginState(state = !loginButton.disabled) {
       state;
 }
 
-// 等待登录回应消息
+// 登录结果
 messenger.onNotification(LoginReqType.loginRet, (ret: boolean) => {
   if (!ret) {
+    // 登录失败
     changeLoginState();
     refreshButtonState();
   }
@@ -80,13 +81,12 @@ loginButton.addEventListener('click', () => {
     { type: 'extension' },
     record
   );
-  loginButton.textContent = '登录中';
   changeLoginState();
+  loginButton.textContent = '登录中';
 });
 
 // 动态判断登录按钮的状态
 uinText.addEventListener('input', refreshButtonState);
-passwordText.addEventListener('input', refreshButtonState);
 
 // 响应回车键
 window.addEventListener('keydown', (event) => {
@@ -105,18 +105,18 @@ window.addEventListener('keydown', (event) => {
         return;
       }
       uinText.value = loginInfo.uin.toString();
+      refreshButtonState();
       if (loginInfo.savePass) {
         passwordText.value = loginInfo.password;
       }
       savePassCheckbox.checked = loginInfo.savePass;
       autoLoginCheckbox.checked = loginInfo.autoLogin;
-      statusDropdown.options.forEach((option) => {
+      for (const option of statusDropdown.options) {
         if (option.value === loginInfo.onlineStatus.toString()) {
           option.selected = true;
           return;
         }
-      });
-      refreshButtonState();
+      }
       if (autoLoginCheckbox.checked) {
         // 自动登录
         loginButton.click();
