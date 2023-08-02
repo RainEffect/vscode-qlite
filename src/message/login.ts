@@ -1,8 +1,8 @@
 import { OnlineStatus } from 'icqq';
-import { Command } from './message-handler';
+import { NotificationType, RequestType } from 'vscode-messenger-common';
 
 /** 登录记录 */
-export interface Record {
+export interface LoginInfo {
   /** 账号 */
   uin: number;
   /** 密码 */
@@ -15,25 +15,15 @@ export interface Record {
   onlineStatus: Exclude<OnlineStatus, OnlineStatus.Offline>;
 }
 
-/** 登录页面指令表 */
-export default interface LoginCommand extends Command {
-  /** 获取上次的登录记录 */
-  getRecord: {
-    req: undefined;
-    /** 登录信息，可能无登录记录 */
-    res: Record | undefined;
+/** 登录页面的请求类型表 */
+export default class LoginReqType {
+  static readonly getLoginInfo: RequestType<void, LoginInfo | undefined> = {
+    method: 'getLoginInfo'
   };
-  /** 提交登录信息 */
-  submitRecord: {
-    /** 登录信息 */
-    req: Record;
-    res: undefined;
+  static readonly submitLoginInfo: NotificationType<LoginInfo> = {
+    method: 'submitLoginInfo'
   };
-  /** 回应登录结果 */
-  loginRet: {
-    /** 登录是否成功 */
-    req: boolean;
-    /** 响应消息 */
-    res: true;
+  static readonly loginRet: NotificationType<boolean> = {
+    method: 'loginRet'
   };
 }

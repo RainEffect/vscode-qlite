@@ -1,14 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import Global from './global';
-import { Record as loginInfo } from './message/login';
+import { LoginInfo } from './message/login';
 
 /** 登录记录文件接口 */
 interface LoginRecords {
   /** 最近登录的账号 */
   recent: number;
   /** 登录账号历史记录 */
-  info: Map<number, loginInfo>;
+  info: Map<number, LoginInfo>;
 }
 
 /** 读取`login-record.json`文件时调用，解析`json`数据 */
@@ -17,8 +17,8 @@ function reviver(key: string, value: any) {
     return Number(value);
   }
   if (key === 'info') {
-    const map = new Map<number, loginInfo>();
-    const obj = new Map(Object.entries(value)) as Map<string, loginInfo>;
+    const map = new Map<number, LoginInfo>();
+    const obj = new Map(Object.entries(value)) as Map<string, LoginInfo>;
     for (const [k, v] of obj) {
       map.set(Number(k), v);
     }
@@ -56,7 +56,7 @@ export default class LoginRecordManager {
    * 获取最近一次的登录记录
    * @returns 最近的登录记录，若`recent = 0`则为空
    */
-  static getRecent(): loginInfo | undefined {
+  static getRecent(): LoginInfo | undefined {
     const records = this.getRecords();
     return records.info.get(records.recent);
   }
@@ -71,8 +71,8 @@ export default class LoginRecordManager {
    * @param uin 登录账号
    * @param info 需要添加/修改的登录记录
    */
-  static setRecent(uin: number, info: loginInfo): void;
-  static setRecent(uin: number, info?: loginInfo) {
+  static setRecent(uin: number, info: LoginInfo): void;
+  static setRecent(uin: number, info?: LoginInfo) {
     const records = this.getRecords();
     if (!info) {
       // 更新`recent`键值

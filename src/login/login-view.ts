@@ -7,9 +7,9 @@ import {
   window
 } from 'vscode';
 import LoginRecordManager from '../login-record';
-import LoginCommand from '../message/login';
-import MessageHandler from '../message/message-handler';
+import LoginReqType, { LoginInfo } from '../message/login';
 import { getHtmlForWebview } from '../global';
+import { Messenger } from 'vscode-messenger';
 
 /** 登录界面容器类 */
 export default class LoginViewProvider implements WebviewViewProvider {
@@ -62,10 +62,8 @@ export default class LoginViewProvider implements WebviewViewProvider {
 
   resolveWebviewView(webviewView: WebviewView) {
     this._view = webviewView;
-    const msgHandler = new MessageHandler<LoginCommand>(
-      false,
-      webviewView.webview
-    );
+    const messenger = new Messenger();
+    messenger.registerWebviewView(webviewView);
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
@@ -73,56 +71,65 @@ export default class LoginViewProvider implements WebviewViewProvider {
     webviewView.webview.html = getHtmlForWebview(webviewView.webview, 'login');
     /** 处理来自页面的消息 */
     // 获取登录记录
-    msgHandler.get('getRecord', 'req').then((msg) => {
-      const record = this.isEmpty ? undefined : LoginRecordManager.getRecent();
-      msgHandler.response(msg.id, msg.command, record);
-      this.isEmpty = false;
+    messenger.onRequest(LoginReqType.getLoginInfo, () => {
+      if (this.isEmpty) {
+        this.isEmpty = false;
+        return;
+      } else {
+        return LoginRecordManager.getRecent();
+      }
     });
     // 登录操作
-    msgHandler.get('submitRecord', 'req').then((msg) => {
-      this.client.login(msg.payload.uin, msg.payload.password);
-      // 10s无响应则返回登录失败的信息
-      const timeout = setTimeout(() => {
-        window
-          .showErrorMessage(
-            '登录失败，是否要在开发人员工具中查看日志输出？',
-            '是',
-            '否'
-          )
-          .then((value) => {
-            if (!value || value === '否') {
-              return;
-            }
-            commands.executeCommand(
-              'workbench.action.webview.openDeveloperTools'
-            );
-          });
-        msgHandler.request('loginRet', false);
-        errorDispose();
-      }, 10000);
-      // 登录成功
-      const onlineDispose = this.client.on('system.online', () => {
-        this.client.setOnlineStatus(msg.payload.onlineStatus);
-        // 更新账号记录
-        LoginRecordManager.setRecent(this.client.uin, msg.payload);
-        msgHandler.request('loginRet', true, 1000).then((msg) => {
-          if (!msg.payload) {
-            return;
-          }
+    messenger.onNotification(
+      LoginReqType.submitLoginInfo,
+      (loginInfo: LoginInfo) => {
+        this.client.login(loginInfo.uin, loginInfo.password);
+        // 10s无响应则返回登录失败的信息
+        const timeout = setTimeout(() => {
+          window
+            .showErrorMessage(
+              '登录失败，是否要在开发人员工具中查看日志输出？',
+              '是',
+              '否'
+            )
+            .then((value) => {
+              if (!value || value === '否') {
+                return;
+              }
+              commands.executeCommand(
+                'workbench.action.webview.openDeveloperTools'
+              );
+            });
+          messenger.sendNotification(
+            { method: 'loginRet' },
+            { type: 'webview', webviewId: 'loginView' },
+            false
+          );
+          errorDispose();
+        }, 10e3);
+        // 登录成功
+        const onlineDispose = this.client.on('system.online', () => {
+          this.client.setOnlineStatus(loginInfo.onlineStatus);
+          // 更新账号记录
+          LoginRecordManager.setRecent(this.client.uin, loginInfo);
           commands.executeCommand('setContext', 'qlite.isOnline', true);
           clearTimeout(timeout);
           onlineDispose();
           errorDispose();
         });
-      });
-      // 登录失败
-      const errorDispose = this.client.on('system.login.error', (error) => {
-        window.showErrorMessage(error.message);
-        msgHandler.request('loginRet', false);
-        clearTimeout(timeout);
-        errorDispose();
-      });
-    });
+        // 登录失败
+        const errorDispose = this.client.on('system.login.error', (error) => {
+          window.showErrorMessage(error.message);
+          messenger.sendNotification(
+            { method: 'loginRet' },
+            { type: 'webview', webviewId: 'loginView' },
+            false
+          );
+          clearTimeout(timeout);
+          errorDispose();
+        });
+      }
+    );
     // 关闭页面
     webviewView.onDidDispose(() => {
       this._view = undefined;
@@ -137,7 +144,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
    */
   setEmptyView(isEmpty: boolean) {
     if (this._view) {
-      console.warn("it's not working when login view is active");
+      console.warn("it's not working when loginView is active");
     }
     this.isEmpty = isEmpty;
   }

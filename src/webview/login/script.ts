@@ -6,15 +6,16 @@ import {
   Button,
   Dropdown
 } from '@vscode/webview-ui-toolkit';
-import LoginCommand, { Record } from '../../message/login';
-import MessageHandler from '../../message/message-handler';
+import LoginReqType, { LoginInfo } from '../../message/login';
+import { Messenger } from 'vscode-messenger-webview';
 
 /** 注册`vscode-ui`的`webview`组件 */
 provideVSCodeDesignSystem().register(allComponents);
 /** 与扩展主体通信的变量 */
 const vscode = acquireVsCodeApi();
 /** 消息处理器 */
-const msgHandler = new MessageHandler<LoginCommand>(true, vscode);
+const messenger = new Messenger(vscode);
+messenger.start();
 
 // 获取页面组件
 /** 登录状态选单 */
@@ -57,11 +58,8 @@ function changeLoginState(state = !loginButton.disabled) {
 }
 
 // 等待登录回应消息
-msgHandler.get('loginRet', 'req').then((msg) => {
-  if (msg.payload) {
-    loginButton.textContent = '登录成功！';
-    msgHandler.response(msg.id, msg.command, true);
-  } else {
+messenger.onNotification(LoginReqType.loginRet, (ret: boolean) => {
+  if (!ret) {
     changeLoginState();
     refreshButtonState();
   }
@@ -70,14 +68,18 @@ msgHandler.get('loginRet', 'req').then((msg) => {
 // 提交登录信息
 loginButton.addEventListener('click', () => {
   /** 登录信息 */
-  const record: Record = {
+  const record: LoginInfo = {
     uin: Number(uinText.value),
     password: passwordText.value,
     savePass: savePassCheckbox.checked,
     autoLogin: autoLoginCheckbox.checked,
     onlineStatus: Number(statusDropdown.selectedOptions[0].value)
   };
-  msgHandler.request('submitRecord', record);
+  messenger.sendRequest(
+    LoginReqType.submitLoginInfo,
+    { type: 'extension' },
+    record
+  );
   loginButton.textContent = '登录中';
   changeLoginState();
 });
@@ -94,29 +96,30 @@ window.addEventListener('keydown', (event) => {
 });
 
 (() => {
+  refreshButtonState();
   // 获取登录账号历史信息
-  msgHandler.request('getRecord', undefined, 2000).then((msg) => {
-    const record = msg.payload;
-    if (!record) {
-      refreshButtonState();
-      return;
-    }
-    uinText.value = record.uin.toString();
-    if (record.savePass) {
-      passwordText.value = record.password;
-    }
-    savePassCheckbox.checked = record.savePass;
-    autoLoginCheckbox.checked = record.autoLogin;
-    statusDropdown.options.forEach((option) => {
-      if (option.value === record.onlineStatus.toString()) {
-        option.selected = true;
+  messenger
+    .sendRequest(LoginReqType.getLoginInfo, { type: 'extension' })
+    .then((loginInfo) => {
+      if (!loginInfo) {
         return;
       }
+      uinText.value = loginInfo.uin.toString();
+      if (loginInfo.savePass) {
+        passwordText.value = loginInfo.password;
+      }
+      savePassCheckbox.checked = loginInfo.savePass;
+      autoLoginCheckbox.checked = loginInfo.autoLogin;
+      statusDropdown.options.forEach((option) => {
+        if (option.value === loginInfo.onlineStatus.toString()) {
+          option.selected = true;
+          return;
+        }
+      });
+      refreshButtonState();
+      if (autoLoginCheckbox.checked) {
+        // 自动登录
+        loginButton.click();
+      }
     });
-    refreshButtonState();
-    if (autoLoginCheckbox.checked) {
-      // 自动登录
-      loginButton.click();
-    }
-  });
 })();
