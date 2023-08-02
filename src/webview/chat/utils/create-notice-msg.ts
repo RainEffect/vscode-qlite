@@ -11,7 +11,8 @@ import {
   MemberIncreaseEvent
 } from 'icqq';
 import { GroupSignEvent } from 'icqq/lib/events';
-import { msgHandler } from '../script';
+import { messenger } from '../script';
+import * as chat from '../../../message/chat';
 
 /**
  * 撤回消息
@@ -59,8 +60,9 @@ export default async function createNoticeMsg(
       tip.textContent = `对方撤回了一条消息`;
     }
   } else {
-    const msg = await msgHandler.request('getMember', undefined, 1000);
-    const members = msg.payload.members;
+    const { members } = await messenger.sendRequest(chat.getMember, {
+      type: 'extension'
+    });
     // 群聊通知
     if (notice.sub_type === 'poke') {
       // 戳一戳

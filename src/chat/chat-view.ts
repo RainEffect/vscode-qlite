@@ -1,9 +1,9 @@
 import * as icqq from 'icqq';
 import * as vscode from 'vscode';
 import Global, { getHtmlForWebview } from '../global';
-import ChatCommand from '../message/chat';
-import MessageHandler from '../message/message-handler';
+import * as chat from '../message/chat';
 import { ChatType, parseMsgId } from '../message/parse-msg-id';
+import { Messenger } from 'vscode-messenger';
 
 /** 聊天页面的管理类 */
 export default class ChatViewManager {
@@ -49,19 +49,19 @@ export default class ChatViewManager {
       this.panelMap[type].get(uin)?.reveal();
       return;
     }
-    const label = (
-      type === ChatType.Friend
+    const label =
+      (type === ChatType.Friend
         ? this.client.pickFriend(uin).remark ??
           this.client.pickFriend(uin).nickname
-        : this.client.pickGroup(uin).name
-    ) as string;
+        : this.client.pickGroup(uin).name) ?? 'empty name';
     const chatView: vscode.WebviewPanel = vscode.window.createWebviewPanel(
       'chat',
       label,
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true }
     );
-    const msgHandler = new MessageHandler<ChatCommand>(false, chatView.webview);
+    const messenger = new Messenger();
+    const webReceiver = messenger.registerWebviewPanel(chatView);
     this.panelMap[type].set(uin, chatView);
     /** 所有需要发送到页面的事件处理器列表，页面关闭时销毁 */
     const toDispose = [
@@ -70,16 +70,16 @@ export default class ChatViewManager {
             if (event.friend.uid !== uin) {
               return;
             }
-            msgHandler.request('messageEvent', event);
+            messenger.sendNotification(chat.messageEvent, webReceiver, event);
           })
         : this.client.on('message.group', (event) => {
             if (event.group_id !== uin) {
               return;
             }
-            msgHandler.request('messageEvent', event);
+            messenger.sendNotification(chat.messageEvent, webReceiver, event);
           }),
       this.client.on('notice', (event) => {
-        msgHandler.request('noticeEvent', event);
+        messenger.sendNotification(chat.noticeEvent, webReceiver, event);
       })
     ];
     chatView.iconPath = vscode.Uri.joinPath(this.extensionUri, 'ico.ico');
@@ -96,158 +96,195 @@ export default class ChatViewManager {
       }
     );
     // 获取自己的基本信息
-    msgHandler.get('getSimpleInfo', 'req').then((msg) => {
-      msgHandler.response(msg.id, msg.command, {
-        uin: this.client.uin,
-        name:
-          type === ChatType.Friend
-            ? this.client.nickname
-            : this.client.pickGroup(uin).pickMember(this.client.uin).card ??
-              this.client.nickname,
-        type
-      });
-    });
+    messenger.onRequest(
+      chat.getSimpleInfo,
+      () => {
+        return {
+          uin: this.client.uin,
+          name:
+            type === ChatType.Friend
+              ? this.client.nickname
+              : this.client.pickGroup(uin).pickMember(this.client.uin).card ??
+                this.client.nickname,
+          type
+        };
+      },
+      { sender: webReceiver }
+    );
     // 获取历史消息
-    msgHandler.get('getChatHistory', 'req').then(async (msg) => {
-      let chatHistory: (icqq.PrivateMessage | icqq.GroupMessage)[];
-      const message_id = msg.payload;
-      if (type === ChatType.Friend) {
-        const friend: icqq.Friend = this.client.pickFriend(uin);
-        chatHistory = await friend.getChatHistory(
-          message_id ? parseMsgId(ChatType.Friend, message_id).time : undefined
-        );
-      } else {
-        const group: icqq.Group = this.client.pickGroup(uin);
-        chatHistory = await group.getChatHistory(
-          message_id ? parseMsgId(ChatType.Group, message_id).seq : undefined
-        );
-      }
-      msgHandler.response(msg.id, msg.command, chatHistory);
-    });
+    messenger.onRequest(
+      chat.getChatHistory,
+      async (msgid) => {
+        let chatHistory: (icqq.PrivateMessage | icqq.GroupMessage)[];
+        if (type === ChatType.Friend) {
+          const friend: icqq.Friend = this.client.pickFriend(uin);
+          chatHistory = await friend.getChatHistory(
+            msgid ? parseMsgId(ChatType.Friend, msgid).time : undefined
+          );
+        } else {
+          const group: icqq.Group = this.client.pickGroup(uin);
+          chatHistory = await group.getChatHistory(
+            msgid ? parseMsgId(ChatType.Group, msgid).seq : undefined
+          );
+        }
+        return chatHistory;
+      },
+      { sender: webReceiver }
+    );
     // 获取用户头像
-    msgHandler.get('getUserAvatar', 'req').then((msg) => {
-      const src = this.client.pickUser(msg.payload.uin).getAvatarUrl(40);
-      msgHandler.response(msg.id, msg.command, src);
-    });
+    messenger.onRequest(
+      chat.getUserAvatar,
+      (uin) => {
+        return this.client.pickUser(uin).getAvatarUrl(40);
+      },
+      { sender: webReceiver }
+    );
     // 发送消息
-    msgHandler.get('sendMsg', 'req').then((msg) => {
-      const content = msg.payload.content;
-      if (type === ChatType.Friend) {
-        const friend: icqq.Friend = this.client.pickFriend(uin);
-        friend.sendMsg(content).then((ret) => {
-          /** 超时检测 */
-          const timeout = setTimeout(() => {
-            clearInterval(interval);
-            vscode.window.showWarningMessage('消息无法显示，请重新打开此页面');
-          }, 4000);
-          /** 间隔获取消息 */
-          const interval = setInterval(async () => {
-            const retMsg = (await friend.getChatHistory(ret.time, 1))[0];
-            // 返回的消息中的时间可能有1s的延迟误差
-            if (retMsg.time === ret.time || retMsg.time === ret.time + 1) {
-              clearInterval(interval);
-              clearTimeout(timeout);
-              msgHandler.response(msg.id, msg.command, retMsg);
-            }
-          }, 200);
-        });
-      } else {
-        const group: icqq.Group = this.client.pickGroup(uin);
-        group.sendMsg(content).then((ret) => {
-          /** 超时检测 */
-          const timeout = setTimeout(() => {
-            clearInterval(interval);
-            vscode.window.showWarningMessage('消息无法显示，请重新打开此页面');
-          }, 2000);
-          /** 间隔获取消息 */
-          const interval = setInterval(async () => {
-            const retMsg = (await group.getChatHistory(ret.seq, 1))[0];
-            if (retMsg.message_id === ret.message_id) {
-              clearInterval(interval);
-              clearTimeout(timeout);
-              msgHandler.response(msg.id, msg.command, retMsg);
-            }
-          }, 200);
-        });
-      }
-    });
+    messenger.onRequest(
+      chat.sendMsg,
+      async ({ content }) => {
+        const ret = await this._sendMsg(type, uin, content);
+        if (!ret) {
+          vscode.window.showWarningMessage('消息无法显示，请重新打开此页面');
+        }
+        return ret;
+      },
+      { sender: webReceiver }
+    );
     // 获取漫游表情
-    msgHandler.get('getStamp', 'req').then(async (msg) => {
-      const stamps = await this.client.getRoamingStamp();
-      msgHandler.response(msg.id, msg.command, stamps);
-    });
+    messenger.onRequest(
+      chat.getStamp,
+      async () => {
+        return await this.client.getRoamingStamp();
+      },
+      { sender: webReceiver }
+    );
     // 获取群成员信息
-    msgHandler.get('getMember', 'req').then(async (msg) => {
-      const group = this.client.pickGroup(uin);
-      const members = [...(await group.getMemberMap()).values()];
-      msgHandler.response(msg.id, msg.command, {
-        atAll: group.is_admin || group.is_owner,
-        members
-      });
-    });
+    messenger.onRequest(
+      chat.getMember,
+      async () => {
+        const group = this.client.pickGroup(uin);
+        return {
+          atAll: group.is_admin || group.is_owner,
+          members: [...(await group.getMemberMap()).values()]
+        };
+      },
+      { sender: webReceiver }
+    );
     // 发送文件
     // @todo 获取发送文件的消息的逻辑待完善，目前采用与发送普通消息一样的暴力监听新消息的方式
-    msgHandler.get('sendFile', 'req').then((msg) => {
-      const filePath = msg.payload;
-      if (type === ChatType.Friend) {
-        const friend = this.client.pickFriend(uin);
-        friend.sendFile(filePath, undefined).then((fid) => {
-          console.log(`${friend.uid}：文件${filePath}发送成功`);
-          const timeout = setTimeout(() => {
-            clearInterval(interval);
-            vscode.window.showWarningMessage('文件无法显示，请重新打开此页面');
-          }, 4000);
-          const interval = setInterval(async () => {
-            const retMsg = (await friend.getChatHistory(undefined, 1))[0];
-            if (
-              retMsg.message.length === 1 &&
-              retMsg.message[0].type === 'file' &&
-              retMsg.message[0].fid === fid
-            ) {
-              clearInterval(interval);
-              clearTimeout(timeout);
-              msgHandler.response(msg.id, msg.command, retMsg);
-            }
-          }, 200);
-        });
-      } else {
-        const group = this.client.pickGroup(uin);
-        group.fs
-          .upload(filePath, undefined, undefined, (perc) =>
-            console.log(`${group.gid}：发送文件${filePath}中：${perc}%`)
-          )
-          .then((fileState) => {
-            console.log(`${group.gid}：文件${filePath}发送成功`);
-            const timeout = setTimeout(() => {
-              clearInterval(interval);
-              vscode.window.showWarningMessage(
-                '文件无法显示，请重新打开此页面'
-              );
-            }, 4000);
-            const interval = setInterval(async () => {
-              const retMsg = (await group.getChatHistory(undefined, 1))[0];
-              if (
-                retMsg.message.length === 1 &&
-                retMsg.message[0].type === 'file' &&
-                retMsg.message[0].fid === fileState.fid
-              ) {
-                clearInterval(interval);
-                clearTimeout(timeout);
-                msgHandler.response(msg.id, msg.command, retMsg);
-              }
-            }, 200);
-          });
+    messenger.onRequest(
+      chat.sendFile,
+      async (filePath) => {
+        const ret = this._sendFile(type, uin, filePath);
+        if (!ret) {
+          vscode.window.showWarningMessage('文件无法显示，请重新打开此页面');
+        }
+        return ret;
+      },
+      {
+        sender: webReceiver
       }
-    });
+    );
     // 获取文件下载链接
-    msgHandler.get('getFileUrl', 'req').then((msg) => {
-      const target =
-        type === ChatType.Friend
-          ? this.client.pickFriend(uin)
-          : this.client.pickGroup(uin);
-      target
-        .getFileUrl(msg.payload)
-        .then((url) => vscode.env.openExternal(vscode.Uri.parse(url)));
-    });
+    messenger.onNotification(
+      chat.getFileUrl,
+      (url) => {
+        const target =
+          type === ChatType.Friend
+            ? this.client.pickFriend(uin)
+            : this.client.pickGroup(uin);
+        target
+          .getFileUrl(url)
+          .then((url) => vscode.env.openExternal(vscode.Uri.parse(url)));
+      },
+      { sender: webReceiver }
+    );
+  }
+
+  /**
+   * 发送私聊/群聊消息
+   * @param type 聊天类型
+   * @param uin 目标账号
+   * @param content 发送内容
+   * @returns 发送成功返回发送的消息完整信息，否则返回undefined
+   */
+  private async _sendMsg(type: ChatType, uin: number, content: icqq.Sendable) {
+    let sentMsg,
+      /** 尝试次数 */
+      attemps = 5;
+    if (type === ChatType.Friend) {
+      const friend = this.client.pickFriend(uin);
+      const ret = await friend.sendMsg(content);
+      do {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const history = await friend.getChatHistory();
+        sentMsg = history.find(
+          /** id会有1s的误差 */
+          (msg) => Math.abs(msg.message_id.localeCompare(ret.message_id)) <= 1
+        );
+        attemps--;
+      } while (!sentMsg && attemps);
+    } else {
+      const group = this.client.pickGroup(uin);
+      const ret = await group.sendMsg(content);
+      do {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const history = await group.getChatHistory();
+        sentMsg = history.find(
+          /** id会有1s的误差 */
+          (msg) => msg.message_id === ret.message_id || msg.message_id === ret.message_id + 1
+        );
+        attemps--;
+      } while (!sentMsg && attemps);
+    }
+    return sentMsg;
+  }
+
+  /**
+   * 发送文件
+   * @param type 聊天类型
+   * @param uin 目标账号
+   * @param filePath 文件路径，或文件的buffer值
+   * @returns 发送成功返回发送的消息完整信息，否则返回undefined
+   */
+  private async _sendFile(
+    type: ChatType,
+    uin: number,
+    filePath: string | Buffer
+  ) {
+    let sentMsg,
+      /** 尝试次数 */
+      attemps = 5;
+    if (type === ChatType.Friend) {
+      const friend = this.client.pickFriend(uin);
+      const fid = await friend.sendFile(filePath);
+      do {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const history = await friend.getChatHistory();
+        sentMsg = history.find(
+          (msg) =>
+            msg.message.length === 1 &&
+            msg.message[0].type === 'file' &&
+            msg.message[0].fid === fid
+        );
+        attemps--;
+      } while (!sentMsg && attemps);
+    } else {
+      const group = this.client.pickGroup(uin);
+      const fileState = await group.fs.upload(filePath);
+      do {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const history = await group.getChatHistory();
+        sentMsg = history.find(
+          (msg) =>
+            msg.message.length === 1 &&
+            msg.message[0].type === 'file' &&
+            msg.message[0].fid === fileState.fid
+        );
+        attemps--;
+      } while (!sentMsg && attemps);
+    }
+    return sentMsg;
   }
 }

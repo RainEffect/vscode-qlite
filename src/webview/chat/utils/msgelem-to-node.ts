@@ -1,6 +1,7 @@
 import { Tag } from '@vscode/webview-ui-toolkit';
 import { MessageElem } from 'icqq';
-import { msgHandler } from '../script';
+import * as chat from '../../../message/chat';
+import { messenger } from '../script';
 
 /** face表情类型 */
 export enum FaceType {
@@ -126,7 +127,9 @@ export function createFileElem(
   elem.textContent = `${name} (${size}B \\ ${duration}s后过期)`;
   elem.title = '点击下载';
   elem.setAttribute('fid', fid);
-  elem.addEventListener('click', () => msgHandler.request('getFileUrl', fid));
+  elem.addEventListener('click', () =>
+    messenger.sendNotification(chat.getFileUrl, { type: 'extension' }, fid)
+  );
   return elem;
 }
 

@@ -1,8 +1,7 @@
 import * as webviewUiToolkit from '@vscode/webview-ui-toolkit';
 import * as icqq from 'icqq';
 import { inHTMLData } from 'xss-filters';
-import ChatCommand, { UserInfo } from '../../message/chat';
-import MessageHandler from '../../message/message-handler';
+import * as chat from '../../message/chat';
 import { ChatType } from '../../message/parse-msg-id';
 import createNoticeMsg from './utils/create-notice-msg';
 import createUserMsg, { createFlagSpan } from './utils/create-user-msg';
@@ -15,6 +14,7 @@ import {
   createStampElem
 } from './utils/msgelem-to-node';
 import nodeToMsgElem from './utils/node-to-msgelem';
+import { Messenger } from 'vscode-messenger-webview';
 
 // 注册UI组件
 webviewUiToolkit
@@ -24,7 +24,8 @@ webviewUiToolkit
 /** 与扩展主体通信的变量 */
 const vscode = acquireVsCodeApi();
 /** 消息处理器 */
-export const msgHandler = new MessageHandler<ChatCommand>(true, vscode);
+export const messenger = new Messenger(vscode);
+messenger.start();
 
 // 获取页面组件
 /** 上半部分的消息容器 */
@@ -57,7 +58,7 @@ const inputArea = inputBox.querySelector('.input') as HTMLDivElement;
 const sendButton = inputBox.querySelector('.send') as webviewUiToolkit.Button;
 
 /** 用户的基本信息 */
-export let user: UserInfo;
+export let user: chat.UserInfo;
 
 /** 请求历史消息的状态，避免重复请求 */
 let requestHistoryState = false;
@@ -84,20 +85,19 @@ function getMessage(message_id: string) {
 function getChatHistory(
   message_id?: string
 ): Promise<(icqq.PrivateMessage | icqq.GroupMessage)[]> {
+  if (requestHistoryState) {
+    throw new Error('ChatView getChatHistory: duplicate function call');
+  }
   requestHistoryState = true;
   return new Promise((resolve) => {
-    msgHandler
-      .request('getChatHistory', message_id, 2000)
-      .then((msg) => {
-        const history = msg.payload;
+    messenger
+      .sendRequest(chat.getChatHistory, { type: 'extension' }, message_id)
+      .then((history) => {
         // 按发言时间逆序排列
         history.sort((a, b) => b.time - a.time);
         resolve(history);
-      })
-      .catch((error: Error) => {
-        console.error('ChatView getChatHistory: ' + error.message);
-      })
-      .finally(() => (requestHistoryState = false));
+        requestHistoryState = false;
+      });
   });
 }
 
@@ -126,15 +126,16 @@ function insertInput(node: Node) {
 }
 
 // 接受来自扩展的消息
-msgHandler.get('messageEvent', 'req').then((msg) => {
-  const message = msg.payload;
+messenger.onNotification(chat.messageEvent, (message) => {
   if (getMessage(message.message_id)) {
     return;
   }
   msgBox.insertAdjacentElement('beforeend', createUserMsg(message));
 });
-msgHandler.get('noticeEvent', 'req').then((msg) => {
-  const notice = msg.payload;
+messenger.onNotification(chat.noticeEvent, (notice) => {
+  if (getMessage(notice.message_id)) {
+    return;
+  }
   createNoticeMsg(notice).then((elem) =>
     msgBox.insertAdjacentElement('beforeend', elem)
   );
@@ -205,14 +206,18 @@ fileBox.addEventListener('change', (ev) => {
   if (!files) {
     return;
   }
-  msgHandler
-    .request('sendFile', (files[0] as File & { path: string }).path, 5000)
-    .then((msg) =>
-      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg.payload))
+  messenger
+    .sendRequest(
+      chat.sendFile,
+      { type: 'extension' },
+      (files[0] as File & { path: string }).path
     )
-    .catch((error: Error) =>
-      console.error('ChatView sendFile: ' + error.message)
-    );
+    .then((msg) => {
+      if (!msg) {
+        return console.error('ChatView sendFile: get file failed');
+      }
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg));
+    });
 });
 
 // 输入框按下按键时
@@ -297,15 +302,15 @@ sendButton.addEventListener('click', function (this: webviewUiToolkit.Button) {
   }
   this.disabled = true;
   const msgElems: icqq.MessageElem[] = nodeToMsgElem(inputNodes);
-  msgHandler
-    .request('sendMsg', { content: msgElems }, 5000)
+  messenger
+    .sendRequest(chat.sendMsg, { type: 'extension' }, { content: msgElems })
     .then((msg) => {
-      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg.payload));
+      if (!msg) {
+        return console.error('ChatView sendMessage: get msg failed');
+      }
+      msgBox.insertAdjacentElement('beforeend', createUserMsg(msg));
       msgBox.scrollTo(0, msgBox.scrollHeight);
     })
-    .catch((error: Error) =>
-      console.error('ChatView sendMessage: ' + error.message)
-    )
     .finally(() => {
       this.disabled = false;
       inputArea.textContent = '';
@@ -336,30 +341,25 @@ msgBox.addEventListener('scroll', function (ev: Event) {
 (async () => {
   try {
     // 优先获取基本信息
-    const msg = await msgHandler.request(
-      'getSimpleInfo',
-
-      undefined,
-      2000
-    );
-    user = msg.payload;
+    user = await messenger.sendRequest(chat.getSimpleInfo, {
+      type: 'extension'
+    });
     if (user.type === ChatType.Friend) {
       // 私聊隐藏at工具
       atBtn.style.display = 'none';
     } else {
-      msgHandler
-        .request('getMember', undefined, 2000)
-        .then((msg) => {
-          const members = msg.payload.members;
-          if (msg.payload.atAll) {
+      messenger
+        .sendRequest(chat.getMember, { type: 'extension' })
+        .then(({ atAll, members }) => {
+          if (atAll) {
             // at所有人
-            const atAll = document.createElement('div');
+            const atAllElem = document.createElement('div');
             const elem = new webviewUiToolkit.Button();
             elem.appearance = 'secondary';
-            elem.append(atAll);
+            elem.append(atAllElem);
             elem.onclick = () => insertInput(createAtElem('all'));
-            atAll.title = 'all';
-            atAll.textContent = '全体成员';
+            atAllElem.title = 'all';
+            atAllElem.textContent = '全体成员';
             atBox.append(elem);
           }
           members
@@ -385,9 +385,6 @@ msgBox.addEventListener('scroll', function (ev: Event) {
               }
               atBox.append(elem);
             });
-        })
-        .catch((error: Error) => {
-          console.error('ChatView getMember: ' + error.message);
         });
     }
   } catch (error: any) {
@@ -406,22 +403,17 @@ msgBox.addEventListener('scroll', function (ev: Event) {
   faceBox.style.display = 'none';
   atBox.style.display = 'none';
   // 加载漫游表情
-  msgHandler
-    .request('getStamp', undefined, 2000)
-    .then((msg) => {
-      msg.payload.forEach((stamp) => {
-        const img = document.createElement('img');
-        img.src = stamp;
-        const elem = new webviewUiToolkit.Button();
-        elem.appearance = 'icon';
-        elem.append(img);
-        elem.onclick = () => insertInput(createStampElem(stamp));
-        stampBox.append(elem);
-      });
-    })
-    .catch((error: Error) =>
-      console.error('ChatView getStamp: ' + error.message)
-    );
+  messenger.sendRequest(chat.getStamp, { type: 'extension' }).then((stamps) => {
+    stamps.forEach((stamp) => {
+      const img = document.createElement('img');
+      img.src = stamp;
+      const elem = new webviewUiToolkit.Button();
+      elem.appearance = 'icon';
+      elem.append(img);
+      elem.onclick = () => insertInput(createStampElem(stamp));
+      stampBox.append(elem);
+    });
+  });
   // 加载face表情
   for (const id in facemap) {
     const face = document.createElement('img');
