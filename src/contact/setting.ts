@@ -42,7 +42,8 @@ async function setAccounts() {
       placeHolder: '当前帐号：' + Global.client.nickname
     })
     .then(async (accountItem) => {
-      if (!accountItem) {
+      if (!accountItem || Number(accountItem.description) === Global.client.uin) {
+        // 重复点击已登录账号不退出
         return;
       }
       await Global.client.logout();
