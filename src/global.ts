@@ -15,11 +15,28 @@ import ContactTreeDataProvider from './contact/contact-tree';
 import LoginViewProvider from './login/login-view';
 import { Messenger } from 'vscode-messenger';
 
-function getConfiguration(command: 'platform'): number;
-function getConfiguration<T extends 'platform'>(command: T) {
+/**
+ * 获取用户登录协议设置
+ * @param command 设置名
+ * @returns 登录协议枚举值
+ */
+function getConfiguration(command: 'platform'): Platform;
+/**
+ * 获取用户设置
+ * @param command 设置名
+ * @returns 设置名的对应值
+ */
+function getConfiguration(command: string) {
   const conf = workspace.getConfiguration('qlite');
   if (command === 'platform') {
-    return Platform[(conf.get(command) ?? 'Android') as keyof typeof Platform];
+    const platformName = conf.get<keyof typeof Platform>(command) ?? 'Android';
+    const platform = Platform[platformName];
+    if (platform) {
+      return platform;
+    } else {
+      conf.update(command, undefined);
+      return Platform.Android;
+    }
   }
   return undefined;
 }
