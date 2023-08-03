@@ -41,11 +41,11 @@ async function setAccounts() {
     .showQuickPick(accounts, {
       placeHolder: '当前帐号：' + Global.client.nickname
     })
-    .then((accountItem) => {
+    .then(async (accountItem) => {
       if (!accountItem) {
         return;
       }
-      Global.client.logout();
+      await Global.client.logout();
       if (accountItem === accounts[accounts.length - 1]) {
         // 退出
         Global.loginViewProvider.setEmptyView(true);
