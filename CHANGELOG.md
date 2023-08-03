@@ -2,6 +2,16 @@
 
 All notable changes to the "vscode-qlite" extension will be documented in this file.
 
+## [1.5.5] - 2023-08-03
+
+### Changed
+- 修改登录协议设置的值，之前修改过此设置的用户需要将此设置移除才可正常使用
+
+### Fixed
+- 修复取消输入ticket和进行设备锁验证时没有刷新登录状态的bug
+- 修复无法热重启的bug
+- 修复热重启可选择已登录账号的bug
+
 ## [1.5.4] - 2023-08-02
 
 ### Changed
