@@ -33,7 +33,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
     Global.messenger.onNotification(login.loginTimeout, () => {
       window
         .showWarningMessage(
-          '登录出错，是否要在开发人员工具中查看登录日志？',
+          '登录尚未成功，是否要在开发人员工具中查看登录日志？',
           '是',
           '否'
         )
