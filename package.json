@@ -94,7 +94,7 @@
         "title": "QLite",
         "properties": {
           "qlite.platform": {
-            "description": "登录时使用的设备类型",
+            "description": "登录时使用的设备类型，重启扩展生效",
             "type": "string",
             "enum": [
               "Android",
