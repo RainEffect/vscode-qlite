@@ -18,41 +18,7 @@ export default class LoginViewProvider implements WebviewViewProvider {
   /**
    * @param extensionUri 扩展根目录
    */
-  constructor(private readonly extensionUri: Uri) {
-    Global.client.on('system.login.device', ({ url }) => {
-      // 设备锁验证
-      window
-        .showInformationMessage(
-          `请点击 [此网址](${url}) 进行设备锁验证。`,
-          '已验证'
-        )
-        .then((value: string | undefined) => {
-          if (!value) {
-            window.showInformationMessage('已取消登录');
-          } else {
-            Global.client.login();
-          }
-        });
-    });
-    Global.client.on('system.login.slider', ({ url }) => {
-      // 滑动验证码验证
-      window.showInformationMessage(`请点击 [此网址](${url}) 完成滑动验证码。`);
-      window
-        .showInputBox({
-          placeHolder: '请输入验证ticket',
-          prompt:
-            '[如何获取ticket](https://github.com/takayama-lily/node-onebot/issues/28)',
-          ignoreFocusOut: true
-        })
-        .then((ticket: string | undefined) => {
-          if (!ticket) {
-            window.showInformationMessage('取消登录');
-          } else {
-            Global.client.submitSlider(ticket);
-          }
-        });
-    });
-  }
+  constructor(private readonly extensionUri: Uri) {}
 
   resolveWebviewView(webviewView: WebviewView) {
     this._view = webviewView;
@@ -92,27 +58,69 @@ export default class LoginViewProvider implements WebviewViewProvider {
     // 登录操作
     Global.messenger.onNotification(login.submitLoginInfo, (loginInfo) => {
       Global.client.login(loginInfo.uin, loginInfo.password);
-      // 登录成功
-      const onlineDispose = Global.client.on('system.online', () => {
-        Global.client.setOnlineStatus(loginInfo.onlineStatus);
-        // 更新账号记录
-        LoginRecordManager.setRecent(Global.client.uin, loginInfo);
-        commands.executeCommand('setContext', 'qlite.isOnline', true);
-        onlineDispose();
-        errorDispose();
-      });
-      // 登录失败
-      const errorDispose = Global.client.on('system.login.error', (error) => {
-        window.showErrorMessage(error.message);
-        Global.messenger.sendNotification(
-          login.loginRet,
-          msgParticipant,
-          false
-        );
-        onlineDispose();
-        errorDispose();
-      });
+      const loginDispose = [
+        Global.client.on('system.login.device', ({ url }) => {
+          // 设备锁验证
+          window
+            .showInformationMessage(
+              `请点击 [此网址](${url}) 进行设备锁验证。`,
+              '已验证'
+            )
+            .then((value: string | undefined) => {
+              if (!value) {
+                window.showInformationMessage('已取消登录');
+              } else {
+                Global.client.login();
+              }
+            });
+        }),
+        Global.client.on('system.login.slider', ({ url }) => {
+          // 滑动验证码验证
+          window.showInformationMessage(
+            `请点击 [此网址](${url}) 完成滑动验证码。`
+          );
+          window
+            .showInputBox({
+              placeHolder: '请输入验证ticket',
+              prompt:
+                '[如何获取ticket](https://github.com/takayama-lily/node-onebot/issues/28)',
+              ignoreFocusOut: true
+            })
+            .then((ticket: string | undefined) => {
+              if (!ticket) {
+                window.showInformationMessage('取消登录');
+                Global.messenger.sendNotification(
+                  login.loginRet,
+                  msgParticipant,
+                  false
+                );
+                loginDispose.forEach((dispose) => dispose());
+              } else {
+                Global.client.submitSlider(ticket);
+              }
+            });
+        }),
+        // 登录成功
+        Global.client.on('system.online', () => {
+          Global.client.setOnlineStatus(loginInfo.onlineStatus);
+          // 更新账号记录
+          LoginRecordManager.setRecent(Global.client.uin, loginInfo);
+          commands.executeCommand('setContext', 'qlite.isOnline', true);
+          loginDispose.forEach((dispose) => dispose());
+        }),
+        // 登录失败
+        Global.client.on('system.login.error', (error) => {
+          window.showErrorMessage(error.message);
+          Global.messenger.sendNotification(
+            login.loginRet,
+            msgParticipant,
+            false
+          );
+          loginDispose.forEach((dispose) => dispose());
+        })
+      ];
     });
+
     // 关闭页面
     webviewView.onDidDispose(() => {
       this._view = undefined;
