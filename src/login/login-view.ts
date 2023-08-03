@@ -69,6 +69,12 @@ export default class LoginViewProvider implements WebviewViewProvider {
             .then((value: string | undefined) => {
               if (!value) {
                 window.showInformationMessage('已取消登录');
+                Global.messenger.sendNotification(
+                  login.loginRet,
+                  msgParticipant,
+                  false
+                );
+                loginDispose.forEach((dispose) => dispose());
               } else {
                 Global.client.login();
               }
