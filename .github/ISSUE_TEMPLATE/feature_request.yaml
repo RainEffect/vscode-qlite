@@ -1,5 +1,6 @@
 name: 功能追加/改善
 description: 建议增加的功能、设置等内容。
+title: "[Feature] "
 body:
   - type: textarea
     id: description
